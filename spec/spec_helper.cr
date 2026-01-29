@@ -49,6 +49,30 @@ def diagnostics_to_json(diags : Array(Jinja::Diagnostic)) : JSON::Any
   JSON.parse(payload.to_json)
 end
 
+def issues_to_json(issues : Array(Jinja::Linter::Issue)) : JSON::Any
+  payload = issues.map do |issue|
+    {
+      "id"       => issue.id,
+      "severity" => issue.severity.to_s.downcase,
+      "message"  => issue.message,
+      "span"     => {
+        "start" => {
+          "offset" => issue.span.start_pos.offset,
+          "line"   => issue.span.start_pos.line,
+          "column" => issue.span.start_pos.column,
+        },
+        "end" => {
+          "offset" => issue.span.end_pos.offset,
+          "line"   => issue.span.end_pos.line,
+          "column" => issue.span.end_pos.column,
+        },
+      },
+    }
+  end
+
+  JSON.parse(payload.to_json)
+end
+
 def assert_snapshot(path : String, actual : JSON::Any) : Nil
   if File.exists?(path)
     expected = JSON.parse(File.read(path))
@@ -87,4 +111,13 @@ def assert_diagnostics_snapshot(path : String, diags : Array(Jinja::Diagnostic))
   end
 
   assert_snapshot(path, diagnostics_to_json(diags))
+end
+
+def assert_lint_snapshot(path : String, issues : Array(Jinja::Linter::Issue)) : Nil
+  if issues.empty?
+    File.delete(path) if File.exists?(path)
+    return
+  end
+
+  assert_snapshot(path, issues_to_json(issues))
 end

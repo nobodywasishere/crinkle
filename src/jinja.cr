@@ -8,6 +8,7 @@ require "./parser/parser"
 require "./renderer/renderer"
 require "./formatter/formatter"
 require "./linter/linter"
+require "./linter/rules"
 
 module Jinja
 end

@@ -1,0 +1,19 @@
+[
+  {
+    "id": "Lint/MultipleExtends",
+    "severity": "warning",
+    "message": "Multiple extends tags found; only one is allowed.",
+    "span": {
+      "start": {
+        "offset": 24,
+        "line": 2,
+        "column": 1
+      },
+      "end": {
+        "offset": 48,
+        "line": 2,
+        "column": 25
+      }
+    }
+  }
+]

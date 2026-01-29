@@ -1,0 +1,27 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Extends",
+      "template": {
+        "type": "Literal",
+        "value": "base.j2"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Extends",
+      "template": {
+        "type": "Literal",
+        "value": "other.j2"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

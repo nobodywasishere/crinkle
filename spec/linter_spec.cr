@@ -23,4 +23,23 @@ describe Jinja::Linter do
     issue.span.should eq(span)
     issue.source_type.should eq(Jinja::DiagnosticType::UnknownTag)
   end
+
+  it "matches linter snapshots for fixtures" do
+    Dir.glob("fixtures/templates/lint_*.j2").sort.each do |path|
+      source = File.read(path)
+      lexer = Jinja::Lexer.new(source)
+      tokens = lexer.lex_all
+      parser = Jinja::Parser.new(tokens)
+      template = parser.parse
+      diagnostics = lexer.diagnostics + parser.diagnostics
+      issues = Jinja::Linter::Runner.new.lint(template, source, diagnostics)
+
+      snapshot_path = File.join(
+        "fixtures",
+        "linter_diagnostics",
+        "#{File.basename(path, ".j2")}.json",
+      )
+      assert_lint_snapshot(snapshot_path, issues)
+    end
+  end
 end

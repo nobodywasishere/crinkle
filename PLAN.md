@@ -169,11 +169,11 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Add tests for lints and fixes.
 
 #### Phase 8 Checklist
-- [ ] Linter rule framework + severity plumbing
-- [ ] Diagnostic ID format: `Category/RuleName` (e.g., `Parser/UnknownTag`)
-- [ ] Map lexer/parser/formatter/renderer diagnostics into categories (no refactor of existing IDs)
+- [x] Linter rule framework + severity plumbing
+- [x] Diagnostic ID format: `Category/RuleName` (e.g., `Parser/UnknownTag`)
+- [x] Map lexer/parser/formatter/renderer diagnostics into categories (no refactor of existing IDs)
 - [ ] Linter output style aligned with ameba conventions
-- [ ] Initial lint rules implemented + snapshots
+- [x] Initial lint rules implemented + snapshots
 
 ### Phase 9 — Language Server (LSP)
 **Outcome:** IDE features for templates.

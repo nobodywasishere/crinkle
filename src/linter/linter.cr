@@ -40,6 +40,10 @@ module Jinja
       def check(_template : AST::Template, _context : Context) : Array(Issue)
         Array(Issue).new
       end
+
+      protected def issue(span : Span, message : String, severity : Severity = @severity) : Issue
+        Issue.new(@id, severity, message, span)
+      end
     end
 
     class RuleSet
@@ -63,7 +67,7 @@ module Jinja
     class Runner
       getter ruleset : RuleSet
 
-      def initialize(@ruleset : RuleSet = RuleSet.new) : Nil
+      def initialize(@ruleset : RuleSet = Linter.default_ruleset) : Nil
       end
 
       def lint(
@@ -76,6 +80,15 @@ module Jinja
         issues.concat(@ruleset.run(template, context))
         issues
       end
+    end
+
+    def self.default_ruleset : RuleSet
+      ruleset = RuleSet.new
+      ruleset.add(Rules::MultipleExtends.new)
+      ruleset.add(Rules::ExtendsNotFirst.new)
+      ruleset.add(Rules::DuplicateBlock.new)
+      ruleset.add(Rules::TrailingWhitespace.new)
+      ruleset
     end
 
     DIAGNOSTIC_MAP = {
