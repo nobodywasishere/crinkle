@@ -109,7 +109,10 @@ module Jinja
       end
 
       def newline : Nil
-        @buffer << @current_line.to_s
+        line_value = @current_line.to_s
+        unless whitespace_line?(line_value)
+          @buffer << line_value
+        end
         @buffer << "\n"
         @current_line = String::Builder.new
         @at_line_start = true
@@ -127,11 +130,15 @@ module Jinja
       def to_s : String
         result = @buffer.to_s
         trailing = @current_line.to_s
-        if trailing.empty?
+        if trailing.empty? || whitespace_line?(trailing)
           result
         else
           result + trailing
         end
+      end
+
+      private def whitespace_line?(line : String) : Bool
+        line.strip.empty?
       end
     end
 

@@ -1,0 +1,27 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "Line 1\n     \n\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Literal",
+        "value": true
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  output\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
