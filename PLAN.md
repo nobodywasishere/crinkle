@@ -120,7 +120,14 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Integrate include/extends/import/macro/call behavior.
 - Add rendering fixtures with expected output.
 
-### Phase 7 — Linter
+### Phase 7 — Formatter (Optional, HTML-aware)
+**Outcome:** Format templates with HTML-structural awareness.
+- Build formatter over AST + token spans (preserve trivia where possible).
+- HTML-aware mode: align Jinja blocks with HTML indentation.
+- Configurable options (indent width, line length, whitespace control).
+- Add fixtures with before/after formatting samples.
+
+### Phase 8 — Linter
 **Outcome:** Useful diagnostics beyond syntax.
 - Build rule framework with rule IDs, severity, quick fixes.
 - Starter rules:
@@ -131,7 +138,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
   - Suspicious whitespace control
 - Add tests for lints and fixes.
 
-### Phase 8 — Language Server (LSP)
+### Phase 9 — Language Server (LSP)
 **Outcome:** IDE features for templates.
 - Minimal LSP server (initialize, textDocument/didOpen, didChange, didClose).
 - Diagnostics pipeline using lexer/parser/linter.
@@ -139,7 +146,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Document symbols, folding ranges, semantic tokens (optional).
 - Performance: incremental parsing and caching.
 
-### Phase 9 — Compatibility + UX Polish
+### Phase 10 — Compatibility + UX Polish
 **Outcome:** Confidence + developer adoption.
 - Add compatibility test suite using real-world Jinja2 templates.
 - Benchmark parsing on large templates.
