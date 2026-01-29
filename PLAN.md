@@ -81,6 +81,8 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Support literals: strings, numbers, booleans, null, lists, dicts.
 - Add whitespace/line-statement variations (if in scope).
 - Expand fixtures + tests.
+- Recovery: unexpected tokens now resync to the next expression-start token to avoid
+  cascading `}}`/`%}` errors (ex: `{{ 1 + * 2 }}` recovers to `1 + 2` with a single diagnostic).
 
 #### Phase 3 Checklist
 - [x] Expression parser extended with precedence + postfix operators

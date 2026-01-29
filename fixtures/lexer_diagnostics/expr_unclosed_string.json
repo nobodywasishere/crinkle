@@ -1,0 +1,36 @@
+[
+  {
+    "id": "E_UNTERMINATED_STRING",
+    "severity": "error",
+    "message": "Unterminated string literal.",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 11,
+        "line": 2,
+        "column": 1
+      }
+    }
+  },
+  {
+    "id": "E_UNTERMINATED_EXPRESSION",
+    "severity": "error",
+    "message": "Unterminated expression; expected '}}'.",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 11,
+        "line": 2,
+        "column": 1
+      }
+    }
+  }
+]

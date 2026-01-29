@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_EXPECTED_TOKEN",
+    "severity": "error",
+    "message": "Expected filter name after '|'.",
+    "span": {
+      "start": {
+        "offset": 10,
+        "line": 1,
+        "column": 11
+      },
+      "end": {
+        "offset": 11,
+        "line": 1,
+        "column": 12
+      }
+    }
+  }
+]

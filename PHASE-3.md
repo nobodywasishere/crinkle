@@ -48,6 +48,8 @@
 - Missing closing `)` / `]` / `}`.
 - Invalid filter/test syntax.
 - Recovery: sync to `,`, `)`/`]`/`}` or block end.
+- Recovery: when an unexpected token appears, advance to the next viable expression start
+  (or stop token) to avoid cascading `}}`/`%}` errors.
 
 ## Fixtures / Snapshots
 - Add focused fixtures for:
@@ -58,6 +60,10 @@
   - List/dict literals
   - Error cases (missing separators, missing closers)
 - Use self-updating snapshot specs for parser AST + diagnostics.
+
+## Implementation Notes
+- Unexpected-token recovery now re-syncs to the next expression-start token so we can
+  continue parsing (ex: `{{ 1 + * 2 }}` becomes `1 + 2` with a single diagnostic).
 
 ## CLI Integration
 - `src/j2parse.cr --ast` should include new expression nodes.

@@ -1,0 +1,27 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "DictLiteral",
+        "pairs": [
+          {
+            "key": {
+              "type": "Name",
+              "value": "a"
+            },
+            "value": {
+              "type": "Literal",
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

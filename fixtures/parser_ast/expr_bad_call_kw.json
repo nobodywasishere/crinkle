@@ -1,0 +1,36 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "foo"
+        },
+        "args": [],
+        "kwargs": [
+          {
+            "name": "a",
+            "value": {
+              "type": "Literal",
+              "value": null
+            }
+          },
+          {
+            "name": "b",
+            "value": {
+              "type": "Literal",
+              "value": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

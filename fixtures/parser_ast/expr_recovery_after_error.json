@@ -1,0 +1,33 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Group",
+          "expr": {
+            "type": "Binary",
+            "op": "+",
+            "left": {
+              "type": "Name",
+              "value": "foo"
+            },
+            "right": {
+              "type": "Literal",
+              "value": null
+            }
+          }
+        },
+        "name": "upper",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

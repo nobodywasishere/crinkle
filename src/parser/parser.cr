@@ -504,11 +504,17 @@ module Jinja
         else
           emit_unexpected_token("expression")
           advance
+          recover_expression_start(stop_types, stop_lexemes)
+          return AST::Literal.new(nil, current.span) if stop_at?(stop_types, stop_lexemes)
+          return parse_primary(stop_types, stop_lexemes) if expression_start?
           AST::Literal.new(nil, current.span)
         end
       else
         emit_unexpected_token("expression")
         advance
+        recover_expression_start(stop_types, stop_lexemes)
+        return AST::Literal.new(nil, current.span) if stop_at?(stop_types, stop_lexemes)
+        return parse_primary(stop_types, stop_lexemes) if expression_start?
         AST::Literal.new(nil, current.span)
       end
     end
@@ -782,6 +788,28 @@ module Jinja
     private def recover_to(stop_types : Array(TokenType)) : Nil
       while !at_end? && !stop_types.includes?(current.type)
         advance
+      end
+    end
+
+    private def recover_expression_start(stop_types : Array(TokenType), stop_lexemes : Array(String)) : Nil
+      while !at_end? && !stop_at?(stop_types, stop_lexemes) && !expression_start?
+        advance
+      end
+    end
+
+    private def expression_start? : Bool
+      case current.type
+      when TokenType::Identifier, TokenType::Number, TokenType::String
+        true
+      when TokenType::Punct
+        case current.lexeme
+        when "(", "[", "{"
+          true
+        else
+          false
+        end
+      else
+        false
       end
     end
 

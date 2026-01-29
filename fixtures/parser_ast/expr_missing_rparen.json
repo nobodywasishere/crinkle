@@ -1,0 +1,27 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Group",
+        "expr": {
+          "type": "Binary",
+          "op": "+",
+          "left": {
+            "type": "Name",
+            "value": "foo"
+          },
+          "right": {
+            "type": "Literal",
+            "value": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

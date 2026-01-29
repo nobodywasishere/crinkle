@@ -1,0 +1,12 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Literal",
+        "value": "foo }}"
+      }
+    }
+  ]
+}

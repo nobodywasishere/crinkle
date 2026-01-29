@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_EXPECTED_TOKEN",
+    "severity": "error",
+    "message": "Expected ']' to close list.",
+    "span": {
+      "start": {
+        "offset": 12,
+        "line": 1,
+        "column": 13
+      },
+      "end": {
+        "offset": 14,
+        "line": 1,
+        "column": 15
+      }
+    }
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "ListLiteral",
+        "items": [
+          {
+            "type": "Literal",
+            "value": 1
+          },
+          {
+            "type": "Literal",
+            "value": 2
+          },
+          {
+            "type": "Literal",
+            "value": 3
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

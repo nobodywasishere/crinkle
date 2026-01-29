@@ -1,0 +1,28 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          },
+          "name": "",
+          "args": [],
+          "kwargs": []
+        },
+        "name": "upper",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
