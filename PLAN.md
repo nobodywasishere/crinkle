@@ -98,6 +98,9 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
   - `{% raw %}` / `{% endraw %}`
 - Track nesting and scoping in AST.
 - Improve recovery for mismatched tags.
+- Note: end tags may include a trailing name (e.g., `endblock name`); parser accepts
+  it now and leaves mismatch checks for the linter. Raw blocks collect token lexemes
+  until `endraw` and emit a single `Raw` node.
 
 ### Phase 5 — Linter
 **Outcome:** Useful diagnostics beyond syntax.

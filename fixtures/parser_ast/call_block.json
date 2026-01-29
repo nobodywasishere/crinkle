@@ -1,0 +1,29 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "CallBlock",
+      "callee": {
+        "type": "Name",
+        "value": "greet"
+      },
+      "args": [
+        {
+          "type": "Literal",
+          "value": "Jane"
+        }
+      ],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nBody\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

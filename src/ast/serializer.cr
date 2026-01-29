@@ -81,6 +81,137 @@ module Jinja
               end
             end
           end
+        when Set
+          json.object do
+            json.field "type", "Set"
+            json.field "target" do
+              write_expr(json, node.target)
+            end
+            json.field "value" do
+              write_expr(json, node.value)
+            end
+          end
+        when SetBlock
+          json.object do
+            json.field "type", "SetBlock"
+            json.field "target" do
+              write_expr(json, node.target)
+            end
+            json.field "body" do
+              json.array do
+                node.body.each do |child|
+                  write_node(json, child)
+                end
+              end
+            end
+          end
+        when Block
+          json.object do
+            json.field "type", "Block"
+            json.field "name", node.name
+            json.field "body" do
+              json.array do
+                node.body.each do |child|
+                  write_node(json, child)
+                end
+              end
+            end
+          end
+        when Extends
+          json.object do
+            json.field "type", "Extends"
+            json.field "template" do
+              write_expr(json, node.template)
+            end
+          end
+        when Include
+          json.object do
+            json.field "type", "Include"
+            json.field "template" do
+              write_expr(json, node.template)
+            end
+            json.field "with_context", node.with_context?
+            json.field "ignore_missing", node.ignore_missing?
+          end
+        when Import
+          json.object do
+            json.field "type", "Import"
+            json.field "template" do
+              write_expr(json, node.template)
+            end
+            json.field "alias", node.alias
+          end
+        when FromImport
+          json.object do
+            json.field "type", "FromImport"
+            json.field "template" do
+              write_expr(json, node.template)
+            end
+            json.field "names" do
+              json.array do
+                node.names.each do |name|
+                  json.object do
+                    json.field "name", name.name
+                    json.field "alias", name.alias
+                  end
+                end
+              end
+            end
+            json.field "with_context", node.with_context?
+          end
+        when Macro
+          json.object do
+            json.field "type", "Macro"
+            json.field "name", node.name
+            json.field "params" do
+              json.array do
+                node.params.each do |param|
+                  json.object do
+                    json.field "name", param.name
+                    json.field "default" do
+                      if default_value = param.default_value
+                        write_expr(json, default_value)
+                      else
+                        json.null
+                      end
+                    end
+                  end
+                end
+              end
+            end
+            json.field "body" do
+              json.array do
+                node.body.each do |child|
+                  write_node(json, child)
+                end
+              end
+            end
+          end
+        when CallBlock
+          json.object do
+            json.field "type", "CallBlock"
+            json.field "callee" do
+              write_expr(json, node.callee)
+            end
+            json.field "args" do
+              write_expr_array(json, node.args)
+            end
+            json.field "kwargs" do
+              write_kwargs(json, node.kwargs)
+            end
+            json.field "body" do
+              json.array do
+                node.body.each do |child|
+                  write_node(json, child)
+                end
+              end
+            end
+          end
+        when Raw
+          json.object do
+            json.field "type", "Raw"
+            json.field "text", node.text
+          end
         end
       end
 

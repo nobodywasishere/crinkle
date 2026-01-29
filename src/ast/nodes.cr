@@ -1,6 +1,19 @@
 module Jinja
   module AST
-    alias Node = Text | Output | If | For
+    alias Node = Text |
+                 Output |
+                 If |
+                 For |
+                 Set |
+                 SetBlock |
+                 Block |
+                 Extends |
+                 Include |
+                 Import |
+                 FromImport |
+                 Macro |
+                 CallBlock |
+                 Raw
     alias Expr = Name |
                  Literal |
                  Unary |
@@ -57,6 +70,117 @@ module Jinja
       getter span : Span
 
       def initialize(@target : Name, @iter : Expr, @body : Array(Node), @else_body : Array(Node), @span : Span) : Nil
+      end
+    end
+
+    class Set
+      getter target : Name
+      getter value : Expr
+      getter span : Span
+
+      def initialize(@target : Name, @value : Expr, @span : Span) : Nil
+      end
+    end
+
+    class SetBlock
+      getter target : Name
+      getter body : Array(Node)
+      getter span : Span
+
+      def initialize(@target : Name, @body : Array(Node), @span : Span) : Nil
+      end
+    end
+
+    class Block
+      getter name : String
+      getter body : Array(Node)
+      getter span : Span
+
+      def initialize(@name : String, @body : Array(Node), @span : Span) : Nil
+      end
+    end
+
+    class Extends
+      getter template : Expr
+      getter span : Span
+
+      def initialize(@template : Expr, @span : Span) : Nil
+      end
+    end
+
+    class Include
+      getter template : Expr
+      getter? with_context : Bool
+      getter? ignore_missing : Bool
+      getter span : Span
+
+      def initialize(@template : Expr, @with_context : Bool, @ignore_missing : Bool, @span : Span) : Nil
+      end
+    end
+
+    class Import
+      getter template : Expr
+      getter alias : String
+      getter span : Span
+
+      def initialize(@template : Expr, @alias : String, @span : Span) : Nil
+      end
+    end
+
+    class ImportName
+      getter name : String
+      getter alias : String?
+      getter span : Span
+
+      def initialize(@name : String, @alias : String?, @span : Span) : Nil
+      end
+    end
+
+    class FromImport
+      getter template : Expr
+      getter names : Array(ImportName)
+      getter? with_context : Bool
+      getter span : Span
+
+      def initialize(@template : Expr, @names : Array(ImportName), @with_context : Bool, @span : Span) : Nil
+      end
+    end
+
+    class MacroParam
+      getter name : String
+      getter default_value : Expr?
+      getter span : Span
+
+      def initialize(@name : String, @default_value : Expr?, @span : Span) : Nil
+      end
+    end
+
+    class Macro
+      getter name : String
+      getter params : Array(MacroParam)
+      getter body : Array(Node)
+      getter span : Span
+
+      def initialize(@name : String, @params : Array(MacroParam), @body : Array(Node), @span : Span) : Nil
+      end
+    end
+
+    class CallBlock
+      getter callee : Expr
+      getter args : Array(Expr)
+      getter kwargs : Array(KeywordArg)
+      getter body : Array(Node)
+      getter span : Span
+
+      def initialize(@callee : Expr, @args : Array(Expr), @kwargs : Array(KeywordArg), @body : Array(Node), @span : Span) : Nil
+      end
+    end
+
+    class Raw
+      getter text : String
+      getter span : Span
+
+      def initialize(@text : String, @span : Span) : Nil
       end
     end
 

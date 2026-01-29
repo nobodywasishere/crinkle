@@ -1,0 +1,13 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Raw",
+      "text": "{{ not parsed }}"
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

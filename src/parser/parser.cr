@@ -78,7 +78,25 @@ module Jinja
         parse_if(start_span)
       when "for"
         parse_for(start_span)
-      when "endif", "endfor"
+      when "set"
+        parse_set(start_span)
+      when "block"
+        parse_block_tag(start_span)
+      when "extends"
+        parse_extends(start_span)
+      when "include"
+        parse_include(start_span)
+      when "import"
+        parse_import(start_span)
+      when "from"
+        parse_from(start_span)
+      when "macro"
+        parse_macro(start_span)
+      when "call"
+        parse_call_block(start_span)
+      when "raw"
+        parse_raw_block(start_span)
+      when "endif", "endfor", "endset", "endblock", "endmacro", "endcall", "endraw"
         emit_diagnostic(DiagnosticType::UnexpectedEndTag, "Unexpected '#{tag}'.")
         recover_to([TokenType::BlockEnd])
         advance if current.type == TokenType::BlockEnd
@@ -146,14 +164,233 @@ module Jinja
       AST::For.new(target, iter, body, Array(AST::Node).new, span_between(start_span, end_span))
     end
 
-    private def parse_until_end_tag(end_tag : String) : {Array(AST::Node), Span?}
+    private def parse_set(start_span : Span) : AST::Node
+      skip_whitespace
+      target = parse_name_target("Expected variable name after 'set'.")
+      skip_whitespace
+
+      if operator?("=")
+        advance
+        skip_whitespace
+        value = parse_expression([TokenType::BlockEnd])
+        skip_whitespace
+        end_span = expect_block_end("Expected '%}' to close set tag.")
+        return AST::Set.new(target, value, span_between(start_span, end_span))
+      end
+
+      end_span = expect_block_end("Expected '%}' to close set tag.")
+      body, body_end = parse_until_end_tag("endset")
+      body_end ||= end_span
+      AST::SetBlock.new(target, body, span_between(start_span, body_end))
+    end
+
+    private def parse_block_tag(start_span : Span) : AST::Block
+      skip_whitespace
+      name = parse_name("Expected block name after 'block'.")
+      skip_whitespace
+      end_span = expect_block_end("Expected '%}' to close block tag.")
+      body, body_end = parse_until_end_tag("endblock", allow_end_name: true)
+      body_end ||= end_span
+      AST::Block.new(name, body, span_between(start_span, body_end))
+    end
+
+    private def parse_extends(start_span : Span) : AST::Extends
+      skip_whitespace
+      template = parse_expression([TokenType::BlockEnd])
+      skip_whitespace
+      end_span = expect_block_end("Expected '%}' to close extends tag.")
+      AST::Extends.new(template, span_between(start_span, end_span))
+    end
+
+    private def parse_include(start_span : Span) : AST::Include
+      skip_whitespace
+      template = parse_expression([TokenType::BlockEnd])
+      with_context = true
+      ignore_missing = false
+
+      loop do
+        skip_whitespace
+        break if current.type == TokenType::BlockEnd
+        if keyword?("ignore")
+          advance
+          skip_whitespace
+          if keyword?("missing")
+            advance
+          else
+            emit_expected_token("Expected 'missing' after 'ignore'.")
+          end
+          ignore_missing = true
+          next
+        end
+
+        if keyword?("with")
+          advance
+          skip_whitespace
+          if keyword?("context")
+            advance
+          else
+            emit_expected_token("Expected 'context' after 'with'.")
+          end
+          with_context = true
+          next
+        end
+
+        if keyword?("without")
+          advance
+          skip_whitespace
+          if keyword?("context")
+            advance
+          else
+            emit_expected_token("Expected 'context' after 'without'.")
+          end
+          with_context = false
+          next
+        end
+
+        emit_unexpected_token("include tag")
+        advance
+      end
+
+      end_span = expect_block_end("Expected '%}' to close include tag.")
+      AST::Include.new(template, with_context, ignore_missing, span_between(start_span, end_span))
+    end
+
+    private def parse_import(start_span : Span) : AST::Import
+      skip_whitespace
+      template = parse_expression([TokenType::BlockEnd])
+      skip_whitespace
+
+      alias_name = ""
+      if keyword?("as")
+        advance
+        skip_whitespace
+        alias_name = parse_name("Expected alias after 'as'.")
+      else
+        emit_expected_token("Expected 'as' after import target.")
+      end
+
+      skip_whitespace
+      end_span = expect_block_end("Expected '%}' to close import tag.")
+      AST::Import.new(template, alias_name, span_between(start_span, end_span))
+    end
+
+    private def parse_from(start_span : Span) : AST::FromImport
+      skip_whitespace
+      template = parse_expression([TokenType::BlockEnd])
+      skip_whitespace
+
+      if keyword?("import")
+        advance
+      else
+        emit_expected_token("Expected 'import' after from target.")
+      end
+
+      names = parse_import_names
+      with_context = true
+
+      loop do
+        skip_whitespace
+        break if current.type == TokenType::BlockEnd
+        if keyword?("with")
+          advance
+          skip_whitespace
+          if keyword?("context")
+            advance
+          else
+            emit_expected_token("Expected 'context' after 'with'.")
+          end
+          with_context = true
+          next
+        end
+
+        if keyword?("without")
+          advance
+          skip_whitespace
+          if keyword?("context")
+            advance
+          else
+            emit_expected_token("Expected 'context' after 'without'.")
+          end
+          with_context = false
+          next
+        end
+
+        emit_unexpected_token("from import tag")
+        advance
+      end
+
+      end_span = expect_block_end("Expected '%}' to close from import tag.")
+      AST::FromImport.new(template, names, with_context, span_between(start_span, end_span))
+    end
+
+    private def parse_macro(start_span : Span) : AST::Macro
+      skip_whitespace
+      name = parse_name("Expected macro name after 'macro'.")
+      params = parse_macro_params
+      skip_whitespace
+      end_span = expect_block_end("Expected '%}' to close macro tag.")
+      body, body_end = parse_until_end_tag("endmacro", allow_end_name: true)
+      body_end ||= end_span
+      AST::Macro.new(name, params, body, span_between(start_span, body_end))
+    end
+
+    private def parse_call_block(start_span : Span) : AST::CallBlock
+      skip_whitespace
+      expr = parse_expression([TokenType::BlockEnd])
+      skip_whitespace
+      end_span = expect_block_end("Expected '%}' to close call tag.")
+      body, body_end = parse_until_end_tag("endcall", allow_end_name: true)
+      body_end ||= end_span
+
+      callee = expr
+      args = Array(AST::Expr).new
+      kwargs = Array(AST::KeywordArg).new
+
+      if expr.is_a?(AST::Call)
+        callee = expr.callee
+        args = expr.args
+        kwargs = expr.kwargs
+      end
+
+      AST::CallBlock.new(callee, args, kwargs, body, span_between(start_span, body_end))
+    end
+
+    private def parse_raw_block(start_span : Span) : AST::Raw
+      skip_whitespace
+      expect_block_end("Expected '%}' to close raw tag.")
+
+      tokens = Array(Token).new
+      content_start = nil
+      content_end = nil
+
+      while !at_end?
+        if current.type == TokenType::BlockStart && peek_block_tag == "endraw"
+          end_span = consume_end_tag
+          text = tokens.map(&.lexeme).join
+          if content_start && content_end
+            return AST::Raw.new(text, span_between(content_start, content_end))
+          end
+          return AST::Raw.new(text, span_between(start_span, end_span))
+        end
+
+        content_start ||= current.span
+        content_end = current.span
+        tokens << current
+        advance
+      end
+
+      emit_diagnostic(DiagnosticType::MissingEndTag, "Missing end tag 'endraw'.")
+      AST::Raw.new(tokens.map(&.lexeme).join, start_span)
+    end
+
+    private def parse_until_end_tag(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), Span?}
       nodes = Array(AST::Node).new
 
       while !at_end?
         if current.type == TokenType::BlockStart
           tag = peek_block_tag
           if tag == end_tag
-            end_span = consume_end_tag
+            end_span = consume_end_tag(allow_end_name)
             return {nodes, end_span}
           end
 
@@ -180,7 +417,136 @@ module Jinja
       {nodes, nil}
     end
 
-    private def consume_end_tag : Span
+    private def parse_name_target(message : String) : AST::Name
+      if current.type == TokenType::Identifier
+        name = AST::Name.new(current.lexeme, current.span)
+        advance
+        name
+      else
+        emit_expected_token(message)
+        AST::Name.new("", current.span)
+      end
+    end
+
+    private def parse_name(message : String) : String
+      if current.type == TokenType::Identifier
+        name = current.lexeme
+        advance
+        name
+      else
+        emit_expected_token(message)
+        ""
+      end
+    end
+
+    private def parse_import_names : Array(AST::ImportName)
+      names = Array(AST::ImportName).new
+      loop do
+        skip_whitespace
+        break if current.type == TokenType::BlockEnd
+
+        if current.type != TokenType::Identifier
+          emit_expected_token("Expected name in import list.")
+          break
+        end
+
+        name = current.lexeme
+        name_span = current.span
+        advance
+        skip_whitespace
+
+        alias_name = nil
+        alias_span = name_span
+        if keyword?("as")
+          advance
+          skip_whitespace
+          if current.type == TokenType::Identifier
+            alias_name = current.lexeme
+            alias_span = current.span
+            advance
+          else
+            emit_expected_token("Expected alias after 'as'.")
+          end
+        end
+
+        names << AST::ImportName.new(name, alias_name, span_between(name_span, alias_span))
+        skip_whitespace
+        break unless punct?(",")
+        advance
+        skip_whitespace
+      end
+      names
+    end
+
+    private def parse_macro_params : Array(AST::MacroParam)
+      params = Array(AST::MacroParam).new
+      skip_whitespace
+      return params unless punct?("(")
+
+      advance
+      skip_whitespace
+      if punct?(")")
+        advance
+        return params
+      end
+
+      loop do
+        skip_whitespace
+        if current.type != TokenType::Identifier
+          emit_expected_token("Expected parameter name in macro.")
+          break
+        end
+
+        name = current.lexeme
+        name_span = current.span
+        advance
+        skip_whitespace
+
+        default_value = nil
+        end_span = name_span
+        if operator?("=")
+          advance
+          skip_whitespace
+          default_value = parse_expression([TokenType::Punct], [",", ")"])
+          end_span = default_value.span
+        end
+
+        params << AST::MacroParam.new(name, default_value, span_between(name_span, end_span))
+        skip_whitespace
+        break unless punct?(",")
+        advance
+        skip_whitespace
+        break if punct?(")")
+      end
+
+      if punct?(")")
+        advance
+      else
+        emit_expected_token("Expected ')' to close macro parameters.")
+      end
+
+      params
+    end
+
+    private def expect_block_end(message : String) : Span
+      if current.type == TokenType::BlockEnd
+        end_span = current.span
+        advance
+        return end_span
+      end
+
+      emit_expected_token(message)
+      recover_to([TokenType::BlockEnd])
+      if current.type == TokenType::BlockEnd
+        end_span = current.span
+        advance
+        return end_span
+      end
+
+      previous.span
+    end
+
+    private def consume_end_tag(allow_name : Bool = false) : Span
       start_span = current.span
       advance
       skip_whitespace
@@ -190,6 +556,10 @@ module Jinja
         emit_expected_token("Expected end tag name.")
       end
       skip_whitespace
+      if allow_name && current.type == TokenType::Identifier
+        advance
+        skip_whitespace
+      end
       if current.type == TokenType::BlockEnd
         end_span = current.span
         advance

@@ -1,0 +1,19 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Block",
+      "name": "content",
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nHello\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

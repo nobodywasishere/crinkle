@@ -1,0 +1,33 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "SetBlock",
+      "target": {
+        "type": "Name",
+        "value": "greeting"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nHello "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
