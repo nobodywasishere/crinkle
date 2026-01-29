@@ -82,3 +82,12 @@
 ## Tooling Notes
 - Lint with Ameba 1.7.x using `/Users/margret/.local/bin/ameba`.
 - Run specs with `CRYSTAL_CACHE_DIR=/tmp/crystal-cache crystal spec` (cache dir override).
+
+## Progress Checklist
+- [x] Token model defined
+- [x] UTF-8 char-stream lexer implemented
+- [x] Spans tracked with byte offsets + line/column
+- [x] Fault-tolerant recovery implemented
+- [x] Diagnostics for unterminated constructs and unexpected chars
+- [x] Lexer specs added
+- [x] CLI updated to print tokens/diagnostics

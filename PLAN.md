@@ -21,6 +21,14 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Document how evaluation/execution layers on after parsing.
 - Adopt `Jinja::` module naming (e.g., `Jinja::Lexer`, `Jinja::Parser`).
 
+#### Phase 0 Checklist
+- [x] Scope and compatibility decisions documented
+- [x] Repo skeleton created
+- [x] Fixtures added (`.j2` templates + JSON snapshots)
+- [x] Diagnostics/AST snapshot format documented
+- [x] Minimal CLI scaffold added
+- [x] Eval/exec layering documented
+
 ### Phase 1 — Minimal Lexer
 **Outcome:** Token stream with precise spans.
 - Design token types: text, variable start/end, block start/end, identifiers, literals, operators, punctuation, whitespace control.
@@ -28,7 +36,15 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Support Jinja2 delimiters and raw text.
 - Emit diagnostics for malformed delimiters or unexpected EOF.
 - Add lexer tests against fixtures (`.j2`).
- - Prefer fault-tolerant recovery (keep lexing after errors).
+- Prefer fault-tolerant recovery (keep lexing after errors).
+
+#### Phase 1 Checklist
+- [x] Token model + spans implemented
+- [x] UTF-8 char-stream lexer implemented
+- [x] Fault-tolerant recovery in lexer
+- [x] Diagnostics emitted for unterminated constructs
+- [x] Lexer specs added
+- [x] CLI prints tokens/diagnostics
 
 ### Phase 2 — Minimal Parser + AST
 **Outcome:** Parse a limited but useful subset.
