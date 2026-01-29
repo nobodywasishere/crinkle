@@ -5,12 +5,12 @@
       "type": "Output",
       "expr": {
         "type": "Literal",
-        "value": ""
+        "value": "}}"
       }
     },
     {
       "type": "Text",
-      "value": "\" }}\n"
+      "value": "\n"
     }
   ]
 }

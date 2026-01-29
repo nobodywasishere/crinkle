@@ -4,8 +4,33 @@
     {
       "type": "Output",
       "expr": {
-        "type": "Name",
-        "value": "user"
+        "type": "GetItem",
+        "target": {
+          "type": "Call",
+          "callee": {
+            "type": "GetAttr",
+            "target": {
+              "type": "GetAttr",
+              "target": {
+                "type": "Name",
+                "value": "user"
+              },
+              "name": "profile"
+            },
+            "name": "get_name"
+          },
+          "args": [
+            {
+              "type": "Literal",
+              "value": "x"
+            }
+          ],
+          "kwargs": []
+        },
+        "index": {
+          "type": "Literal",
+          "value": 0
+        }
       }
     },
     {

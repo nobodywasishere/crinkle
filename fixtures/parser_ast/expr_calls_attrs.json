@@ -4,8 +4,43 @@
     {
       "type": "Output",
       "expr": {
-        "type": "Name",
-        "value": "user"
+        "type": "Call",
+        "callee": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Call",
+            "callee": {
+              "type": "GetAttr",
+              "target": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "user"
+                },
+                "name": "profile"
+              },
+              "name": "get"
+            },
+            "args": [
+              {
+                "type": "Literal",
+                "value": "email"
+              }
+            ],
+            "kwargs": [
+              {
+                "name": "default",
+                "value": {
+                  "type": "Literal",
+                  "value": "x"
+                }
+              }
+            ]
+          },
+          "name": "lower"
+        },
+        "args": [],
+        "kwargs": []
       }
     },
     {

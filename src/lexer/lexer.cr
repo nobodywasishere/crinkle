@@ -259,11 +259,6 @@ module Jinja
       advance_char
 
       while !at_eof?
-        if starts_end_for_mode?
-          emit_diagnostic(DiagnosticType::UnterminatedString, "Unterminated string literal.", start_offset, start_line, start_col)
-          return token_from(TokenType::String, start_offset, start_line, start_col)
-        end
-
         if current_char == '\\'
           advance_char
           advance_char unless at_eof?
@@ -332,7 +327,7 @@ module Jinja
 
     private def punct?(lexeme : String) : Bool
       case lexeme
-      when "(", ")", "[", "]", "{", "}", ",", ":"
+      when "(", ")", "[", "]", "{", "}", ",", ":", "."
         true
       else
         false

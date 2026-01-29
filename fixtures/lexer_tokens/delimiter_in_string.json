@@ -33,7 +33,7 @@
   },
   {
     "type": "String",
-    "lexeme": "\"",
+    "lexeme": "\"}}\"",
     "span": {
       "start": {
         "offset": 3,
@@ -41,9 +41,25 @@
         "column": 4
       },
       "end": {
-        "offset": 4,
+        "offset": 7,
         "line": 1,
-        "column": 5
+        "column": 8
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      },
+      "end": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
       }
     }
   },
@@ -52,25 +68,25 @@
     "lexeme": "}}",
     "span": {
       "start": {
-        "offset": 4,
+        "offset": 8,
         "line": 1,
-        "column": 5
+        "column": 9
       },
       "end": {
-        "offset": 6,
+        "offset": 10,
         "line": 1,
-        "column": 7
+        "column": 11
       }
     }
   },
   {
     "type": "Text",
-    "lexeme": "\" }}\n",
+    "lexeme": "\n",
     "span": {
       "start": {
-        "offset": 6,
+        "offset": 10,
         "line": 1,
-        "column": 7
+        "column": 11
       },
       "end": {
         "offset": 11,

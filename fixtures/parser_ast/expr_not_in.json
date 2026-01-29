@@ -12,7 +12,7 @@
         },
         "right": {
           "type": "Name",
-          "value": "in"
+          "value": "items"
         }
       }
     },

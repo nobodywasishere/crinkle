@@ -269,7 +269,8 @@ module Jinja
 
         if keyword?("not") && peek_keyword?("in")
           advance
-          advance
+          skip_whitespace
+          advance if keyword?("in")
           right = parse_add(stop_types, stop_lexemes)
           left = AST::Binary.new("not in", left, right, span_between(left.span, right.span))
           next
