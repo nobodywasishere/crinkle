@@ -1,5 +1,6 @@
 module Jinja
   class Formatter
+    @preformatted_indent : String?
     # Configuration options for the formatter
     struct Options
       getter indent_string : String
@@ -14,7 +15,8 @@ module Jinja
       HTML_INDENT_TAGS = Set{"html", "head", "body", "div", "section", "article",
                              "nav", "header", "footer", "main", "aside", "ul",
                              "ol", "li", "table", "thead", "tbody", "tr", "form",
-                             "dl", "dd", "dt", "figure", "figcaption", "blockquote"}
+                             "dl", "dd", "dt", "figure", "figcaption", "blockquote",
+                             "svg", "i"}
 
       # Self-closing HTML tags (void elements)
       HTML_VOID_TAGS = Set{"br", "hr", "img", "input", "meta", "link", "area",
@@ -140,6 +142,10 @@ module Jinja
         @at_line_start = true
       end
 
+      def at_line_start? : Bool
+        @at_line_start
+      end
+
       def write_line(text : String) : Nil
         write(text)
         newline
@@ -167,6 +173,8 @@ module Jinja
       @printer = Printer.new(@options)
       @html_context = HtmlContext.new(@options)
       @jinja_indent = 0
+      @html_open_buffer = ""
+      @preformatted_indent = nil
     end
 
     def format : String
@@ -231,13 +239,6 @@ module Jinja
     private def format_text(node : AST::Text) : Nil
       text = node.value
 
-      # In preformatted context, preserve exactly
-      if @html_context.in_preformatted?
-        @printer.write_raw(text)
-        @html_context.process_text(text)
-        return
-      end
-
       # If not normalizing indent, preserve original text
       unless @options.normalize_text_indent?
         @printer.write_raw(text)
@@ -253,6 +254,18 @@ module Jinja
           @printer.newline
         end
 
+        if preformatted_open?(line) && !@html_context.in_preformatted?
+          @preformatted_indent = current_indent_string
+        end
+
+        if @html_context.in_preformatted?
+          base_indent = @preformatted_indent || current_indent_string
+          write_preformatted_line(line, base_indent)
+          @html_context.process_text(line)
+          @preformatted_indent = nil unless @html_context.in_preformatted?
+          next
+        end
+
         # Strip leading whitespace (we'll re-indent)
         stripped = line.lstrip
 
@@ -265,7 +278,7 @@ module Jinja
         end
 
         # Process opening tags after writing to affect following lines
-        process_opening_tags(stripped)
+        process_opening_tags_with_buffer(stripped)
       end
     end
 
@@ -278,10 +291,11 @@ module Jinja
       end
     end
 
-    private def process_opening_tags(text : String) : Nil
+    private def process_opening_tags_with_buffer(text : String) : Nil
       return unless @options.html_aware?
 
-      text.scan(/<([a-zA-Z][a-zA-Z0-9]*)[^>]*>/) do |match|
+      combined = @html_open_buffer + text
+      combined.scan(/<([a-zA-Z][a-zA-Z0-9]*)[^>]*>/) do |match|
         full = match[0]
         tag = match[1].downcase
 
@@ -293,6 +307,65 @@ module Jinja
 
         @html_context.open_tag(tag)
       end
+
+      @html_open_buffer = pending_open_tag(combined)
+    end
+
+    private def pending_open_tag(text : String) : String
+      last_lt = text.rindex('<')
+      return "" unless last_lt
+
+      tail = text[last_lt..]
+      return "" if tail.includes?('>')
+
+      tail
+    end
+
+    private def preformatted_open?(text : String) : Bool
+      return false unless @options.html_aware?
+
+      text.scan(/<([a-zA-Z][a-zA-Z0-9]*)[^>]*>/) do |match|
+        full = match[0]
+        tag = match[1].downcase
+        next if full.starts_with?("</")
+        next if Options::HTML_VOID_TAGS.includes?(tag)
+        return true if Options::HTML_PREFORMATTED_TAGS.includes?(tag)
+      end
+
+      false
+    end
+
+    private def leading_whitespace(text : String) : String
+      index = 0
+      while index < text.size
+        ch = text.byte_at(index)
+        break unless ch == ' '.ord || ch == '\t'.ord
+        index += 1
+      end
+      text.byte_slice(0, index)
+    end
+
+    private def write_preformatted_line(line : String, base_indent : String) : Nil
+      if line.strip.empty?
+        @printer.write_raw("")
+        return
+      end
+
+      unless @printer.at_line_start?
+        @printer.write_raw(line)
+        return
+      end
+
+      if base_indent.empty? || line.starts_with?(base_indent)
+        @printer.write_raw(line)
+      else
+        @printer.write_raw(base_indent + line)
+      end
+    end
+
+    private def current_indent_string : String
+      level = @options.html_aware? ? (@html_context.indent_level + @jinja_indent) : @jinja_indent
+      @options.indent_string * level
     end
 
     private def format_comment(node : AST::Comment) : Nil
@@ -742,6 +815,9 @@ module Jinja
 
     private def compute_effective_indent : Int32
       if @options.html_aware?
+        if @html_context.in_preformatted? && @preformatted_indent
+          return preformatted_indent_level
+        end
         @html_context.indent_level + @jinja_indent
       else
         @jinja_indent
@@ -750,6 +826,22 @@ module Jinja
 
     private def sync_indent : Nil
       @printer.indent_level = compute_effective_indent
+    end
+
+    private def preformatted_indent_level : Int32
+      indent = @preformatted_indent
+      return 0 unless indent
+      return 0 unless indent.each_char.all? { |char| char == ' ' || char == '\t' }
+
+      unit = @options.indent_string
+      return 0 if unit.empty?
+      return 0 unless indent.starts_with?(unit)
+
+      if indent.size % unit.size == 0
+        indent.size // unit.size
+      else
+        0
+      end
     end
   end
 end

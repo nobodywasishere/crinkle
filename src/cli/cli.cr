@@ -74,7 +74,11 @@ module Jinja
         formatter = Formatter.new(source)
         output = formatter.format
         write_snapshots(opts.snapshots_dir, label, output: output, output_ext: "j2")
-        STDOUT.print(output)
+        if opts.path
+          File.write(label, output)
+        else
+          STDOUT.print(output)
+        end
         exit 0
       when "lint"
         opts = parse_options(args, default_format: OutputFormat::Json)
@@ -161,7 +165,7 @@ module Jinja
     end
 
     private def self.read_source(opts : Options) : {String, String}
-      if opts.stdin && opts.path
+      if opts.stdin? && opts.path
         STDERR.puts "Specify either a path or --stdin, not both."
         exit 2
       end
@@ -261,7 +265,7 @@ module Jinja
     end
 
     private def self.print_json(payload : Hash(String, JSON::Any), opts : Options) : Nil
-      output = opts.pretty ? payload.to_pretty_json : payload.to_json
+      output = opts.pretty? ? payload.to_pretty_json : payload.to_json
       STDOUT.puts(output)
     end
 
@@ -302,7 +306,7 @@ module Jinja
       JSON.parse(payload.to_json)
     end
 
-    private def self.span_to_json(span : Span) : Hash(String, JSON::Any)
+    private def self.span_to_json(span : Span) : Hash(String, Hash(String, Int32))
       {
         "start" => {
           "offset" => span.start_pos.offset,
@@ -351,13 +355,13 @@ module Jinja
 
     private def self.exit_code(diags : Array(Diagnostic), opts : Options) : Int32
       return 1 if diags.any?(&.severity.error?)
-      return 1 if opts.strict && diags.any?(&.severity.warning?)
+      return 1 if opts.strict? && diags.any?(&.severity.warning?)
       0
     end
 
     private def self.exit_code_for_issues(issues : Array(Linter::Issue), opts : Options) : Int32
       return 1 if issues.any?(&.severity.error?)
-      return 1 if opts.strict && issues.any?(&.severity.warning?)
+      return 1 if opts.strict? && issues.any?(&.severity.warning?)
       0
     end
 

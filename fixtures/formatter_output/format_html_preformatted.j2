@@ -1,15 +1,15 @@
 <div>
   <pre>
   {% if show_code %}
-def hello():
+  def hello():
     print("Hello")
   {% endif %}
-</pre>
-<code>{{ inline_code }}</code>
-<script>
-var x = {{ json_value }};
+  </pre>
+  <code>{{ inline_code }}</code>
+  <script>
+  var x = {{ json_value }};
   {% if debug %}
-console.log(x);
+  console.log(x);
   {% endif %}
-</script>
+  </script>
 </div>

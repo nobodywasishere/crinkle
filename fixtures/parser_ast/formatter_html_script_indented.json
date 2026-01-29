@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div>\n  <script>\n    const values = [\n      1,\n      2,\n      3,\n    ];\n\n    if (values.length) {\n      console.log(values);\n    }\n  </script>\n</div>\n"
+    }
+  ]
+}

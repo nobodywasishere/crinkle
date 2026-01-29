@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<form action=\"/signup/mobile\" method=\"post\" class=\"mt-8 _0_example_search_form example-search-box\">\n<div class=\"flex align-center example-search-box-in\">\n<i class=\"icon-md ml-16\">\n<svg aria-hidden=\"true\">\n<use href=\"#search\" />\n</svg>\n</i>\n</div>\n</form>\n"
+    }
+  ]
+}
