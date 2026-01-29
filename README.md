@@ -66,6 +66,7 @@ Notes:
 
 ## Development
 - Run specs: `crystal spec`
+- Note: 100% of the code in this repo was vibe coded.
 
 ## Object serialization
 
