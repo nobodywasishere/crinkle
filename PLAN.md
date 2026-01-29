@@ -120,7 +120,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Outcome:** Render templates from AST (no linting yet).
 - Define runtime context (variables, filters, tests, globals).
 - Implement evaluation for expressions and control flow.
-- Render output with whitespace control and raw blocks.
+- Render output with whitespace control (trim delimiters) and raw blocks.
 - Integrate include/extends/import/macro/call behavior.
 - Add rendering fixtures with expected output.
   - Templates live in `fixtures/templates`.
@@ -129,6 +129,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Renderer emits diagnostics for runtime issues and defaults unknown custom tags to
   rendering their bodies.
 - Renderer uses an environment-provided template loader for include/import/extends.
+ - Renderer respects `trim_left` / `trim_right` on AST nodes when composing output.
 
 ### Phase 7 — Formatter (Optional, HTML-aware)
 **Outcome:** Format templates with HTML-structural awareness.

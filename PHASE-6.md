@@ -5,6 +5,7 @@
 - Provide renderer diagnostics with spans for runtime errors.
 - Establish extension points for filters/tests/functions and custom tags.
 - Keep output fixtures and diagnostics consistent and easy to inspect.
+- Respect whitespace-control trim markers from AST nodes when rendering.
 
 ## Scope (Phase 6)
 - Core renderer with:
