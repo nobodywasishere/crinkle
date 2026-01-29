@@ -67,7 +67,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - [x] Snapshot fixtures + specs (self-updating)
 - [x] CLI supports AST output
 
-#### Notes: Custom Tags (Future)
+#### Notes: Custom Tags (Planned)
 - Add a parser extension registry keyed by tag name.
 - Extensions provide a `parse` hook that consumes tokens and returns AST nodes.
 - Extensions declare their end tags to aid recovery and nesting.
@@ -104,7 +104,23 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Added edge-case fixtures for missing end tags, malformed import/include flags, unknown
   tags, and raw blocks that contain tag-like text.
 
-### Phase 5 — Linter
+### Phase 5 — Custom Tags / Extensions
+**Outcome:** Parser extensibility for non-core tags.
+- Introduce a tag-extension registry (name -> handler).
+- Extension handlers can consume tokens and return AST nodes.
+- Extensions declare end tags to support recovery/nesting.
+- Unknown tags emit diagnostics when no extension matches.
+- Add fixtures for extension tag parsing and error recovery.
+
+### Phase 6 — Renderer / Execution
+**Outcome:** Render templates from AST (no linting yet).
+- Define runtime context (variables, filters, tests, globals).
+- Implement evaluation for expressions and control flow.
+- Render output with whitespace control and raw blocks.
+- Integrate include/extends/import/macro/call behavior.
+- Add rendering fixtures with expected output.
+
+### Phase 7 — Linter
 **Outcome:** Useful diagnostics beyond syntax.
 - Build rule framework with rule IDs, severity, quick fixes.
 - Starter rules:
@@ -115,7 +131,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
   - Suspicious whitespace control
 - Add tests for lints and fixes.
 
-### Phase 6 — Language Server (LSP)
+### Phase 8 — Language Server (LSP)
 **Outcome:** IDE features for templates.
 - Minimal LSP server (initialize, textDocument/didOpen, didChange, didClose).
 - Diagnostics pipeline using lexer/parser/linter.
@@ -123,7 +139,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Document symbols, folding ranges, semantic tokens (optional).
 - Performance: incremental parsing and caching.
 
-### Phase 7 — Compatibility + UX Polish
+### Phase 9 — Compatibility + UX Polish
 **Outcome:** Confidence + developer adoption.
 - Add compatibility test suite using real-world Jinja2 templates.
 - Benchmark parsing on large templates.
