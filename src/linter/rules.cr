@@ -209,7 +209,7 @@ module Jinja
 
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
-          SourceLines.each_line(context.source) do |line, line_no, offset, index, size|
+          SourceLines.each_line(context.source) do |line, line_no, offset|
             issues.concat(issues_for_line(line, line_no, offset))
           end
 
@@ -231,7 +231,7 @@ module Jinja
           return Array(Issue).new if trail_len == 0
 
           byte_offset = 0
-          chars[0, trail_index].each { |ch| byte_offset += ch.bytesize }
+          chars[0, trail_index].each { |char| byte_offset += char.bytesize }
           start_offset = line_offset + byte_offset
           end_offset = line_offset + line.bytesize
 
@@ -250,7 +250,7 @@ module Jinja
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
 
-          SourceLines.each_line(context.source) do |line, line_no, offset, index, size|
+          SourceLines.each_line(context.source) do |line, line_no, offset|
             leading = leading_whitespace(line)
             next if leading.empty?
             next unless leading.includes?('\t') && leading.includes?(' ')
@@ -290,7 +290,7 @@ module Jinja
           issues = Array(Issue).new
           blank_run = 0
 
-          SourceLines.each_line(context.source) do |line, line_no, offset, index, size|
+          SourceLines.each_line(context.source) do |line, line_no, offset|
             if line.strip.empty?
               blank_run += 1
               if blank_run > MAX_BLANK_LINES
@@ -314,13 +314,13 @@ module Jinja
     end
 
     module SourceLines
-      def self.each_line(source : String, &block : String, Int32, Int32, Int32, Int32 ->) : Nil
+      def self.each_line(source : String, & : String, Int32, Int32 ->) : Nil
         lines = source.split("\n", remove_empty: false)
         line_no = 1
         offset = 0
 
         lines.each_with_index do |line, index|
-          yield line, line_no, offset, index, lines.size
+          yield line, line_no, offset
           line_no += 1
           offset += line.bytesize
           offset += 1 if index < lines.size - 1
@@ -329,7 +329,7 @@ module Jinja
     end
 
     module ASTWalker
-      def self.walk_nodes(nodes : Array(AST::Node), &block : AST::Node ->) : Nil
+      def self.walk_nodes(nodes : Array(AST::Node), & : AST::Node ->) : Nil
         stack = nodes.reverse
         until stack.empty?
           node = stack.pop
@@ -359,7 +359,7 @@ module Jinja
         end
       end
 
-      def self.walk_expr(expr : AST::Expr, &block : AST::Expr ->) : Nil
+      def self.walk_expr(expr : AST::Expr, & : AST::Expr ->) : Nil
         stack = [expr] of AST::Expr
         until stack.empty?
           current = stack.pop
