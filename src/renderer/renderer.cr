@@ -56,11 +56,26 @@ module Jinja
     end
 
     private def render_nodes(nodes : Array(AST::Node)) : String
-      String.build do |io|
-        nodes.each do |node|
-          io << render_node(node)
+      output = ""
+      trim_next_leading = false
+
+      nodes.each do |node|
+        output = output.rstrip if node_trim_left?(node)
+
+        rendered = render_node(node)
+        if trim_next_leading
+          rendered = rendered.lstrip
+          trim_next_leading = false
+        end
+
+        output += rendered
+
+        if node_trim_right?(node) || node_end_trim_right?(node)
+          trim_next_leading = true
         end
       end
+
+      output
     end
 
     private def render_node(node : AST::Node) : String
@@ -70,16 +85,12 @@ module Jinja
       when AST::Comment
         "" # Comments produce no output
       when AST::Raw
-        node.text
+        render_raw(node)
       when AST::Output
         value = eval_expr(node.expr)
         value_to_s(value)
       when AST::If
-        if truthy?(eval_expr(node.test))
-          render_nodes(node.body)
-        else
-          render_nodes(node.else_body)
-        end
+        render_if(node)
       when AST::For
         render_for(node)
       when AST::Set
@@ -114,7 +125,7 @@ module Jinja
             "No renderer registered for custom tag '#{node.name}'.",
             node.span
           )
-          render_nodes(node.body)
+          render_custom_tag_body(node)
         end
       when AST::Template
         render_nodes(node.body)
@@ -138,12 +149,20 @@ module Jinja
           "Expected iterable in for loop.",
           node.iter.span
         )
-        return render_nodes(node.else_body)
+        output = render_nodes(node.else_body)
+        output = output.lstrip if node.else_trim_right?
+        output = output.rstrip if node.end_trim_left?
+        return output
       end
 
-      return render_nodes(node.else_body) if items.empty?
+      if items.empty?
+        output = render_nodes(node.else_body)
+        output = output.lstrip if node.else_trim_right?
+        output = output.rstrip if node.end_trim_left?
+        return output
+      end
 
-      String.build do |io|
+      body_output = String.build do |io|
         length = items.size
         items.each_with_index do |item, index|
           push_scope
@@ -153,6 +172,39 @@ module Jinja
           pop_scope
         end
       end
+      body_output = body_output.lstrip if node.trim_right?
+      body_output = body_output.rstrip if node.end_trim_left?
+      body_output
+    end
+
+    private def render_if(node : AST::If) : String
+      if truthy?(eval_expr(node.test))
+        output = render_nodes(node.body)
+        output = output.lstrip if node.trim_right?
+        output = output.rstrip if node.end_trim_left?
+        return output
+      end
+
+      output = render_nodes(node.else_body)
+      output = output.lstrip if node.else_trim_right?
+      output = output.rstrip if node.end_trim_left?
+      output
+    end
+
+    private def render_raw(node : AST::Raw) : String
+      output = node.text
+      output = output.lstrip if node.trim_right?
+      output = output.rstrip if node.end_trim_left?
+      output
+    end
+
+    private def render_custom_tag_body(node : AST::CustomTag) : String
+      return "" if node.body.empty?
+
+      output = render_nodes(node.body)
+      output = output.lstrip if node.trim_right?
+      output = output.rstrip if node.end_trim_left?
+      output
     end
 
     private def render_block(node : AST::Block) : String
@@ -160,10 +212,15 @@ module Jinja
         @super_stack << node.body
         output = render_nodes(override)
         @super_stack.pop
+        output = output.lstrip if node.trim_right?
+        output = output.rstrip if node.end_trim_left?
         return output
       end
 
-      render_nodes(node.body)
+      output = render_nodes(node.body)
+      output = output.lstrip if node.trim_right?
+      output = output.rstrip if node.end_trim_left?
+      output
     end
 
     private def assign_loop_vars(index : Int32, length : Int32) : Nil
@@ -178,6 +235,38 @@ module Jinja
       assign("loop", loop_info)
     end
 
+    private def node_trim_left?(node : AST::Node) : Bool
+      case node
+      when AST::Output, AST::Comment, AST::If, AST::For, AST::Set, AST::SetBlock,
+           AST::Block, AST::Extends, AST::Include, AST::Import, AST::FromImport,
+           AST::Macro, AST::CallBlock, AST::Raw, AST::CustomTag
+        node.trim_left?
+      else
+        false
+      end
+    end
+
+    private def node_trim_right?(node : AST::Node) : Bool
+      case node
+      when AST::Output, AST::Comment, AST::If, AST::For, AST::Set, AST::SetBlock,
+           AST::Block, AST::Extends, AST::Include, AST::Import, AST::FromImport,
+           AST::Macro, AST::CallBlock, AST::Raw, AST::CustomTag
+        node.trim_right?
+      else
+        false
+      end
+    end
+
+    private def node_end_trim_right?(node : AST::Node) : Bool
+      case node
+      when AST::If, AST::For, AST::SetBlock, AST::Block, AST::Macro,
+           AST::CallBlock, AST::Raw, AST::CustomTag
+        node.end_trim_right?
+      else
+        false
+      end
+    end
+
     private def assign_for_target(target : AST::Target, value : Value) : Nil
       assign_target(target, value)
     end
@@ -186,16 +275,18 @@ module Jinja
       template = load_template_from_expr(node.template, node.span, node.ignore_missing?)
       return "" unless template
 
-      if node.with_context?
-        push_scope
-        output = render_nodes(template.body)
-        pop_scope
-        output
-      else
-        with_isolated_context(Hash(String, Value).new) do
-          render_nodes(template.body)
-        end
-      end
+      output = if node.with_context?
+                 push_scope
+                 rendered = render_nodes(template.body)
+                 pop_scope
+                 rendered
+               else
+                 with_isolated_context(Hash(String, Value).new) do
+                   render_nodes(template.body)
+                 end
+               end
+      output = output.lstrip if node.trim_right?
+      output
     end
 
     private def render_import(node : AST::Import) : Nil
@@ -231,12 +322,18 @@ module Jinja
       args, kwargs = eval_args(node.args, node.kwargs)
 
       if macro_def = resolve_macro(node.callee)
-        return render_macro(macro_def, args, kwargs, caller_body)
+        output = render_macro(macro_def, args, kwargs, caller_body)
+        output = output.lstrip if node.trim_right?
+        output = output.rstrip if node.end_trim_left?
+        return output
       end
 
       if fn = resolve_function(node.callee)
         result = fn.call(args, kwargs)
-        return value_to_s(result) + caller_body
+        output = value_to_s(result) + caller_body
+        output = output.lstrip if node.trim_right?
+        output = output.rstrip if node.end_trim_left?
+        return output
       end
 
       if @environment.strict_functions?
@@ -246,7 +343,10 @@ module Jinja
           node.callee.span
         )
       end
-      caller_body
+      output = caller_body
+      output = output.lstrip if node.trim_right?
+      output = output.rstrip if node.end_trim_left?
+      output
     end
 
     private def eval_expr(expr : AST::Expr) : Value

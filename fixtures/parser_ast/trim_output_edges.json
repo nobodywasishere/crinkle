@@ -1,0 +1,20 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "A"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "name"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "B\n"
+    }
+  ]
+}

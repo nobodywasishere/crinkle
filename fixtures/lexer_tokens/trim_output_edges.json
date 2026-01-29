@@ -1,0 +1,130 @@
+[
+  {
+    "type": "Text",
+    "lexeme": "A",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 1,
+        "line": 1,
+        "column": 2
+      }
+    }
+  },
+  {
+    "type": "VarStart",
+    "lexeme": "{{-",
+    "span": {
+      "start": {
+        "offset": 1,
+        "line": 1,
+        "column": 2
+      },
+      "end": {
+        "offset": 4,
+        "line": 1,
+        "column": 5
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 4,
+        "line": 1,
+        "column": 5
+      },
+      "end": {
+        "offset": 5,
+        "line": 1,
+        "column": 6
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "name",
+    "span": {
+      "start": {
+        "offset": 5,
+        "line": 1,
+        "column": 6
+      },
+      "end": {
+        "offset": 9,
+        "line": 1,
+        "column": 10
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 9,
+        "line": 1,
+        "column": 10
+      },
+      "end": {
+        "offset": 10,
+        "line": 1,
+        "column": 11
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "-}}",
+    "span": {
+      "start": {
+        "offset": 10,
+        "line": 1,
+        "column": 11
+      },
+      "end": {
+        "offset": 13,
+        "line": 1,
+        "column": 14
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "B\n",
+    "span": {
+      "start": {
+        "offset": 13,
+        "line": 1,
+        "column": 14
+      },
+      "end": {
+        "offset": 15,
+        "line": 2,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 15,
+        "line": 2,
+        "column": 1
+      },
+      "end": {
+        "offset": 15,
+        "line": 2,
+        "column": 1
+      }
+    }
+  }
+]
