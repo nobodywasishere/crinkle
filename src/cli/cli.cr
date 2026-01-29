@@ -8,11 +8,13 @@ module Jinja
       Json
       Text
       Html
+      Dot
     end
 
     struct Options
       property? stdin : Bool
       property path : String?
+      property paths : Array(String)
       property format : OutputFormat
       property? pretty : Bool
       property? no_color : Bool
@@ -23,6 +25,7 @@ module Jinja
       def initialize(
         @stdin : Bool = false,
         @path : String? = nil,
+        @paths : Array(String) = Array(String).new,
         @format : OutputFormat = OutputFormat::Json,
         @pretty : Bool = false,
         @no_color : Bool = false,
@@ -43,14 +46,16 @@ module Jinja
       case command
       when "lex"
         opts = parse_options(args, default_format: OutputFormat::Json)
-        source, label = read_source(opts)
+        sources = read_sources(opts, allow_multiple: false)
+        source, label = sources.first
         tokens, diagnostics = lex_source(source)
         write_snapshots(opts.snapshots_dir, label, tokens: tokens, diagnostics: diagnostics)
         exit_with = emit_tokens_and_diagnostics(tokens, diagnostics, opts, label)
         exit exit_with
       when "parse"
         opts = parse_options(args, default_format: OutputFormat::Json)
-        source, label = read_source(opts)
+        sources = read_sources(opts, allow_multiple: false)
+        source, label = sources.first
         tokens, diagnostics = lex_source(source)
         template, parser_diags = parse_tokens(tokens)
         all_diags = diagnostics + parser_diags
@@ -59,7 +64,8 @@ module Jinja
         exit exit_with
       when "render"
         opts = parse_options(args, default_format: OutputFormat::Text)
-        source, label = read_source(opts)
+        sources = read_sources(opts, allow_multiple: false)
+        source, label = sources.first
         tokens, diagnostics = lex_source(source)
         template, parser_diags = parse_tokens(tokens)
         renderer = Renderer.new
@@ -70,26 +76,47 @@ module Jinja
         exit exit_with
       when "format"
         opts = parse_options(args, default_format: OutputFormat::Text)
-        source, label = read_source(opts)
-        formatter = Formatter.new(source)
-        output = formatter.format
-        all_diags = formatter.diagnostics
-        write_snapshots(opts.snapshots_dir, label, output: output, diagnostics: all_diags, output_ext: "j2")
-        if opts.path
-          File.write(label, output)
+        sources = read_sources(opts, allow_multiple: true)
+        if sources.size == 1 && opts.paths.empty? && opts.format != OutputFormat::Dot
+          source, label = sources.first
+          formatter = Formatter.new(source)
+          output = formatter.format
+          all_diags = formatter.diagnostics
+          write_snapshots(opts.snapshots_dir, label, output: output, diagnostics: all_diags, output_ext: "j2")
+          exit_with = emit_output_and_diagnostics(output, all_diags, opts, label)
+          exit exit_with
         else
-          STDOUT.print(output)
+          results = Array(Tuple(String, Array(Diagnostic))).new
+          all_diags = Array(Diagnostic).new
+          sources.each do |entry_source, entry_label|
+            formatter = Formatter.new(entry_source)
+            output = formatter.format
+            File.write(entry_label, output) unless entry_label == "stdin"
+            results << {entry_label, formatter.diagnostics}
+            all_diags.concat(formatter.diagnostics)
+            write_snapshots(opts.snapshots_dir, entry_label, output: output, diagnostics: formatter.diagnostics, output_ext: "j2")
+          end
+          emit_format_diagnostics_results(results, opts)
+          exit exit_code(all_diags, opts)
         end
       when "lint"
         opts = parse_options(args, default_format: OutputFormat::Json)
-        source, label = read_source(opts)
-        tokens, diagnostics = lex_source(source)
-        template, parser_diags = parse_tokens(tokens)
-        all_diags = diagnostics + parser_diags
-        issues = Linter::Runner.new.lint(template, source, all_diags)
-        write_snapshots(opts.snapshots_dir, label, issues: issues)
-        exit_with = emit_issues(issues, opts, label)
-        exit exit_with
+        sources = read_sources(opts, allow_multiple: true)
+        results = Array(Tuple(String, Array(Linter::Issue))).new
+        all_issues = Array(Linter::Issue).new
+        sources.each do |entry_source, entry_label|
+          formatter = Formatter.new(entry_source)
+          formatter.format
+          tokens, _diagnostics = lex_source(entry_source)
+          template, _parser_diags = parse_tokens(tokens)
+          all_diags = formatter.diagnostics
+          issues = Linter::Runner.new.lint(template, entry_source, all_diags)
+          results << {entry_label, issues}
+          all_issues.concat(issues)
+          write_snapshots(opts.snapshots_dir, entry_label, issues: issues)
+        end
+        emit_issues_results(results, opts)
+        exit exit_code_for_issues(all_issues, opts)
       when "-h", "--help", "help"
         print_usage
         exit 0
@@ -102,7 +129,7 @@ module Jinja
 
     private def self.print_usage : Nil
       STDERR.puts <<-USAGE
-        Usage: jinja <command> [path] [--stdin] [options]
+        Usage: jinja <command> [path ...] [--stdin] [options]
 
         Commands:
           lex      Lex template and output tokens + diagnostics
@@ -113,7 +140,7 @@ module Jinja
 
         Options:
           --stdin                Read from stdin instead of file path
-          --format json|text|html Output format (default varies by command)
+          --format json|text|html|dot Output format (default varies by command)
           --pretty               Pretty-print JSON
           --no-color             Disable ANSI colors in text output
           --strict               Treat warnings as errors
@@ -141,11 +168,7 @@ module Jinja
 
       parser.parse(args)
 
-      if args.size > 1
-        STDERR.puts "Too many positional arguments."
-        exit 2
-      end
-
+      opts.paths = args
       opts.path = args.first?
       opts
     end
@@ -158,23 +181,41 @@ module Jinja
         OutputFormat::Text
       when "html"
         OutputFormat::Html
+      when "dot"
+        OutputFormat::Dot
       else
         STDERR.puts "Unknown format '#{value}'."
         exit 2
       end
     end
 
-    private def self.read_source(opts : Options) : {String, String}
-      if opts.stdin? && opts.path
-        STDERR.puts "Specify either a path or --stdin, not both."
+    private def self.read_sources(opts : Options, allow_multiple : Bool) : Array(Tuple(String, String))
+      if opts.stdin? && !opts.paths.empty?
+        STDERR.puts "Specify either paths or --stdin, not both."
         exit 2
       end
 
-      if path = opts.path
-        {File.read(path), path}
-      else
-        {STDIN.gets_to_end, "stdin"}
+      if opts.stdin?
+        return [{STDIN.gets_to_end, "stdin"}]
       end
+
+      if opts.paths.empty?
+        default_paths = Dir.glob("**/*.j2").sort
+        if default_paths.empty?
+          STDERR.puts "No .j2 files found. Provide paths or use --stdin."
+          exit 2
+        end
+        opts.paths = default_paths
+      end
+
+      unless allow_multiple
+        if opts.paths.size > 1
+          STDERR.puts "Too many positional arguments."
+          exit 2
+        end
+      end
+
+      opts.paths.map { |path| {File.read(path), path} }
     end
 
     private def self.lex_source(source : String) : {Array(Token), Array(Diagnostic)}
@@ -262,6 +303,135 @@ module Jinja
         print_issues(issues, opts, label)
       end
       exit_code_for_issues(issues, opts)
+    end
+
+    private def self.emit_issues_results(results : Array(Tuple(String, Array(Linter::Issue))), opts : Options) : Nil
+      case opts.format
+      when OutputFormat::Json
+        files = results.map do |label, issues|
+          {
+            "path"        => JSON.parse(label.to_json),
+            "diagnostics" => issues_to_json(issues, opts),
+          }
+        end
+        print_json({"files" => JSON.parse(files.to_json)}, opts)
+      when OutputFormat::Dot
+        emit_dot_results_for_issues(results, opts)
+      else
+        results.each do |label, issues|
+          print_issues(issues, opts, label)
+        end
+      end
+    end
+
+    private def self.emit_format_diagnostics_results(results : Array(Tuple(String, Array(Diagnostic))), opts : Options) : Nil
+      case opts.format
+      when OutputFormat::Json
+        files = results.map do |label, diags|
+          {
+            "path"        => JSON.parse(label.to_json),
+            "diagnostics" => diagnostics_to_json(diags, opts),
+          }
+        end
+        print_json({"files" => JSON.parse(files.to_json)}, opts)
+      when OutputFormat::Dot
+        emit_dot_results_for_diagnostics(results, opts)
+      else
+        results.each do |label, diags|
+          print_diagnostics(diags, opts, label)
+        end
+      end
+    end
+
+    private def self.emit_dot_results_for_issues(
+      results : Array(Tuple(String, Array(Linter::Issue))),
+      opts : Options,
+    ) : Nil
+      started_at = Time.instant
+      total = results.size
+      STDOUT.puts(dot_started_message(total))
+      STDOUT.puts
+
+      failures = 0
+      results.each do |_label, issues|
+        if issues.empty?
+          STDOUT << "."
+        else
+          STDOUT << "F"
+          failures += issues.size
+        end
+      end
+
+      STDOUT << "\n\n"
+
+      results.each do |label, issues|
+        next if issues.empty?
+        print_issues(issues, opts, label)
+        STDOUT.puts
+      end
+
+      STDOUT.puts(dot_finished_message(started_at, Time.instant))
+      STDOUT.puts(dot_summary_message(total, failures))
+    end
+
+    private def self.emit_dot_results_for_diagnostics(
+      results : Array(Tuple(String, Array(Diagnostic))),
+      opts : Options,
+    ) : Nil
+      started_at = Time.instant
+      total = results.size
+      STDOUT.puts(dot_started_message(total))
+      STDOUT.puts
+
+      failures = 0
+      results.each do |_label, diags|
+        if diags.empty?
+          STDOUT << "."
+        else
+          STDOUT << "F"
+          failures += diags.size
+        end
+      end
+
+      STDOUT << "\n\n"
+
+      results.each do |label, diags|
+        next if diags.empty?
+        print_diagnostics(diags, opts, label)
+        STDOUT.puts
+      end
+
+      STDOUT.puts(dot_finished_message(started_at, Time.instant))
+      STDOUT.puts(dot_summary_message(total, failures))
+    end
+
+    private def self.dot_started_message(total : Int32) : String
+      "Inspecting #{total} #{pluralize(total, "file")}"
+    end
+
+    private def self.dot_finished_message(started_at : Time::Instant, finished_at : Time::Instant) : String
+      "Finished in #{to_human_duration(finished_at - started_at)}"
+    end
+
+    private def self.dot_summary_message(total : Int32, failures : Int32) : String
+      "#{total} inspected, #{failures} #{pluralize(failures, "failure")}"
+    end
+
+    private def self.pluralize(count : Int32, word : String) : String
+      count == 1 ? word : "#{word}s"
+    end
+
+    private def self.to_human_duration(span : Time::Span) : String
+      seconds = span.total_seconds
+      if seconds < 1
+        "#{(seconds * 1000).round(2)}ms"
+      elsif seconds < 60
+        "#{seconds.round(2)}s"
+      else
+        minutes = (seconds / 60).floor
+        remaining = (seconds - minutes * 60).round(2)
+        "#{minutes}m#{remaining}s"
+      end
     end
 
     private def self.print_json(payload : Hash(String, JSON::Any), opts : Options) : Nil
