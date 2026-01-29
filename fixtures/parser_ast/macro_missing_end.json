@@ -1,0 +1,32 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Macro",
+      "name": "greet",
+      "params": [
+        {
+          "name": "name",
+          "default": null
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nHello "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    }
+  ]
+}

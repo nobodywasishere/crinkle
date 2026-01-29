@@ -1,0 +1,27 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Block",
+      "name": "content",
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "Raw",
+          "text": "{{ not parsed }}"
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

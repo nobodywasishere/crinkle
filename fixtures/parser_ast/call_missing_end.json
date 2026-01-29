@@ -1,0 +1,20 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "CallBlock",
+      "callee": {
+        "type": "Name",
+        "value": "greet"
+      },
+      "args": [],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nHi\n"
+        }
+      ]
+    }
+  ]
+}

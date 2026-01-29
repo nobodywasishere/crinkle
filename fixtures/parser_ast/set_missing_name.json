@@ -1,0 +1,20 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": ""
+      },
+      "value": {
+        "type": "Literal",
+        "value": 1
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

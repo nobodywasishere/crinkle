@@ -1,0 +1,20 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Macro",
+      "name": "greet",
+      "params": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nHi\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Import",
+      "template": {
+        "type": "Literal",
+        "value": "a.j2"
+      },
+      "alias": ""
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

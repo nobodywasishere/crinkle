@@ -101,6 +101,8 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Note: end tags may include a trailing name (e.g., `endblock name`); parser accepts
   it now and leaves mismatch checks for the linter. Raw blocks collect token lexemes
   until `endraw` and emit a single `Raw` node.
+- Added edge-case fixtures for missing end tags, malformed import/include flags, unknown
+  tags, and raw blocks that contain tag-like text.
 
 ### Phase 5 — Linter
 **Outcome:** Useful diagnostics beyond syntax.

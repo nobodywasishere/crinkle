@@ -1,0 +1,24 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "CallBlock",
+      "callee": {
+        "type": "Literal",
+        "value": null
+      },
+      "args": [],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nHi\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Raw",
+      "text": "\n{% if ok %}{{ value }}{% endif %}\n"
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

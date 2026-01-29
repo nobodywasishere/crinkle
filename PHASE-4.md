@@ -76,6 +76,12 @@
   - Invalid/mismatched tags for diagnostics + recovery
 - Ensure both AST and diagnostics snapshots cover edge cases.
 
+## Added Edge-Case Coverage
+- Missing end tags for set/macro/call/raw.
+- Malformed import/include flags and missing import names.
+- Unknown/stray end tags and extra tokens in tag headers.
+- Raw blocks containing nested tag-like text and raw blocks inside blocks.
+
 ## CLI Integration
 - `src/j2parse.cr --ast` should serialize new node types.
 - Add CLI flag idea (optional): `--format` to choose AST or diagnostics only.

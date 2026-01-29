@@ -443,7 +443,10 @@ module Jinja
       names = Array(AST::ImportName).new
       loop do
         skip_whitespace
-        break if current.type == TokenType::BlockEnd
+        if current.type == TokenType::BlockEnd
+          emit_expected_token("Expected name in import list.") if names.empty?
+          break
+        end
 
         if current.type != TokenType::Identifier
           emit_expected_token("Expected name in import list.")
