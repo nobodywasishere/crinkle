@@ -1,0 +1,68 @@
+<div>
+  <script nonce="{{ foo }}">
+            let ready = false;
+            let submitted = false;
+
+            const form = document.querySelector("#form");
+            const button = form.querySelector("#submit");
+            const errorNotice = document.querySelector("#error");
+
+            form.addEventListener("submit", (e) => {
+              if (ready) return;
+
+              submitted = true;
+
+              button.disabled = true;
+              button.classList.toggle("--disabled");
+              button.title = "Please wait while we verify";
+
+              e.preventDefault();
+            });
+
+            async function onError(code) {
+              console.error(`Validation failed: ${code}`)
+              errorNotice.hidden = false;
+              // NOTE(team): We could inspect the specific error family and show a specific message.
+              // But in most cases, refreshing the page is all they can do if we get here.
+            }
+
+            async function onSuccess(token) {
+              const response = await fetch("/verify", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "text/plain",
+                },
+                body: token,
+                credentials: "same-origin",
+              });
+              const ok = await response.json();
+              ready = true;
+
+              if (submitted) {
+                button.disabled = false;
+                button.classList.toggle("--disabled");
+                button.title = "";
+              }
+
+              if (ok) {
+                console.log("Verify complete!");
+
+                if (submitted) {
+                  form.submit();
+                }
+              } else {
+  {#
+    TODO(team): The check passed, but verification failed.
+    Communicate this to the user somehow.
+
+    TODO(team): Hmm, what do we do here? Let it fail, have them try
+    again on the "full" page...?
+  #}
+                alert("Verification failed. If this persists, please reach out to support@example.com with details.");
+                window.location = "/#verification-error";
+              }
+
+              submitted = false;
+            }
+  </script>
+</div>

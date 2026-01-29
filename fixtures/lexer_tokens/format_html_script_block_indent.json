@@ -1,0 +1,162 @@
+[
+  {
+    "type": "Text",
+    "lexeme": "<div>\n  <script nonce=\"",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 23,
+        "line": 2,
+        "column": 18
+      }
+    }
+  },
+  {
+    "type": "VarStart",
+    "lexeme": "{{",
+    "span": {
+      "start": {
+        "offset": 23,
+        "line": 2,
+        "column": 18
+      },
+      "end": {
+        "offset": 25,
+        "line": 2,
+        "column": 20
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 25,
+        "line": 2,
+        "column": 20
+      },
+      "end": {
+        "offset": 26,
+        "line": 2,
+        "column": 21
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "foo",
+    "span": {
+      "start": {
+        "offset": 26,
+        "line": 2,
+        "column": 21
+      },
+      "end": {
+        "offset": 29,
+        "line": 2,
+        "column": 24
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 29,
+        "line": 2,
+        "column": 24
+      },
+      "end": {
+        "offset": 30,
+        "line": 2,
+        "column": 25
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "}}",
+    "span": {
+      "start": {
+        "offset": 30,
+        "line": 2,
+        "column": 25
+      },
+      "end": {
+        "offset": 32,
+        "line": 2,
+        "column": 27
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\">\n            let ready = false;\n            let submitted = false;\n\n            const form = document.querySelector(\"#form\");\n            const button = form.querySelector(\"#submit\");\n            const errorNotice = document.querySelector(\"#error\");\n\n            form.addEventListener(\"submit\", (e) => {\n              if (ready) return;\n\n              submitted = true;\n\n              button.disabled = true;\n              button.classList.toggle(\"--disabled\");\n              button.title = \"Please wait while we verify\";\n\n              e.preventDefault();\n            });\n\n            async function onError(code) {\n              console.error(`Validation failed: ${code}`)\n              errorNotice.hidden = false;\n              // NOTE(team): We could inspect the specific error family and show a specific message.\n              // But in most cases, refreshing the page is all they can do if we get here.\n            }\n\n            async function onSuccess(token) {\n              const response = await fetch(\"/verify\", {\n                method: \"POST\",\n                headers: {\n                  \"Content-Type\": \"text/plain\",\n                },\n                body: token,\n                credentials: \"same-origin\",\n              });\n              const ok = await response.json();\n              ready = true;\n\n              if (submitted) {\n                button.disabled = false;\n                button.classList.toggle(\"--disabled\");\n                button.title = \"\";\n              }\n\n              if (ok) {\n                console.log(\"Verify complete!\");\n\n                if (submitted) {\n                  form.submit();\n                }\n              } else {\n  ",
+    "span": {
+      "start": {
+        "offset": 32,
+        "line": 2,
+        "column": 27
+      },
+      "end": {
+        "offset": 1716,
+        "line": 54,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Comment",
+    "lexeme": "{#\n    TODO(team): The check passed, but verification failed.\n    Communicate this to the user somehow.\n\n    TODO(team): Hmm, what do we do here? Let it fail, have them try\n    again on the \"full\" page...?\n  #}",
+    "span": {
+      "start": {
+        "offset": 1716,
+        "line": 54,
+        "column": 3
+      },
+      "end": {
+        "offset": 1926,
+        "line": 60,
+        "column": 5
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n                alert(\"Verification failed. If this persists, please reach out to support@example.com with details.\");\n                window.location = \"/#verification-error\";\n              }\n\n              submitted = false;\n            }\n  </script>\n</div>\n",
+    "span": {
+      "start": {
+        "offset": 1926,
+        "line": 60,
+        "column": 5
+      },
+      "end": {
+        "offset": 2187,
+        "line": 69,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 2187,
+        "line": 69,
+        "column": 1
+      },
+      "end": {
+        "offset": 2187,
+        "line": 69,
+        "column": 1
+      }
+    }
+  }
+]

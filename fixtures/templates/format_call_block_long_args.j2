@@ -1,0 +1,15 @@
+{% macro onb_plan(title, icon, form_id, plan_key, order, annual_locale, monthly_locale, show_standard, choosing_new_plan, confirm_change, annual_billing, per_period_text) %}
+  {{ title }}
+{% endmacro %}
+
+{% set annual_locale = "annual_locale" %}
+{% set monthly_locale = "monthly_locale" %}
+{% set show_standard = true %}
+{% set choosing_new_plan = false %}
+{% set confirm_change = true %}
+{% set annual_billing = true %}
+{% set per_period_text = "period_label" %}
+
+{% call() onb_plan("plan.headline", "icon.svg", "plan_form", "premium", 3, annual_locale, monthly_locale, show_standard, choosing_new_plan, confirm_change, annual_billing, per_period_text) %}
+  Hi
+{% endcall %}

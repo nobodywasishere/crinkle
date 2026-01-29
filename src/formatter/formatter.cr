@@ -4,6 +4,9 @@ require "./html/indent_engine"
 module Jinja
   class Formatter
     @preformatted_indent : String?
+    @preformatted_last_indent : String?
+    @preformatted_last_line : String?
+    @preformatted_tag_indent : String?
 
     # Configuration options for the formatter
     struct Options
@@ -145,6 +148,9 @@ module Jinja
       @jinja_indent = 0
       @html_open_buffer = ""
       @preformatted_indent = nil
+      @preformatted_last_indent = nil
+      @preformatted_last_line = nil
+      @preformatted_tag_indent = nil
       @html_in_tag = false
       @html_attr_quote = nil.as(Char?)
       @string_quote_override = nil.as(Char?)
@@ -242,18 +248,32 @@ module Jinja
 
         if preformatted_open?(line) && !@html_engine.in_preformatted?
           @preformatted_indent = current_indent_string
+          @preformatted_tag_indent = @preformatted_indent
           @html_engine.note_preformatted_open(line)
         end
 
         if @html_engine.in_preformatted?
-          base_indent = @preformatted_indent || current_indent_string
+          base_indent = @preformatted_tag_indent || @preformatted_indent
+          unless base_indent
+            base_indent = current_indent_string
+            unit = @options.indent_string
+            if !unit.empty? && base_indent.ends_with?(unit)
+              base_indent = base_indent.byte_slice(0, base_indent.size - unit.size)
+            end
+            @preformatted_tag_indent = base_indent
+            @preformatted_indent = base_indent
+          end
           preformatted_output = @html_engine.format_preformatted_line(line, base_indent, @options.indent_string, @printer.at_line_start?)
           @printer.write_raw(preformatted_output) unless preformatted_output.empty?
           update_html_attribute_state(preformatted_output) unless preformatted_output.empty?
+          update_preformatted_last_indent(preformatted_output)
           process_html_closing(line)
           process_html_opening_with_buffer(line)
           unless @html_engine.in_preformatted?
             @preformatted_indent = nil
+            @preformatted_last_indent = nil
+            @preformatted_last_line = nil
+            @preformatted_tag_indent = nil
             @html_engine.clear_preformatted_source
           end
           next
@@ -343,6 +363,11 @@ module Jinja
     end
 
     private def format_comment(node : AST::Comment) : Nil
+      if @options.html_aware? && @html_engine.in_preformatted?
+        format_preformatted_comment(node)
+        return
+      end
+
       sync_indent
       start_delim = node.trim_left? ? "{#-" : "{#"
       end_delim = node.trim_right? ? "-#}" : "#}"
@@ -368,6 +393,49 @@ module Jinja
     private def comment_multiline?(text : String) : Bool
       return true if text.includes?('\n')
       text.size > @options.max_line_length
+    end
+
+    private def format_preformatted_comment(node : AST::Comment) : Nil
+      start_delim = node.trim_left? ? "{#-" : "{#"
+      end_delim = node.trim_right? ? "-#}" : "#}"
+      text = node.text.strip
+      base_indent = @preformatted_tag_indent || @preformatted_indent || current_indent_string
+      indent = base_indent + @options.indent_string
+      inner_indent = indent + @options.indent_string
+
+      if comment_multiline?(text)
+        @printer.write_raw("#{indent}#{start_delim}\n")
+        lines = text.split('\n', remove_empty: false)
+        lines.each_with_index do |line, i|
+          @printer.write_raw("#{inner_indent}#{line.strip}")
+          @printer.write_raw("\n") if i < lines.size - 1
+        end
+        @printer.write_raw("\n#{indent}#{end_delim}")
+      else
+        brace_space = @options.space_inside_braces? ? " " : ""
+        @printer.write_raw("#{indent}#{start_delim}#{brace_space}#{text}#{brace_space}#{end_delim}")
+      end
+
+      @preformatted_last_indent = indent
+      @preformatted_last_line = "#{indent}#{start_delim}"
+    end
+
+    private def update_preformatted_last_indent(output : String) : Nil
+      return if output.strip.empty?
+      indent = leading_whitespace(output)
+      return if indent.empty?
+      @preformatted_last_indent = indent
+      @preformatted_last_line = output
+    end
+
+    private def leading_whitespace(text : String) : String
+      index = 0
+      while index < text.size
+        ch = text.byte_at(index)
+        break unless ch == ' '.ord || ch == '\t'.ord
+        index += 1
+      end
+      text.byte_slice(0, index)
     end
 
     private def format_output(node : AST::Output) : Nil
@@ -531,17 +599,16 @@ module Jinja
       @printer.write("#{block_start(node.trim_left?)} call")
 
       if call_args = node.call_args
-        @printer.write("(")
-        format_args_inline(call_args, node.call_kwargs || Array(AST::KeywordArg).new)
-        @printer.write(") ")
+        call_kwargs = node.call_kwargs || Array(AST::KeywordArg).new
+        format_paren_args(call_args, call_kwargs, args_span(call_args, call_kwargs))
+        @printer.write(" ")
       else
         @printer.write(" ")
       end
 
       format_expr(node.callee)
-      @printer.write("(")
-      format_args_inline(node.args, node.kwargs)
-      @printer.write(") #{block_end(node.trim_right?)}")
+      format_paren_args(node.args, node.kwargs, args_span(node.args, node.kwargs))
+      @printer.write(" #{block_end(node.trim_right?)}")
 
       @jinja_indent += 1
       format_nodes(node.body)
@@ -706,8 +773,10 @@ module Jinja
     private def format_literal(expr : AST::Literal) : Nil
       case value = expr.value
       when String
-        quote = @string_quote_override || '"'
-        escaped = value.gsub("\\", "\\\\")
+        quote = @string_quote_override || preferred_string_quote(value)
+        normalized = value
+        normalized = normalized.gsub("\\\"", "\"") if quote == '\''
+        escaped = normalized.gsub("\\", "\\\\")
         if quote == '"'
           escaped = escaped.gsub("\"", "\\\"")
         else
@@ -723,6 +792,11 @@ module Jinja
       when Nil
         @printer.write("none")
       end
+    end
+
+    private def preferred_string_quote(value : String) : Char
+      return '\'' if value.includes?('"') && !value.includes?('\'')
+      '"'
     end
 
     private def format_binary(expr : AST::Binary) : Nil
@@ -930,8 +1004,8 @@ module Jinja
       end
     end
 
-    private def format_paren_args(args : Array(AST::Expr), kwargs : Array(AST::KeywordArg), span : Span) : Nil
-      if pretty_args?(args, kwargs, span)
+    private def format_paren_args(args : Array(AST::Expr), kwargs : Array(AST::KeywordArg), span : Span?) : Nil
+      if span && pretty_args?(args, kwargs, span)
         current_level = @printer.indent_level
         @printer.write("(")
         @printer.newline
@@ -955,10 +1029,21 @@ module Jinja
       length > @options.max_line_length
     end
 
+    private def args_span(args : Array(AST::Expr), kwargs : Array(AST::KeywordArg)) : Span?
+      spans = Array(Span).new
+      args.each { |arg| spans << arg.span }
+      kwargs.each { |kwarg| spans << kwarg.span }
+      return nil if spans.empty?
+
+      start = spans.min_by { |span| span.start_pos.offset }.start_pos
+      finish = spans.max_by { |span| span.end_pos.offset }.end_pos
+      Span.new(start, finish)
+    end
+
     private def compute_effective_indent : Int32
       if @options.html_aware?
         if @html_engine.in_preformatted? && @preformatted_indent
-          return preformatted_indent_level
+          return preformatted_indent_level + 1
         end
         @html_engine.indent_level + @jinja_indent
       else

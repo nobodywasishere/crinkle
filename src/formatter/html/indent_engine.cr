@@ -42,7 +42,7 @@ module Jinja
       end
 
       def note_preformatted_open(line : String) : Nil
-        @preformatted_source_indent = leading_whitespace(line)
+        @preformatted_source_indent = nil
       end
 
       def clear_preformatted_source : Nil
@@ -85,10 +85,9 @@ module Jinja
 
         stripped = line.lstrip
         return base_indent + stripped if preformatted_end_tag_line?(stripped)
-        return base_indent + stripped if jinja_line?(stripped)
-
-        shift = preformatted_shift(base_indent)
-        shift.empty? ? line : shift + line
+        @preformatted_source_indent ||= leading_whitespace(line)
+        return base_indent + indent_string + stripped if jinja_line?(stripped)
+        rebase_preformatted_line(line, base_indent, indent_string)
       end
 
       def finalize : Array(Diagnostic)
@@ -142,6 +141,20 @@ module Jinja
         return base_indent.byte_slice(source_indent.size, base_indent.size - source_indent.size) if base_indent.starts_with?(source_indent)
 
         base_indent
+      end
+
+      private def rebase_preformatted_line(line : String, base_indent : String, indent_string : String) : String
+        source_indent = @preformatted_source_indent
+        stripped = line.lstrip
+        return base_indent + indent_string + stripped unless source_indent
+
+        line_indent = leading_whitespace(line)
+        relative_indent = if line_indent.starts_with?(source_indent)
+                            line_indent.byte_slice(source_indent.size, line_indent.size - source_indent.size)
+                          else
+                            line_indent
+                          end
+        base_indent + indent_string + relative_indent + stripped
       end
     end
   end
