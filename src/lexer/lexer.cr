@@ -75,6 +75,10 @@ module Jinja
           return lex_block_end(next_mode)
         end
 
+        if starts_var? || starts_block?
+          return recover_to_text(end_type)
+        end
+
         ch = current_char
 
         if whitespace_char?(ch)
@@ -255,6 +259,11 @@ module Jinja
       advance_char
 
       while !at_eof?
+        if starts_end_for_mode?
+          emit_diagnostic(DiagnosticType::UnterminatedString, "Unterminated string literal.", start_offset, start_line, start_col)
+          return token_from(TokenType::String, start_offset, start_line, start_col)
+        end
+
         if current_char == '\\'
           advance_char
           advance_char unless at_eof?
@@ -339,6 +348,21 @@ module Jinja
       eof_token
     end
 
+    private def recover_to_text(end_type : TokenType) : Token
+      if end_type == TokenType::VarEnd
+        emit_diagnostic(DiagnosticType::UnterminatedExpression, "Unterminated expression; expected '}}'.", @mode_start_offset, @mode_start_line, @mode_start_col)
+      else
+        emit_diagnostic(DiagnosticType::UnterminatedBlock, "Unterminated block; expected '%}'.", @mode_start_offset, @mode_start_line, @mode_start_col)
+      end
+
+      @mode = Mode::Text
+      span = Span.new(
+        Position.new(current_offset, @line, @column),
+        Position.new(current_offset, @line, @column)
+      )
+      Token.new(end_type, "", span)
+    end
+
     private def emit_unexpected_char
       start_offset = current_offset
       start_line = @line
@@ -385,6 +409,17 @@ module Jinja
       @mode_start_offset = start_offset
       @mode_start_line = start_line
       @mode_start_col = start_col
+    end
+
+    private def starts_end_for_mode? : Bool
+      case @mode
+      when Mode::Expr
+        starts_var_end?
+      when Mode::Block
+        starts_block_end?
+      else
+        false
+      end
     end
 
     private def current_char : Char
