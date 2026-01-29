@@ -1,0 +1,450 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'show_features'.",
+      "span": {
+        "start": {
+          "offset": 171,
+          "line": 9,
+          "column": 7
+        },
+        "end": {
+          "offset": 184,
+          "line": 9,
+          "column": 20
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'requirements'.",
+      "span": {
+        "start": {
+          "offset": 466,
+          "line": 26,
+          "column": 7
+        },
+        "end": {
+          "offset": 478,
+          "line": 26,
+          "column": 19
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'repo_url'.",
+      "span": {
+        "start": {
+          "offset": 720,
+          "line": 38,
+          "column": 14
+        },
+        "end": {
+          "offset": 728,
+          "line": 38,
+          "column": 22
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'install_command'.",
+      "span": {
+        "start": {
+          "offset": 804,
+          "line": 41,
+          "column": 4
+        },
+        "end": {
+          "offset": 819,
+          "line": 41,
+          "column": 19
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'run_command'.",
+      "span": {
+        "start": {
+          "offset": 845,
+          "line": 44,
+          "column": 4
+        },
+        "end": {
+          "offset": 856,
+          "line": 44,
+          "column": 15
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'config'.",
+      "span": {
+        "start": {
+          "offset": 989,
+          "line": 52,
+          "column": 22
+        },
+        "end": {
+          "offset": 995,
+          "line": 52,
+          "column": 28
+        }
+      }
+    },
+    {
+      "id": "E_NOT_ITERABLE",
+      "severity": "error",
+      "message": "Expected iterable in for loop.",
+      "span": {
+        "start": {
+          "offset": 989,
+          "line": 52,
+          "column": 22
+        },
+        "end": {
+          "offset": 995,
+          "line": 52,
+          "column": 28
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'examples'.",
+      "span": {
+        "start": {
+          "offset": 1175,
+          "line": 69,
+          "column": 7
+        },
+        "end": {
+          "offset": 1183,
+          "line": 69,
+          "column": 15
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'functions'.",
+      "span": {
+        "start": {
+          "offset": 1465,
+          "line": 92,
+          "column": 16
+        },
+        "end": {
+          "offset": 1474,
+          "line": 92,
+          "column": 25
+        }
+      }
+    },
+    {
+      "id": "E_NOT_ITERABLE",
+      "severity": "error",
+      "message": "Expected iterable in for loop.",
+      "span": {
+        "start": {
+          "offset": 1465,
+          "line": 92,
+          "column": 16
+        },
+        "end": {
+          "offset": 1474,
+          "line": 92,
+          "column": 25
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'issues'.",
+      "span": {
+        "start": {
+          "offset": 1723,
+          "line": 103,
+          "column": 17
+        },
+        "end": {
+          "offset": 1729,
+          "line": 103,
+          "column": 23
+        }
+      }
+    },
+    {
+      "id": "E_NOT_ITERABLE",
+      "severity": "error",
+      "message": "Expected iterable in for loop.",
+      "span": {
+        "start": {
+          "offset": 1723,
+          "line": 103,
+          "column": 17
+        },
+        "end": {
+          "offset": 1729,
+          "line": 103,
+          "column": 23
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'missing_variable'.",
+      "span": {
+        "start": {
+          "offset": 1981,
+          "line": 118,
+          "column": 30
+        },
+        "end": {
+          "offset": 1997,
+          "line": 118,
+          "column": 46
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_FILTER",
+      "severity": "error",
+      "message": "Unknown filter 'unknown_filter'.",
+      "span": {
+        "start": {
+          "offset": 2055,
+          "line": 122,
+          "column": 34
+        },
+        "end": {
+          "offset": 2076,
+          "line": 122,
+          "column": 55
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_FUNCTION",
+      "severity": "error",
+      "message": "Unknown function 'invalid_function'.",
+      "span": {
+        "start": {
+          "offset": 2135,
+          "line": 126,
+          "column": 28
+        },
+        "end": {
+          "offset": 2151,
+          "line": 126,
+          "column": 44
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'config'.",
+      "span": {
+        "start": {
+          "offset": 2207,
+          "line": 130,
+          "column": 27
+        },
+        "end": {
+          "offset": 2213,
+          "line": 130,
+          "column": 33
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown attribute 'nonexistent'.",
+      "span": {
+        "start": {
+          "offset": 2207,
+          "line": 130,
+          "column": 27
+        },
+        "end": {
+          "offset": 2225,
+          "line": 130,
+          "column": 45
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown attribute 'deeply'.",
+      "span": {
+        "start": {
+          "offset": 2207,
+          "line": 130,
+          "column": 27
+        },
+        "end": {
+          "offset": 2232,
+          "line": 130,
+          "column": 52
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown attribute 'nested'.",
+      "span": {
+        "start": {
+          "offset": 2207,
+          "line": 130,
+          "column": 27
+        },
+        "end": {
+          "offset": 2239,
+          "line": 130,
+          "column": 59
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'faq'.",
+      "span": {
+        "start": {
+          "offset": 2265,
+          "line": 134,
+          "column": 14
+        },
+        "end": {
+          "offset": 2268,
+          "line": 134,
+          "column": 17
+        }
+      }
+    },
+    {
+      "id": "E_NOT_ITERABLE",
+      "severity": "error",
+      "message": "Expected iterable in for loop.",
+      "span": {
+        "start": {
+          "offset": 2265,
+          "line": 134,
+          "column": 14
+        },
+        "end": {
+          "offset": 2268,
+          "line": 134,
+          "column": 17
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'contributing'.",
+      "span": {
+        "start": {
+          "offset": 2531,
+          "line": 149,
+          "column": 7
+        },
+        "end": {
+          "offset": 2543,
+          "line": 149,
+          "column": 19
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'license'.",
+      "span": {
+        "start": {
+          "offset": 2740,
+          "line": 165,
+          "column": 7
+        },
+        "end": {
+          "offset": 2747,
+          "line": 165,
+          "column": 14
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'authors'.",
+      "span": {
+        "start": {
+          "offset": 2888,
+          "line": 173,
+          "column": 35
+        },
+        "end": {
+          "offset": 2895,
+          "line": 173,
+          "column": 42
+        }
+      }
+    },
+    {
+      "id": "E_NOT_ITERABLE",
+      "severity": "error",
+      "message": "Expected iterable in for loop.",
+      "span": {
+        "start": {
+          "offset": 2888,
+          "line": 173,
+          "column": 35
+        },
+        "end": {
+          "offset": 2895,
+          "line": 173,
+          "column": 42
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'last_updated'.",
+      "span": {
+        "start": {
+          "offset": 2983,
+          "line": 177,
+          "column": 19
+        },
+        "end": {
+          "offset": 2995,
+          "line": 177,
+          "column": 31
+        }
+      }
+    }
+  ],
+  "linter": []
+}

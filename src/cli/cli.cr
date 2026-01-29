@@ -79,7 +79,9 @@ module Jinja
         sources = read_sources(opts, allow_multiple: true)
         if sources.size == 1 && opts.paths.empty? && opts.format != OutputFormat::Dot
           source, label = sources.first
-          formatter = Formatter.new(source)
+          html_aware = Formatter.html_aware?(label)
+          formatter_options = Formatter::Options.new(html_aware: html_aware, normalize_text_indent: html_aware)
+          formatter = Formatter.new(source, formatter_options)
           output = formatter.format
           all_diags = formatter.diagnostics
           write_snapshots(opts.snapshots_dir, label, output: output, diagnostics: all_diags, output_ext: "j2")
@@ -89,7 +91,9 @@ module Jinja
           results = Array(Tuple(String, Array(Diagnostic))).new
           all_diags = Array(Diagnostic).new
           sources.each do |entry_source, entry_label|
-            formatter = Formatter.new(entry_source)
+            html_aware = Formatter.html_aware?(entry_label)
+            formatter_options = Formatter::Options.new(html_aware: html_aware, normalize_text_indent: html_aware)
+            formatter = Formatter.new(entry_source, formatter_options)
             output = formatter.format
             File.write(entry_label, output) unless entry_label == "stdin"
             results << {entry_label, formatter.diagnostics}

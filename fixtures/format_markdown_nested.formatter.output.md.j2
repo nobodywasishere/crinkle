@@ -1,0 +1,10 @@
+## Release Notes
+
+{% for note in notes %}
+- {{ note.title }}
+  {% if note.details %}
+  - {{ note.details }}
+  {% else %}
+  - Details pending
+  {% endif %}
+{% endfor %}

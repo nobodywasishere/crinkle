@@ -1,0 +1,177 @@
+# {{ title | upper }} Documentation
+
+## Overview
+
+Welcome to the {{ name }} project! This document demonstrates how Jinja and Markdown work together.
+
+### Features
+
+{% if show_features %}
+The project includes:
+
+{% for feature in features %}
+- **{{ feature.name }}**: {{ feature.description }}
+  {% if feature.stable %}
+  - Status: ✓ Stable
+  {% else %}
+  - Status: ⚠ Experimental
+  {% endif %}
+{% endfor %}
+{% endif %}
+
+## Installation
+
+### Prerequisites
+
+{% if requirements %}
+1. Install {{ requirements.runtime }}
+2. Ensure {{ requirements.version }} or higher
+   {% for dep in requirements.dependencies %}
+   - `{{ dep }}`
+   {% endfor %}
+{% endif %}
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone {{ repo_url | default("https://github.com/example/repo") }}
+
+# Install dependencies
+{{ install_command }}
+
+# Run the project
+{{ run_command | default("./run.sh") }}
+```
+
+## Configuration
+
+The configuration can be customized in `config.yaml`:
+
+```yaml
+{% for key, value in config %}
+{{ key }}: {{ value }}
+{% endfor %}
+```
+
+## Usage Examples
+
+### Basic Example
+
+```
+{% raw %}
+This is {{ variable }} interpolation
+{% endraw %}
+```
+
+### Advanced Example
+
+{% if examples %}
+{% for example in examples %}
+#### {{ example.title }}
+
+{{ example.description }}
+
+{% if example.code %}
+```{{ example.language }}
+{{ example.code }}
+```
+{% endif %}
+
+**Output:**
+
+> {{ example.output }}
+
+{% endfor %}
+{% endif %}
+
+## API Reference
+
+### Functions
+
+{% for func in functions %}
+- `{{ func.name }}({{ func.params | join(", ") }})` — {{ func.description }}
+  {% if func.deprecated %}
+  > **Deprecated**: Use `{{ func.replacement }}` instead
+  {% endif %}
+{% endfor %}
+
+## Error Handling
+
+### Common Issues
+
+{% for issue in issues %}
+{{ loop.index }}. **{{ issue.title }}**
+
+   Problem: {{ issue.problem }}
+
+   Solution:
+   {% for step in issue.solution %}
+   - {{ step }}
+   {% endfor %}
+{% endfor %}
+
+## Testing Error Recovery
+
+### Missing Variables
+
+This should render empty: {{ missing_variable }}
+
+### Unknown Filter
+
+This should error gracefully: {{ name | unknown_filter }}
+
+### Invalid Function Call
+
+This should also error: {{ invalid_function() }}
+
+### Missing Attribute
+
+Accessing missing key: {{ config.nonexistent.deeply.nested }}
+
+## FAQ
+
+{% for qa in faq %}
+**Q: {{ qa.question }}**
+
+A: {{ qa.answer }}
+
+{% if qa.related %}
+*See also:* {% for rel in qa.related %}[{{ rel }}](#{{ rel | lower | replace(" ", "-") }}){% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}
+
+---
+
+{% endfor %}
+
+## Contributing
+
+{% if contributing %}
+{{ contributing.intro }}
+
+### Guidelines
+
+{% for guideline in contributing.guidelines %}
+- {{ guideline }}
+{% endfor %}
+
+### Code Style
+
+{{ contributing.style }}
+{% endif %}
+
+## License
+
+{% if license %}
+This project is licensed under {{ license.name }}.
+
+{{ license.details }}
+{% endif %}
+
+## Credits
+
+Built with ❤️ by {% for author in authors %}{{ author }}{% if not loop.last %}, {% endif %}{% endfor %}.
+
+---
+
+*Last updated: {{ last_updated | default("Unknown") }}*

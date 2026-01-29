@@ -1,0 +1,18 @@
+## Release Notes
+
+
+- Install
+  
+  - Run `shards install`
+  
+
+- Build
+  
+  - crystal build src/cli/cli.cr
+  
+
+- Deploy
+  
+  - Details pending
+  
+

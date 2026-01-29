@@ -549,12 +549,12 @@ module Jinja
       when Array(Value)
         unless index.is_a?(Int64) || index.is_a?(Int32)
           emit_invalid_operand("[]", expr.span)
-          return nil
+          return
         end
         int_index = index.to_i
         if int_index < 0 || int_index >= target.size
           emit_index_oob(int_index, expr.span)
-          return nil
+          return
         end
         target[int_index]
       when Hash(String, Value)

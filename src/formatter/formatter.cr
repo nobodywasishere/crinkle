@@ -56,6 +56,13 @@ module Jinja
       end
     end
 
+    # Determines html_aware setting based on file path or extension
+    # Returns true for .html.j2 files, false for all others (.md.j2, etc.)
+    def self.html_aware?(path : String) : Bool
+      return true if path.ends_with?(".html.j2") || path.ends_with?("html.j2")
+      false
+    end
+
     # Output string builder with indentation management
     private class Printer
       property indent_level : Int32

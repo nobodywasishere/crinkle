@@ -1,0 +1,1125 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "# "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "title"
+        },
+        "name": "upper",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": " Documentation\n\n## Overview\n\nWelcome to the "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "name"
+      }
+    },
+    {
+      "type": "Text",
+      "value": " project! This document demonstrates how Jinja and Markdown work together.\n\n### Features\n\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "show_features"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nThe project includes:\n\n"
+        },
+        {
+          "type": "For",
+          "target": {
+            "type": "Name",
+            "value": "feature"
+          },
+          "iter": {
+            "type": "Name",
+            "value": "features"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n- **"
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "feature"
+                },
+                "name": "name"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "**: "
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "feature"
+                },
+                "name": "description"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "\n  "
+            },
+            {
+              "type": "If",
+              "test": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "feature"
+                },
+                "name": "stable"
+              },
+              "body": [
+                {
+                  "type": "Text",
+                  "value": "\n  - Status: ✓ Stable\n  "
+                }
+              ],
+              "else": [
+                {
+                  "type": "Text",
+                  "value": "\n  - Status: ⚠ Experimental\n  "
+                }
+              ]
+            },
+            {
+              "type": "Text",
+              "value": "\n"
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n## Installation\n\n### Prerequisites\n\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "requirements"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n1. Install "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "requirements"
+            },
+            "name": "runtime"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n2. Ensure "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "requirements"
+            },
+            "name": "version"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " or higher\n   "
+        },
+        {
+          "type": "For",
+          "target": {
+            "type": "Name",
+            "value": "dep"
+          },
+          "iter": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "requirements"
+            },
+            "name": "dependencies"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n   - `"
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "Name",
+                "value": "dep"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "`\n   "
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n### Quick Start\n\n```bash\n# Clone the repository\ngit clone "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "repo_url"
+        },
+        "name": "default",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "https://github.com/example/repo"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n\n# Install dependencies\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "install_command"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n\n# Run the project\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "run_command"
+        },
+        "name": "default",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "./run.sh"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n```\n\n## Configuration\n\nThe configuration can be customized in `config.yaml`:\n\n```yaml\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "TupleLiteral",
+        "items": [
+          {
+            "type": "Name",
+            "value": "key"
+          },
+          {
+            "type": "Name",
+            "value": "value"
+          }
+        ]
+      },
+      "iter": {
+        "type": "Name",
+        "value": "config"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "key"
+          }
+        },
+        {
+          "type": "Text",
+          "value": ": "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "value"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n```\n\n## Usage Examples\n\n### Basic Example\n\n```\n"
+    },
+    {
+      "type": "Raw",
+      "text": "\nThis is {{ variable }} interpolation\n"
+    },
+    {
+      "type": "Text",
+      "value": "\n```\n\n### Advanced Example\n\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "examples"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "For",
+          "target": {
+            "type": "Name",
+            "value": "example"
+          },
+          "iter": {
+            "type": "Name",
+            "value": "examples"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n#### "
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "example"
+                },
+                "name": "title"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "\n\n"
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "example"
+                },
+                "name": "description"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "\n\n"
+            },
+            {
+              "type": "If",
+              "test": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "example"
+                },
+                "name": "code"
+              },
+              "body": [
+                {
+                  "type": "Text",
+                  "value": "\n```"
+                },
+                {
+                  "type": "Output",
+                  "expr": {
+                    "type": "GetAttr",
+                    "target": {
+                      "type": "Name",
+                      "value": "example"
+                    },
+                    "name": "language"
+                  }
+                },
+                {
+                  "type": "Text",
+                  "value": "\n"
+                },
+                {
+                  "type": "Output",
+                  "expr": {
+                    "type": "GetAttr",
+                    "target": {
+                      "type": "Name",
+                      "value": "example"
+                    },
+                    "name": "code"
+                  }
+                },
+                {
+                  "type": "Text",
+                  "value": "\n```\n"
+                }
+              ],
+              "else": []
+            },
+            {
+              "type": "Text",
+              "value": "\n\n**Output:**\n\n> "
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "example"
+                },
+                "name": "output"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "\n\n"
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n## API Reference\n\n### Functions\n\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "func"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "functions"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n- `"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "func"
+            },
+            "name": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "("
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Filter",
+            "expr": {
+              "type": "GetAttr",
+              "target": {
+                "type": "Name",
+                "value": "func"
+              },
+              "name": "params"
+            },
+            "name": "join",
+            "args": [
+              {
+                "type": "Literal",
+                "value": ", "
+              }
+            ],
+            "kwargs": []
+          }
+        },
+        {
+          "type": "Text",
+          "value": ")` — "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "func"
+            },
+            "name": "description"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "If",
+          "test": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "func"
+            },
+            "name": "deprecated"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n  > **Deprecated**: Use `"
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "func"
+                },
+                "name": "replacement"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "` instead\n  "
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n## Error Handling\n\n### Common Issues\n\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "issue"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "issues"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "loop"
+            },
+            "name": "index"
+          }
+        },
+        {
+          "type": "Text",
+          "value": ". **"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "issue"
+            },
+            "name": "title"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "**\n\n   Problem: "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "issue"
+            },
+            "name": "problem"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n\n   Solution:\n   "
+        },
+        {
+          "type": "For",
+          "target": {
+            "type": "Name",
+            "value": "step"
+          },
+          "iter": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "issue"
+            },
+            "name": "solution"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n   - "
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "Name",
+                "value": "step"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "\n   "
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n## Testing Error Recovery\n\n### Missing Variables\n\nThis should render empty: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "missing_variable"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n\n### Unknown Filter\n\nThis should error gracefully: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "name"
+        },
+        "name": "unknown_filter",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n\n### Invalid Function Call\n\nThis should also error: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "invalid_function"
+        },
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n\n### Missing Attribute\n\nAccessing missing key: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "GetAttr",
+          "target": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "config"
+            },
+            "name": "nonexistent"
+          },
+          "name": "deeply"
+        },
+        "name": "nested"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n\n## FAQ\n\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "qa"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "faq"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n**Q: "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "qa"
+            },
+            "name": "question"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "**\n\nA: "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "qa"
+            },
+            "name": "answer"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n\n"
+        },
+        {
+          "type": "If",
+          "test": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "qa"
+            },
+            "name": "related"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n*See also:* "
+            },
+            {
+              "type": "For",
+              "target": {
+                "type": "Name",
+                "value": "rel"
+              },
+              "iter": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "qa"
+                },
+                "name": "related"
+              },
+              "body": [
+                {
+                  "type": "Text",
+                  "value": "["
+                },
+                {
+                  "type": "Output",
+                  "expr": {
+                    "type": "Name",
+                    "value": "rel"
+                  }
+                },
+                {
+                  "type": "Text",
+                  "value": "](#"
+                },
+                {
+                  "type": "Output",
+                  "expr": {
+                    "type": "Filter",
+                    "expr": {
+                      "type": "Filter",
+                      "expr": {
+                        "type": "Name",
+                        "value": "rel"
+                      },
+                      "name": "lower",
+                      "args": [],
+                      "kwargs": []
+                    },
+                    "name": "replace",
+                    "args": [
+                      {
+                        "type": "Literal",
+                        "value": " "
+                      },
+                      {
+                        "type": "Literal",
+                        "value": "-"
+                      }
+                    ],
+                    "kwargs": []
+                  }
+                },
+                {
+                  "type": "Text",
+                  "value": ")"
+                },
+                {
+                  "type": "If",
+                  "test": {
+                    "type": "Unary",
+                    "op": "not",
+                    "expr": {
+                      "type": "GetAttr",
+                      "target": {
+                        "type": "Name",
+                        "value": "loop"
+                      },
+                      "name": "last"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "Text",
+                      "value": ", "
+                    }
+                  ],
+                  "else": []
+                }
+              ],
+              "else": []
+            },
+            {
+              "type": "Text",
+              "value": "\n"
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n\n---\n\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n## Contributing\n\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "contributing"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "contributing"
+            },
+            "name": "intro"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n\n### Guidelines\n\n"
+        },
+        {
+          "type": "For",
+          "target": {
+            "type": "Name",
+            "value": "guideline"
+          },
+          "iter": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "contributing"
+            },
+            "name": "guidelines"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n- "
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "Name",
+                "value": "guideline"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "\n"
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n\n### Code Style\n\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "contributing"
+            },
+            "name": "style"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n## License\n\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "license"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nThis project is licensed under "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "license"
+            },
+            "name": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": ".\n\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "license"
+            },
+            "name": "details"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n## Credits\n\nBuilt with ❤️ by "
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "author"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "authors"
+      },
+      "body": [
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "author"
+          }
+        },
+        {
+          "type": "If",
+          "test": {
+            "type": "Unary",
+            "op": "not",
+            "expr": {
+              "type": "GetAttr",
+              "target": {
+                "type": "Name",
+                "value": "loop"
+              },
+              "name": "last"
+            }
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": ", "
+            }
+          ],
+          "else": []
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": ".\n\n---\n\n*Last updated: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "last_updated"
+        },
+        "name": "default",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "Unknown"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "*\n"
+    }
+  ]
+}

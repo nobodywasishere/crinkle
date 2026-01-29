@@ -1,0 +1,82 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "### Features\n\n#### Overview\n\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "show_meta"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n- **Status**: "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "condition"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n- **Owner**: "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "title"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n#### Details\n\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "item"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "items"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n1. "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "item"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

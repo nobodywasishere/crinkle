@@ -1,0 +1,43 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected '}}' to close expression.",
+      "span": {
+        "start": {
+          "offset": 75,
+          "line": 6,
+          "column": 28
+        },
+        "end": {
+          "offset": 77,
+          "line": 6,
+          "column": 30
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected '}}' to close expression.",
+      "span": {
+        "start": {
+          "offset": 75,
+          "line": 6,
+          "column": 28
+        },
+        "end": {
+          "offset": 77,
+          "line": 6,
+          "column": 30
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

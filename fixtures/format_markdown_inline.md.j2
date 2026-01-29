@@ -1,0 +1,14 @@
+### Features
+
+#### Overview
+
+{% if show_meta %}
+- **Status**: {{ condition if "Enabled" else "Disabled" }}
+- **Owner**: {{ title }}
+{% endif %}
+
+#### Details
+
+{% for item in items %}
+1. {{ item }}
+{% endfor %}

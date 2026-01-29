@@ -384,6 +384,11 @@ def render_context : Hash(String, Jinja::Value)
     Jinja::SafeString.new("<b>one</b>"),
     "<b>two</b>",
   ] of Jinja::Value
+  context["notes"] = [
+    {"title" => "Install", "details" => "Run `shards install`"} of String => Jinja::Value,
+    {"title" => "Build", "details" => "crystal build src/cli/cli.cr"} of String => Jinja::Value,
+    {"title" => "Deploy", "details" => nil} of String => Jinja::Value,
+  ] of Jinja::Value
   context["show_meta"] = true
   context["description"] = "Page description"
   context["fallback_image"] = "/img/default.png"

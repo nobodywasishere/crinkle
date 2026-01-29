@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown attribute 'details'.",
+      "span": {
+        "start": {
+          "offset": 69,
+          "line": 5,
+          "column": 9
+        },
+        "end": {
+          "offset": 81,
+          "line": 5,
+          "column": 21
+        }
+      }
+    }
+  ],
+  "linter": []
+}

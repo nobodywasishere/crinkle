@@ -1,0 +1,88 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "## Release Notes\n\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "note"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "notes"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n- "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "note"
+            },
+            "name": "title"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "If",
+          "test": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "note"
+            },
+            "name": "details"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n  - "
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "note"
+                },
+                "name": "details"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "\n  "
+            }
+          ],
+          "else": [
+            {
+              "type": "Text",
+              "value": "\n  - Details pending\n  "
+            }
+          ]
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

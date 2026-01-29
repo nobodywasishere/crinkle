@@ -36,7 +36,9 @@ private def run_fixture_snapshots(
   template = parser.parse
   ast_json = JSON.parse(Jinja::AST::Serializer.to_pretty_json(template))
 
-  formatter = Jinja::Formatter.new(source)
+  html_aware = Jinja::Formatter.html_aware?(info.template_ext)
+  formatter_options = Jinja::Formatter::Options.new(html_aware: html_aware, normalize_text_indent: html_aware)
+  formatter = Jinja::Formatter.new(source, formatter_options)
   formatted = formatter.format
 
   renderer_output = ""
