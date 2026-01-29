@@ -6,8 +6,11 @@
       "expr": {
         "type": "Name",
         "value": "name"
-      },
-      "incomplete": true
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
     }
   ]
 }

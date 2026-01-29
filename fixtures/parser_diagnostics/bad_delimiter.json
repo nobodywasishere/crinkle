@@ -15,5 +15,22 @@
         "column": 1
       }
     }
+  },
+  {
+    "id": "E_EXPECTED_TOKEN",
+    "severity": "error",
+    "message": "Expected '}}' to close expression.",
+    "span": {
+      "start": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      },
+      "end": {
+        "offset": 9,
+        "line": 1,
+        "column": 10
+      }
+    }
   }
 ]

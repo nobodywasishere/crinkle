@@ -71,8 +71,8 @@ Start with a minimal set and grow iteratively.
 - `bad_delimiter.j2`: `{{ name }` (unterminated).
 
 ### Expected outputs
-- `fixtures/ast/*.json` for parser output.
-- `fixtures/diagnostics/*.json` for errors.
+- `fixtures/parser_ast/*.json` for parser output.
+- `fixtures/parser_diagnostics/*.json` for errors.
 - Outputs live in parallel folders and are committed when changed.
 
 ## Testing Approach

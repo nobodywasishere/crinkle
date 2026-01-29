@@ -15,5 +15,22 @@
         "column": 5
       }
     }
+  },
+  {
+    "id": "E_EXPECTED_EXPRESSION",
+    "severity": "error",
+    "message": "Expected expression.",
+    "span": {
+      "start": {
+        "offset": 5,
+        "line": 1,
+        "column": 6
+      },
+      "end": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      }
+    }
   }
 ]

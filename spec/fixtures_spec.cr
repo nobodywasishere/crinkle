@@ -8,12 +8,12 @@ describe "fixtures" do
     Dir.glob("fixtures/templates/*.j2").should_not be_empty
   end
 
-  it "loads AST snapshots" do
-    Dir.glob("fixtures/ast/*.json").should_not be_empty
+  it "loads parser AST snapshots" do
+    Dir.glob("fixtures/parser_ast/*.json").should_not be_empty
   end
 
-  it "loads diagnostic snapshots" do
-    Dir.glob("fixtures/diagnostics/*.json").should_not be_empty
+  it "loads parser diagnostic snapshots" do
+    Dir.glob("fixtures/parser_diagnostics/*.json").should_not be_empty
   end
 
   it "loads lexer snapshots" do

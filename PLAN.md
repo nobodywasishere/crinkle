@@ -57,7 +57,15 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
   - `{% for %}...{% endfor %}`
 - Build error recovery (sync at block end / delimiter).
 - Emit diagnostics with spans for syntax errors.
-- Parser tests with golden AST + diagnostics.
+- Parser tests with golden AST + diagnostics (stored under `fixtures/parser_*`).
+- Use self-updating snapshot specs for AST/diagnostics.
+
+#### Phase 2 Checklist
+- [x] AST types + serializer added
+- [x] Parser implemented for `if`/`for` and basic expressions
+- [x] Parser diagnostics + recovery
+- [x] Snapshot fixtures + specs (self-updating)
+- [x] CLI supports AST output
 
 ### Phase 3 — Expression Grammar
 **Outcome:** Full expression parsing (no evaluation).

@@ -4,6 +4,12 @@ module Jinja
     UnterminatedBlock
     UnterminatedString
     UnexpectedChar
+    UnexpectedToken
+    ExpectedToken
+    ExpectedExpression
+    MissingEndTag
+    UnknownTag
+    UnexpectedEndTag
   end
 
   enum Severity
@@ -39,7 +45,30 @@ module Jinja
     end
 
     def id : String
-      @type.to_s.underscore.capitalize
+      case @type
+      when DiagnosticType::UnterminatedExpression
+        "E_UNTERMINATED_EXPRESSION"
+      when DiagnosticType::UnterminatedBlock
+        "E_UNTERMINATED_BLOCK"
+      when DiagnosticType::UnterminatedString
+        "E_UNTERMINATED_STRING"
+      when DiagnosticType::UnexpectedChar
+        "E_UNEXPECTED_CHAR"
+      when DiagnosticType::UnexpectedToken
+        "E_UNEXPECTED_TOKEN"
+      when DiagnosticType::ExpectedToken
+        "E_EXPECTED_TOKEN"
+      when DiagnosticType::ExpectedExpression
+        "E_EXPECTED_EXPRESSION"
+      when DiagnosticType::MissingEndTag
+        "E_MISSING_END_TAG"
+      when DiagnosticType::UnknownTag
+        "E_UNKNOWN_TAG"
+      when DiagnosticType::UnexpectedEndTag
+        "E_UNEXPECTED_END_TAG"
+      else
+        "E_UNKNOWN_DIAGNOSTIC"
+      end
     end
   end
 end
