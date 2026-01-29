@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_UNSUPPORTED_NODE",
+    "severity": "error",
+    "message": "Renderer only supports calling named functions.",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 47,
+        "line": 1,
+        "column": 48
+      }
+    }
+  }
+]

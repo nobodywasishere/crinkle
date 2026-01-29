@@ -10,6 +10,14 @@ module Jinja
     MissingEndTag
     UnknownTag
     UnexpectedEndTag
+    UnknownVariable
+    UnknownFilter
+    UnknownTest
+    UnknownFunction
+    UnknownTagRenderer
+    InvalidOperand
+    NotIterable
+    UnsupportedNode
   end
 
   enum Severity
@@ -56,6 +64,14 @@ module Jinja
       in DiagnosticType::MissingEndTag          then "E_MISSING_END_TAG"
       in DiagnosticType::UnknownTag             then "E_UNKNOWN_TAG"
       in DiagnosticType::UnexpectedEndTag       then "E_UNEXPECTED_END_TAG"
+      in DiagnosticType::UnknownVariable        then "E_UNKNOWN_VARIABLE"
+      in DiagnosticType::UnknownFilter          then "E_UNKNOWN_FILTER"
+      in DiagnosticType::UnknownTest            then "E_UNKNOWN_TEST"
+      in DiagnosticType::UnknownFunction        then "E_UNKNOWN_FUNCTION"
+      in DiagnosticType::UnknownTagRenderer     then "E_UNKNOWN_TAG_RENDERER"
+      in DiagnosticType::InvalidOperand         then "E_INVALID_OPERAND"
+      in DiagnosticType::NotIterable            then "E_NOT_ITERABLE"
+      in DiagnosticType::UnsupportedNode        then "E_UNSUPPORTED_NODE"
       end
     end
   end

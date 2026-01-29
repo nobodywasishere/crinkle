@@ -1,0 +1,36 @@
+[
+  {
+    "id": "E_UNKNOWN_FILTER",
+    "severity": "error",
+    "message": "Unknown filter 'default'.",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 20,
+        "line": 1,
+        "column": 21
+      }
+    }
+  },
+  {
+    "id": "E_UNKNOWN_TEST",
+    "severity": "error",
+    "message": "Unknown test 'none'.",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 32,
+        "line": 1,
+        "column": 33
+      }
+    }
+  }
+]

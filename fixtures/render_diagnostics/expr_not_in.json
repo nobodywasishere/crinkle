@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'item'.",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      }
+    }
+  }
+]

@@ -1,0 +1,36 @@
+[
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'foo'.",
+    "span": {
+      "start": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      },
+      "end": {
+        "offset": 10,
+        "line": 1,
+        "column": 11
+      }
+    }
+  },
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'b'.",
+    "span": {
+      "start": {
+        "offset": 33,
+        "line": 2,
+        "column": 13
+      },
+      "end": {
+        "offset": 34,
+        "line": 2,
+        "column": 14
+      }
+    }
+  }
+]

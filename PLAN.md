@@ -123,6 +123,11 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Render output with whitespace control and raw blocks.
 - Integrate include/extends/import/macro/call behavior.
 - Add rendering fixtures with expected output.
+  - Templates live in `fixtures/templates`.
+  - Outputs live in `fixtures/render_output` as `.html` files.
+  - Diagnostics live in `fixtures/render_diagnostics` as `.json`.
+- Renderer emits diagnostics for runtime issues and defaults unknown custom tags to
+  rendering their bodies.
 
 ### Phase 7 — Formatter (Optional, HTML-aware)
 **Outcome:** Format templates with HTML-structural awareness.

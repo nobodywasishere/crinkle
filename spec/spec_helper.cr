@@ -61,3 +61,16 @@ def assert_snapshot(path : String, actual : JSON::Any) : Nil
     raise "Snapshot missing for #{path}. Created snapshot."
   end
 end
+
+def assert_text_snapshot(path : String, actual : String) : Nil
+  if File.exists?(path)
+    expected = File.read(path)
+    if actual != expected
+      File.write(path, actual)
+      raise "Snapshot mismatch for #{path}. Updated snapshot."
+    end
+  else
+    File.write(path, actual)
+    raise "Snapshot missing for #{path}. Created snapshot."
+  end
+end

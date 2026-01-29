@@ -1,0 +1,104 @@
+[
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'a'.",
+    "span": {
+      "start": {
+        "offset": 4,
+        "line": 1,
+        "column": 5
+      },
+      "end": {
+        "offset": 5,
+        "line": 1,
+        "column": 6
+      }
+    }
+  },
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'b'.",
+    "span": {
+      "start": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      },
+      "end": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      }
+    }
+  },
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'c'.",
+    "span": {
+      "start": {
+        "offset": 10,
+        "line": 1,
+        "column": 11
+      },
+      "end": {
+        "offset": 11,
+        "line": 1,
+        "column": 12
+      }
+    }
+  },
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'foo'.",
+    "span": {
+      "start": {
+        "offset": 23,
+        "line": 2,
+        "column": 8
+      },
+      "end": {
+        "offset": 26,
+        "line": 2,
+        "column": 11
+      }
+    }
+  },
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'bar'.",
+    "span": {
+      "start": {
+        "offset": 31,
+        "line": 2,
+        "column": 16
+      },
+      "end": {
+        "offset": 34,
+        "line": 2,
+        "column": 19
+      }
+    }
+  },
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'baz'.",
+    "span": {
+      "start": {
+        "offset": 38,
+        "line": 2,
+        "column": 23
+      },
+      "end": {
+        "offset": 41,
+        "line": 2,
+        "column": 26
+      }
+    }
+  }
+]

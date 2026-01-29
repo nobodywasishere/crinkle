@@ -1,0 +1,36 @@
+[
+  {
+    "id": "E_UNKNOWN_VARIABLE",
+    "severity": "error",
+    "message": "Unknown variable 'value'.",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      }
+    }
+  },
+  {
+    "id": "E_UNKNOWN_TEST",
+    "severity": "error",
+    "message": "Unknown test 'defined'.",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 19,
+        "line": 1,
+        "column": 20
+      }
+    }
+  }
+]
