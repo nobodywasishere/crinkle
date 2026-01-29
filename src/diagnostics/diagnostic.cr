@@ -1,4 +1,11 @@
 module Jinja
+  enum DiagnosticType
+    UnterminatedExpression
+    UnterminatedBlock
+    UnterminatedString
+    UnexpectedChar
+  end
+
   enum Severity
     Error
     Warning
@@ -23,12 +30,16 @@ module Jinja
   end
 
   struct Diagnostic
-    getter id : String
+    getter type : DiagnosticType
     getter severity : Severity
     getter message : String
     getter span : Span
 
-    def initialize(@id : String, @severity : Severity, @message : String, @span : Span)
+    def initialize(@type : DiagnosticType, @severity : Severity, @message : String, @span : Span)
+    end
+
+    def id : String
+      @type.to_s.underscore.capitalize
     end
   end
 end

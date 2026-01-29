@@ -10,9 +10,8 @@ module Jinja
 
     def initialize(source : String)
       @source = source
-      @bytes = source.to_slice
-      @length = @bytes.size
-      @i = 0
+      @reader = Char::Reader.new(source)
+      @length = source.bytesize
       @line = 1
       @column = 1
       @mode = Mode::Text
@@ -46,7 +45,7 @@ module Jinja
     end
 
     private def lex_text : Token
-      return eof_token if @i >= @length
+      return eof_token if at_eof?
 
       if starts_var?
         return lex_var_start
@@ -54,23 +53,21 @@ module Jinja
         return lex_block_start
       end
 
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
-      while @i < @length
+      while !at_eof?
         break if starts_var? || starts_block?
-        advance_byte
+        advance_char
       end
 
-      span = make_span(start_offset, start_line, start_col)
-      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(TokenType::Text, lexeme, span)
+      token_from(TokenType::Text, start_offset, start_line, start_col)
     end
 
     private def lex_expr_or_block(end_type : TokenType, next_mode : Mode) : Token
       loop do
-        return unterminated(end_type) if @i >= @length
+        return unterminated(end_type) if at_eof?
 
         if end_type == TokenType::VarEnd && starts_var_end?
           return lex_var_end(next_mode)
@@ -78,252 +75,224 @@ module Jinja
           return lex_block_end(next_mode)
         end
 
-        if whitespace_byte?(@bytes[@i])
+        ch = current_char
+
+        if whitespace_char?(ch)
           return lex_whitespace
         end
 
-        if identifier_start?(@bytes[@i])
+        if identifier_start?(ch)
           return lex_identifier
         end
 
-        if digit?(@bytes[@i])
+        if digit?(ch)
           return lex_number
         end
 
-        if quote?(@bytes[@i])
+        if quote?(ch)
           return lex_string
         end
 
-        if operator_or_punct?
+        if operator_or_punct?(ch)
           return lex_operator_or_punct
         end
 
         emit_unexpected_char
-        advance_byte
+        advance_char
       end
     end
 
     private def starts_var? : Bool
-      return false if @i + 1 >= @length
-      @bytes[@i] == '{'.ord.to_u8 && @bytes[@i + 1] == '{'.ord.to_u8
+      b0 = byte_at(current_offset)
+      b1 = byte_at(current_offset + 1)
+      b0 == '{'.ord.to_u8 && b1 == '{'.ord.to_u8
     end
 
     private def starts_block? : Bool
-      return false if @i + 1 >= @length
-      @bytes[@i] == '{'.ord.to_u8 && @bytes[@i + 1] == '%'.ord.to_u8
+      b0 = byte_at(current_offset)
+      b1 = byte_at(current_offset + 1)
+      b0 == '{'.ord.to_u8 && b1 == '%'.ord.to_u8
     end
 
     private def starts_var_end? : Bool
-      return false if @i + 1 >= @length
-      if @bytes[@i] == '-'.ord.to_u8
-        return false if @i + 2 >= @length
-        return @bytes[@i + 1] == '}'.ord.to_u8 && @bytes[@i + 2] == '}'.ord.to_u8
+      pos = current_offset
+      b0 = byte_at(pos)
+      if b0 == '-'.ord.to_u8
+        b1 = byte_at(pos + 1)
+        b2 = byte_at(pos + 2)
+        return b1 == '}'.ord.to_u8 && b2 == '}'.ord.to_u8
       end
-      @bytes[@i] == '}'.ord.to_u8 && @bytes[@i + 1] == '}'.ord.to_u8
+      b1 = byte_at(pos + 1)
+      b0 == '}'.ord.to_u8 && b1 == '}'.ord.to_u8
     end
 
     private def starts_block_end? : Bool
-      return false if @i + 1 >= @length
-      if @bytes[@i] == '-'.ord.to_u8
-        return false if @i + 2 >= @length
-        return @bytes[@i + 1] == '%'.ord.to_u8 && @bytes[@i + 2] == '}'.ord.to_u8
+      pos = current_offset
+      b0 = byte_at(pos)
+      if b0 == '-'.ord.to_u8
+        b1 = byte_at(pos + 1)
+        b2 = byte_at(pos + 2)
+        return b1 == '%'.ord.to_u8 && b2 == '}'.ord.to_u8
       end
-      @bytes[@i] == '%'.ord.to_u8 && @bytes[@i + 1] == '}'.ord.to_u8
+      b1 = byte_at(pos + 1)
+      b0 == '%'.ord.to_u8 && b1 == '}'.ord.to_u8
     end
 
     private def lex_var_start : Token
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
       # {{ or {{-
-      advance_byte
-      advance_byte
-      if @i < @length && @bytes[@i] == '-'.ord.to_u8
-        advance_byte
+      advance_char
+      advance_char
+      if current_char == '-'
+        advance_char
       end
 
       @mode = Mode::Expr
-      @mode_start_offset = start_offset
-      @mode_start_line = start_line
-      @mode_start_col = start_col
-      span = make_span(start_offset, start_line, start_col)
-      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(TokenType::VarStart, lexeme, span)
+      mark_mode_start(start_offset, start_line, start_col)
+      token_from(TokenType::VarStart, start_offset, start_line, start_col)
     end
 
     private def lex_block_start : Token
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
-      # {% or {%-
-      advance_byte
-      advance_byte
-      if @i < @length && @bytes[@i] == '-'.ord.to_u8
-        advance_byte
+      # {% or {% -
+      advance_char
+      advance_char
+      if current_char == '-'
+        advance_char
       end
 
       @mode = Mode::Block
-      @mode_start_offset = start_offset
-      @mode_start_line = start_line
-      @mode_start_col = start_col
-      span = make_span(start_offset, start_line, start_col)
-      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(TokenType::BlockStart, lexeme, span)
+      mark_mode_start(start_offset, start_line, start_col)
+      token_from(TokenType::BlockStart, start_offset, start_line, start_col)
     end
 
     private def lex_var_end(next_mode : Mode) : Token
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
-      if @bytes[@i] == '-'.ord.to_u8
-        advance_byte
+      if current_char == '-'
+        advance_char
       end
-      advance_byte
-      advance_byte
+      advance_char
+      advance_char
 
       @mode = next_mode
-      span = make_span(start_offset, start_line, start_col)
-      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(TokenType::VarEnd, lexeme, span)
+      token_from(TokenType::VarEnd, start_offset, start_line, start_col)
     end
 
     private def lex_block_end(next_mode : Mode) : Token
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
-      if @bytes[@i] == '-'.ord.to_u8
-        advance_byte
+      if current_char == '-'
+        advance_char
       end
-      advance_byte
-      advance_byte
+      advance_char
+      advance_char
 
       @mode = next_mode
-      span = make_span(start_offset, start_line, start_col)
-      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(TokenType::BlockEnd, lexeme, span)
+      token_from(TokenType::BlockEnd, start_offset, start_line, start_col)
     end
 
     private def lex_whitespace : Token
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
-      while @i < @length && whitespace_byte?(@bytes[@i])
-        advance_byte
+      while !at_eof? && whitespace_char?(current_char)
+        advance_char
       end
 
-      span = make_span(start_offset, start_line, start_col)
-      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(TokenType::Whitespace, lexeme, span)
+      token_from(TokenType::Whitespace, start_offset, start_line, start_col)
     end
 
     private def lex_identifier : Token
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
-      advance_byte
-      while @i < @length && identifier_part?(@bytes[@i])
-        advance_byte
+      advance_char
+      while !at_eof? && identifier_part?(current_char)
+        advance_char
       end
 
-      span = make_span(start_offset, start_line, start_col)
-      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(TokenType::Identifier, lexeme, span)
+      token_from(TokenType::Identifier, start_offset, start_line, start_col)
     end
 
     private def lex_number : Token
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
-      while @i < @length && digit?(@bytes[@i])
-        advance_byte
+      while !at_eof? && digit?(current_char)
+        advance_char
       end
 
-      if @i < @length && @bytes[@i] == '.'.ord.to_u8
-        advance_byte
-        while @i < @length && digit?(@bytes[@i])
-          advance_byte
+      if current_char == '.'
+        advance_char
+        while !at_eof? && digit?(current_char)
+          advance_char
         end
       end
 
-      span = make_span(start_offset, start_line, start_col)
-      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(TokenType::Number, lexeme, span)
+      token_from(TokenType::Number, start_offset, start_line, start_col)
     end
 
     private def lex_string : Token
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
-      quote = @bytes[@i]
-      advance_byte
+      quote = current_char
+      advance_char
 
-      while @i < @length
-        if @bytes[@i] == '\\'.ord.to_u8
-          advance_byte
-          advance_byte if @i < @length
+      while !at_eof?
+        if current_char == '\\'
+          advance_char
+          advance_char unless at_eof?
           next
         end
-        break if @bytes[@i] == quote
-        advance_byte
+        break if current_char == quote
+        advance_char
       end
 
-      if @i >= @length
-        emit_diagnostic("E_UNTERMINATED_STRING", "Unterminated string literal.", start_offset, start_line, start_col)
-        span = make_span(start_offset, start_line, start_col)
-        lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-        return Token.new(TokenType::String, lexeme, span)
+      if at_eof?
+        emit_diagnostic(DiagnosticType::UnterminatedString, "Unterminated string literal.", start_offset, start_line, start_col)
+        return token_from(TokenType::String, start_offset, start_line, start_col)
       end
 
-      advance_byte
+      advance_char
 
-      span = make_span(start_offset, start_line, start_col)
-      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(TokenType::String, lexeme, span)
+      token_from(TokenType::String, start_offset, start_line, start_col)
     end
 
-    private def operator_or_punct? : Bool
-      byte = @bytes[@i]
-      return true if byte == '+'.ord.to_u8
-      return true if byte == '-'.ord.to_u8
-      return true if byte == '*'.ord.to_u8
-      return true if byte == '/'.ord.to_u8
-      return true if byte == '%'.ord.to_u8
-      return true if byte == '|'.ord.to_u8
-      return true if byte == '.'.ord.to_u8
-      return true if byte == '~'.ord.to_u8
-      return true if byte == '<'.ord.to_u8
-      return true if byte == '>'.ord.to_u8
-      return true if byte == '='.ord.to_u8
-      return true if byte == '!'.ord.to_u8
-      return true if byte == '('.ord.to_u8
-      return true if byte == ')'.ord.to_u8
-      return true if byte == '['.ord.to_u8
-      return true if byte == ']'.ord.to_u8
-      return true if byte == '{'.ord.to_u8
-      return true if byte == '}'.ord.to_u8
-      return true if byte == ','.ord.to_u8
-      return true if byte == ':'.ord.to_u8
-      false
+    private def operator_or_punct?(ch : Char) : Bool
+      case ch
+      when '+', '-', '*', '/', '%', '|', '&', '.', '~', '<', '>', '=', '!', '(', ')', '[', ']', '{', '}', ',', ':'
+        true
+      else
+        false
+      end
     end
 
     private def lex_operator_or_punct : Token
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
 
       if two_char_operator?
-        advance_byte
-        advance_byte
+        advance_char
+        advance_char
       else
-        advance_byte
+        advance_char
       end
 
       span = make_span(start_offset, start_line, start_col)
@@ -337,9 +306,10 @@ module Jinja
     end
 
     private def two_char_operator? : Bool
-      return false if @i + 1 >= @length
-      a = @bytes[@i]
-      b = @bytes[@i + 1]
+      pos = current_offset
+      a = byte_at(pos)
+      b = byte_at(pos + 1)
+      return false unless a && b
       return true if a == '='.ord.to_u8 && b == '='.ord.to_u8
       return true if a == '!'.ord.to_u8 && b == '='.ord.to_u8
       return true if a == '>'.ord.to_u8 && b == '='.ord.to_u8
@@ -352,69 +322,87 @@ module Jinja
     end
 
     private def punct?(lexeme : String) : Bool
-      return true if lexeme == "("
-      return true if lexeme == ")"
-      return true if lexeme == "["
-      return true if lexeme == "]"
-      return true if lexeme == "{" 
-      return true if lexeme == "}"
-      return true if lexeme == ","
-      return true if lexeme == ":"
-      false
+      case lexeme
+      when "(", ")", "[", "]", "{", "}", ",", ":"
+        true
+      else
+        false
+      end
     end
 
     private def unterminated(end_type : TokenType) : Token
       if end_type == TokenType::VarEnd
-        emit_diagnostic("E_UNTERMINATED_EXPRESSION", "Unterminated expression; expected '}}'.", @mode_start_offset, @mode_start_line, @mode_start_col)
+        emit_diagnostic(DiagnosticType::UnterminatedExpression, "Unterminated expression; expected '}}'.", @mode_start_offset, @mode_start_line, @mode_start_col)
       else
-        emit_diagnostic("E_UNTERMINATED_BLOCK", "Unterminated block; expected '%}'.", @mode_start_offset, @mode_start_line, @mode_start_col)
+        emit_diagnostic(DiagnosticType::UnterminatedBlock, "Unterminated block; expected '%}'.", @mode_start_offset, @mode_start_line, @mode_start_col)
       end
       eof_token
     end
 
     private def emit_unexpected_char
-      start_offset = @i
+      start_offset = current_offset
       start_line = @line
       start_col = @column
-      byte = @bytes[@i]
-      end_offset = start_offset + 1
-      if byte == '\n'.ord.to_u8
+      ch = current_char
+      span = span_for_char(start_offset, start_line, start_col, ch)
+      message = "Unexpected character '#{ch}' in expression."
+      @diagnostics << Diagnostic.new(DiagnosticType::UnexpectedChar, Severity::Error, message, span)
+    end
+
+    private def emit_diagnostic(type : DiagnosticType, message : String)
+      span = make_span(current_offset, @line, @column)
+      @diagnostics << Diagnostic.new(type, Severity::Error, message, span)
+    end
+
+    private def emit_diagnostic(type : DiagnosticType, message : String, start_offset : Int32, start_line : Int32, start_col : Int32)
+      span = make_span(start_offset, start_line, start_col)
+      @diagnostics << Diagnostic.new(type, Severity::Error, message, span)
+    end
+
+    private def make_span(start_offset : Int32, start_line : Int32, start_col : Int32) : Span
+      Span.new(Position.new(start_offset, start_line, start_col), Position.new(current_offset, @line, @column))
+    end
+
+    private def span_for_char(start_offset : Int32, start_line : Int32, start_col : Int32, ch : Char) : Span
+      end_offset = start_offset + ch.bytesize
+      if ch == '\n'
         end_line = start_line + 1
         end_col = 1
       else
         end_line = start_line
         end_col = start_col + 1
       end
-      span = Span.new(Position.new(start_offset, start_line, start_col), Position.new(end_offset, end_line, end_col))
-      message = "Unexpected character '#{@source.byte_slice(start_offset, 1)}' in expression."
-      @diagnostics << Diagnostic.new("E_UNEXPECTED_CHAR", Severity::Error, message, span)
+      Span.new(Position.new(start_offset, start_line, start_col), Position.new(end_offset, end_line, end_col))
     end
 
-    private def emit_diagnostic(id : String, message : String, start_offset : Int32? = nil, start_line : Int32? = nil, start_col : Int32? = nil)
-      if start_offset
-        span = make_span(start_offset, start_line.not_nil!, start_col.not_nil!)
-      else
-        span = make_span(@i, @line, @column)
-      end
-      @diagnostics << Diagnostic.new(id, Severity::Error, message, span)
+    private def token_from(type : TokenType, start_offset : Int32, start_line : Int32, start_col : Int32) : Token
+      span = make_span(start_offset, start_line, start_col)
+      lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
+      Token.new(type, lexeme, span)
     end
 
-    private def make_span(start_offset : Int32, start_line : Int32, start_col : Int32) : Span
-      Span.new(Position.new(start_offset, start_line, start_col), Position.new(@i, @line, @column))
+    private def mark_mode_start(start_offset : Int32, start_line : Int32, start_col : Int32)
+      @mode_start_offset = start_offset
+      @mode_start_line = start_line
+      @mode_start_col = start_col
     end
 
-    private def eof_token : Token
-      start_offset = @i
-      start_line = @line
-      start_col = @column
-      span = Span.new(Position.new(start_offset, start_line, start_col), Position.new(start_offset, start_line, start_col))
-      Token.new(TokenType::EOF, "", span)
+    private def current_char : Char
+      @reader.current_char
     end
 
-    private def advance_byte
-      byte = @bytes[@i]
-      @i += 1
-      if byte == '\n'.ord.to_u8
+    private def current_offset : Int32
+      @reader.pos
+    end
+
+    private def at_eof? : Bool
+      current_char == '\0'
+    end
+
+    private def advance_char
+      ch = current_char
+      @reader.next_char
+      if ch == '\n'
         @line += 1
         @column = 1
       else
@@ -422,26 +410,37 @@ module Jinja
       end
     end
 
-    private def whitespace_byte?(byte : UInt8) : Bool
-      byte == ' '.ord.to_u8 || byte == '\t'.ord.to_u8 || byte == '\n'.ord.to_u8 || byte == '\r'.ord.to_u8
+    private def byte_at(index : Int32) : UInt8?
+      return nil if index < 0 || index >= @length
+      @source.byte_at(index)
     end
 
-    private def identifier_start?(byte : UInt8) : Bool
-      (byte >= 'A'.ord.to_u8 && byte <= 'Z'.ord.to_u8) ||
-        (byte >= 'a'.ord.to_u8 && byte <= 'z'.ord.to_u8) ||
-        byte == '_'.ord.to_u8
+    private def whitespace_char?(ch : Char) : Bool
+      ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
     end
 
-    private def identifier_part?(byte : UInt8) : Bool
-      identifier_start?(byte) || digit?(byte)
+    private def identifier_start?(ch : Char) : Bool
+      (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_'
     end
 
-    private def digit?(byte : UInt8) : Bool
-      byte >= '0'.ord.to_u8 && byte <= '9'.ord.to_u8
+    private def identifier_part?(ch : Char) : Bool
+      identifier_start?(ch) || digit?(ch)
     end
 
-    private def quote?(byte : UInt8) : Bool
-      byte == '\''.ord.to_u8 || byte == '"'.ord.to_u8
+    private def digit?(ch : Char) : Bool
+      ch >= '0' && ch <= '9'
+    end
+
+    private def quote?(ch : Char) : Bool
+      ch == '\'' || ch == '"'
+    end
+
+    private def eof_token : Token
+      start_offset = current_offset
+      start_line = @line
+      start_col = @column
+      span = Span.new(Position.new(start_offset, start_line, start_col), Position.new(start_offset, start_line, start_col))
+      Token.new(TokenType::EOF, "", span)
     end
   end
 end

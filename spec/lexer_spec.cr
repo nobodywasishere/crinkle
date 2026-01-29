@@ -23,6 +23,6 @@ describe Jinja::Lexer do
   it "emits diagnostics for unterminated expressions" do
     tokens, diagnostics = lex_file("fixtures/templates/bad_delimiter.j2")
     tokens.last.type.should eq(Jinja::TokenType::EOF)
-    diagnostics.any? { |d| d.id == "E_UNTERMINATED_EXPRESSION" }.should be_true
+    diagnostics.any?(&.type.unterminated_expression?).should be_true
   end
 end
