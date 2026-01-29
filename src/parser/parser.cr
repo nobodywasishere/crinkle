@@ -1,13 +1,14 @@
 module Jinja
   class Parser
-    private alias TagHandler = Proc(Span, AST::Node?)
+    private alias BuiltInTagHandler = Proc(Span, AST::Node?)
 
     getter diagnostics : Array(Diagnostic)
 
-    def initialize(tokens : Array(Token)) : Nil
+    def initialize(tokens : Array(Token), environment : Environment = Environment.new) : Nil
       @tokens = tokens
       @index = 0
       @diagnostics = Array(Diagnostic).new
+      @environment = environment
     end
 
     def parse : AST::Template
@@ -32,6 +33,41 @@ module Jinja
       end
 
       AST::Template.new(nodes, template_span(nodes))
+    end
+
+    def current_token_for_extension : Token
+      current
+    end
+
+    def advance_for_extension : Token
+      advance
+    end
+
+    def skip_whitespace_for_extension : Nil
+      skip_whitespace
+    end
+
+    def parse_expression_for_extension(
+      stop_types : Array(TokenType),
+      stop_lexemes : Array(String) = Array(String).new,
+    ) : AST::Expr
+      parse_expression(stop_types, stop_lexemes)
+    end
+
+    def expect_block_end_for_extension(message : String) : Span
+      expect_block_end(message)
+    end
+
+    def parse_until_end_tag_for_extension(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), Span?}
+      parse_until_end_tag(end_tag, allow_end_name)
+    end
+
+    def recover_to_for_extension(stop_types : Array(TokenType)) : Nil
+      recover_to(stop_types)
+    end
+
+    def span_between_for_extension(start_span : Span, end_span : Span) : Span
+      span_between(start_span, end_span)
     end
 
     private def parse_output : AST::Output
@@ -76,13 +112,21 @@ module Jinja
       advance
 
       if handler = tag_handlers[tag]?
-        handler.call(start_span)
-      else
-        emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.")
-        recover_to([TokenType::BlockEnd])
-        advance if current.type == TokenType::BlockEnd
-        nil
+        extension = @environment.tag_extension(tag)
+        if extension && @environment.override_builtins? && extension.override?
+          return extension.handler.call(self, start_span)
+        end
+        return handler.call(start_span)
       end
+
+      if extension = @environment.tag_extension(tag)
+        return extension.handler.call(self, start_span)
+      end
+
+      emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.")
+      recover_to([TokenType::BlockEnd])
+      advance if current.type == TokenType::BlockEnd
+      nil
     end
 
     private def parse_if(start_span : Span) : AST::If
@@ -359,7 +403,7 @@ module Jinja
       AST::Raw.new(tokens.map(&.lexeme).join, start_span)
     end
 
-    private def tag_handlers : Hash(String, TagHandler)
+    private def tag_handlers : Hash(String, BuiltInTagHandler)
       @tag_handlers ||= {
         "if"       => ->(span : Span) : AST::Node? { parse_if(span) },
         "for"      => ->(span : Span) : AST::Node? { parse_for(span) },
@@ -379,7 +423,7 @@ module Jinja
         "endmacro" => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endmacro") },
         "endcall"  => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endcall") },
         "endraw"   => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endraw") },
-      } of String => TagHandler
+      } of String => BuiltInTagHandler
     end
 
     private def parse_unexpected_end_tag(tag : String) : Nil

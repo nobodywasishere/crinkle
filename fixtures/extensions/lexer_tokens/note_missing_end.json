@@ -1,0 +1,146 @@
+[
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 2,
+        "line": 1,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 2,
+        "line": 1,
+        "column": 3
+      },
+      "end": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "note",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      },
+      "end": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      }
+    }
+  },
+  {
+    "type": "String",
+    "lexeme": "\"Title\"",
+    "span": {
+      "start": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      },
+      "end": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      },
+      "end": {
+        "offset": 16,
+        "line": 1,
+        "column": 17
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 16,
+        "line": 1,
+        "column": 17
+      },
+      "end": {
+        "offset": 18,
+        "line": 1,
+        "column": 19
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\nHello\n",
+    "span": {
+      "start": {
+        "offset": 18,
+        "line": 1,
+        "column": 19
+      },
+      "end": {
+        "offset": 25,
+        "line": 3,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 25,
+        "line": 3,
+        "column": 1
+      },
+      "end": {
+        "offset": 25,
+        "line": 3,
+        "column": 1
+      }
+    }
+  }
+]

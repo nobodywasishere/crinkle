@@ -1,0 +1,37 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "CustomTag",
+      "name": "note",
+      "args": [
+        {
+          "type": "Literal",
+          "value": "Title"
+        }
+      ],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nHello "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

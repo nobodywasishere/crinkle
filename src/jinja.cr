@@ -1,4 +1,5 @@
 require "./diagnostics/diagnostic"
+require "./environment"
 require "./lexer/token"
 require "./lexer/lexer"
 require "./ast/nodes"

@@ -212,6 +212,24 @@ module Jinja
             json.field "type", "Raw"
             json.field "text", node.text
           end
+        when CustomTag
+          json.object do
+            json.field "type", "CustomTag"
+            json.field "name", node.name
+            json.field "args" do
+              write_expr_array(json, node.args)
+            end
+            json.field "kwargs" do
+              write_kwargs(json, node.kwargs)
+            end
+            json.field "body" do
+              json.array do
+                node.body.each do |child|
+                  write_node(json, child)
+                end
+              end
+            end
+          end
         end
       end
 

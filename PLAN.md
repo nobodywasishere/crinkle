@@ -111,6 +111,8 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Extensions declare end tags to support recovery/nesting.
 - Unknown tags emit diagnostics when no extension matches.
 - Add fixtures for extension tag parsing and error recovery.
+- Add registries for custom filters, tests, and global functions with a consistent API
+  (wiring for renderer; evaluation happens in Phase 6).
 
 ### Phase 6 — Renderer / Execution
 **Outcome:** Render templates from AST (no linting yet).

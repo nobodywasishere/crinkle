@@ -1,0 +1,22 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "CustomTag",
+      "name": "note",
+      "args": [
+        {
+          "type": "Literal",
+          "value": "Title"
+        }
+      ],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nHello\n"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "CustomTag",
+      "name": "shout",
+      "args": [
+        {
+          "type": "Literal",
+          "value": "hi"
+        }
+      ],
+      "kwargs": [],
+      "body": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

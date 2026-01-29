@@ -13,7 +13,8 @@ module Jinja
                  FromImport |
                  Macro |
                  CallBlock |
-                 Raw
+                 Raw |
+                 CustomTag
     alias Expr = Name |
                  Literal |
                  Unary |
@@ -181,6 +182,23 @@ module Jinja
       getter span : Span
 
       def initialize(@text : String, @span : Span) : Nil
+      end
+    end
+
+    class CustomTag
+      getter name : String
+      getter args : Array(Expr)
+      getter kwargs : Array(KeywordArg)
+      getter body : Array(Node)
+      getter span : Span
+
+      def initialize(
+        @name : String,
+        @args : Array(Expr),
+        @kwargs : Array(KeywordArg),
+        @body : Array(Node),
+        @span : Span,
+      ) : Nil
       end
     end
 
