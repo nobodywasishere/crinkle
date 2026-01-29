@@ -1,0 +1,13 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "name"
+      },
+      "incomplete": true
+    }
+  ]
+}

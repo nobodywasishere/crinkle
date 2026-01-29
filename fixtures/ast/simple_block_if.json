@@ -1,0 +1,19 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "user"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "Hi"
+        }
+      ],
+      "else": []
+    }
+  ]
+}

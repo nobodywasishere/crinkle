@@ -1,0 +1,26 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "item"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "items"
+      },
+      "body": [
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "item"
+          }
+        }
+      ],
+      "else": []
+    }
+  ]
+}

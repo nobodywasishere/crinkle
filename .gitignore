@@ -1,0 +1,15 @@
+# Crystal
+/.shards/
+/lib/
+/bin/
+!/bin/j2parse
+/docs/
+/.crystal/
+
+# OS/editor
+.DS_Store
+*.swp
+*.swo
+*.tmp
+.vscode/
+.idea/
