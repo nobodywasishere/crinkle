@@ -32,7 +32,7 @@ describe Jinja::Lexer do
       lexer = Jinja::Lexer.new(source)
       tokens = lexer.lex_all
       assert_snapshot("fixtures/lexer_tokens/#{name}.json", tokens_to_json(tokens))
-      assert_snapshot("fixtures/lexer_diagnostics/#{name}.json", diagnostics_to_json(lexer.diagnostics))
+      assert_diagnostics_snapshot("fixtures/lexer_diagnostics/#{name}.json", lexer.diagnostics)
     end
   end
 end

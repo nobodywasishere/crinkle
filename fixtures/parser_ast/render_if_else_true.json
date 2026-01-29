@@ -1,0 +1,23 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "flag_true"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "Yes"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

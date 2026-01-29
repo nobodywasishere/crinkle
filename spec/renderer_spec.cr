@@ -51,9 +51,9 @@ describe "Jinja renderer" do
       output = renderer.render(template, context)
 
       assert_text_snapshot("fixtures/render_output/#{name}.html", output)
-      assert_snapshot(
+      assert_diagnostics_snapshot(
         "fixtures/render_diagnostics/#{name}.json",
-        diagnostics_to_json(renderer.diagnostics)
+        renderer.diagnostics
       )
     end
   end

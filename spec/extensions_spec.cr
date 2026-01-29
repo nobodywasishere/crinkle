@@ -70,12 +70,11 @@ describe "Jinja custom tags" do
 
       ast_json = JSON.parse(Jinja::AST::Serializer.to_pretty_json(template))
       all_diags = lexer.diagnostics + parser.diagnostics
-      diag_json = diagnostics_to_json(all_diags)
 
       assert_snapshot("fixtures/extensions/lexer_tokens/#{name}.json", tokens_to_json(tokens))
-      assert_snapshot("fixtures/extensions/lexer_diagnostics/#{name}.json", diagnostics_to_json(lexer.diagnostics))
+      assert_diagnostics_snapshot("fixtures/extensions/lexer_diagnostics/#{name}.json", lexer.diagnostics)
       assert_snapshot("fixtures/extensions/parser_ast/#{name}.json", ast_json)
-      assert_snapshot("fixtures/extensions/parser_diagnostics/#{name}.json", diag_json)
+      assert_diagnostics_snapshot("fixtures/extensions/parser_diagnostics/#{name}.json", all_diags)
     end
   end
 end

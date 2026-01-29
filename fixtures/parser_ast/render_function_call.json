@@ -1,0 +1,26 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "greet"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": "Ada"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "!\n"
+    }
+  ]
+}

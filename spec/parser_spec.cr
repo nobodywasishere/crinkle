@@ -13,10 +13,9 @@ describe Jinja::Parser do
 
       ast_json = JSON.parse(Jinja::AST::Serializer.to_pretty_json(template))
       all_diags = lexer.diagnostics + parser.diagnostics
-      diag_json = diagnostics_to_json(all_diags)
 
       assert_snapshot("fixtures/parser_ast/#{name}.json", ast_json)
-      assert_snapshot("fixtures/parser_diagnostics/#{name}.json", diag_json)
+      assert_diagnostics_snapshot("fixtures/parser_diagnostics/#{name}.json", all_diags)
     end
   end
 end

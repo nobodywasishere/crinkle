@@ -63,6 +63,11 @@ def assert_snapshot(path : String, actual : JSON::Any) : Nil
 end
 
 def assert_text_snapshot(path : String, actual : String) : Nil
+  if actual.empty?
+    File.delete(path) if File.exists?(path)
+    return
+  end
+
   if File.exists?(path)
     expected = File.read(path)
     if actual != expected
@@ -73,4 +78,13 @@ def assert_text_snapshot(path : String, actual : String) : Nil
     File.write(path, actual)
     raise "Snapshot missing for #{path}. Created snapshot."
   end
+end
+
+def assert_diagnostics_snapshot(path : String, diags : Array(Jinja::Diagnostic)) : Nil
+  if diags.empty?
+    File.delete(path) if File.exists?(path)
+    return
+  end
+
+  assert_snapshot(path, diagnostics_to_json(diags))
 end
