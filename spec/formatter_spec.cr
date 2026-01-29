@@ -68,7 +68,7 @@ describe Jinja::Formatter do
       source = "{# line1\nline2 #}"
       formatter = Jinja::Formatter.new(source)
       output = formatter.format.strip
-      output.should eq("{# line1\nline2 #}")
+      output.should eq("{#\n  line1\n  line2\n#}")
     end
   end
 end

@@ -1,0 +1,50 @@
+[
+  {
+    "type": "Comment",
+    "lexeme": "{# NOTE(tag): This comment is intentionally long to trigger multiline formatting with the configured max line length in the formatter. #}",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 137,
+        "line": 1,
+        "column": 138
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 137,
+        "line": 1,
+        "column": 138
+      },
+      "end": {
+        "offset": 138,
+        "line": 2,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 138,
+        "line": 2,
+        "column": 1
+      },
+      "end": {
+        "offset": 138,
+        "line": 2,
+        "column": 1
+      }
+    }
+  }
+]

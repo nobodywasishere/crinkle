@@ -318,11 +318,30 @@ module Jinja
 
     private def format_comment(node : AST::Comment) : Nil
       sync_indent
-      brace_space = @options.space_inside_braces? ? " " : ""
       start_delim = node.trim_left? ? "{#-" : "{#"
       end_delim = node.trim_right? ? "-#}" : "#}"
       text = node.text.strip
-      @printer.write("#{start_delim}#{brace_space}#{text}#{brace_space}#{end_delim}")
+      if comment_multiline?(text)
+        indent = @options.indent_string
+        @printer.write(start_delim)
+        @printer.newline
+        lines = text.split('\n', remove_empty: false)
+        lines.each_with_index do |line, i|
+          @printer.write(indent)
+          @printer.write(line.strip)
+          @printer.newline if i < lines.size - 1
+        end
+        @printer.newline
+        @printer.write(end_delim)
+      else
+        brace_space = @options.space_inside_braces? ? " " : ""
+        @printer.write("#{start_delim}#{brace_space}#{text}#{brace_space}#{end_delim}")
+      end
+    end
+
+    private def comment_multiline?(text : String) : Bool
+      return true if text.includes?('\n')
+      text.size > @options.max_line_length
     end
 
     private def format_output(node : AST::Output) : Nil

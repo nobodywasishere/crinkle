@@ -1,0 +1,13 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Comment",
+      "text": " NOTE(tag): This comment is intentionally long to trigger multiline formatting with the configured max line length in the formatter. "
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
