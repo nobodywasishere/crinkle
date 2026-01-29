@@ -159,7 +159,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 
 ### Phase 8 — Linter
 **Outcome:** Useful diagnostics beyond syntax.
-- Build rule framework with rule IDs, severity, quick fixes.
+- Build ameba-style rule framework with rule IDs, severity, quick fixes.
 - Starter rules:
   - Unknown variables (if symbol table available)
   - Unused variables / imports
@@ -167,6 +167,13 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
   - Deprecated syntax
   - Suspicious whitespace control
 - Add tests for lints and fixes.
+
+#### Phase 8 Checklist
+- [ ] Linter rule framework + severity plumbing
+- [ ] Diagnostic ID format: `Category/RuleName` (e.g., `Parser/UnknownTag`)
+- [ ] Map lexer/parser/formatter/renderer diagnostics into categories (no refactor of existing IDs)
+- [ ] Linter output style aligned with ameba conventions
+- [ ] Initial lint rules implemented + snapshots
 
 ### Phase 9 — Language Server (LSP)
 **Outcome:** IDE features for templates.
