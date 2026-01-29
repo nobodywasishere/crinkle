@@ -1,0 +1,13 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Raw",
+      "text": "\nline 1\nline 2\n"
+    },
+    {
+      "type": "Text",
+      "value": "\nAfter\n"
+    }
+  ]
+}

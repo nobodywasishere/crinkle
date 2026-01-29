@@ -1,0 +1,24 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Comment",
+      "text": " This is a basic comment "
+    },
+    {
+      "type": "Text",
+      "value": "\nHello, "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "name"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "!"
+    }
+  ]
+}

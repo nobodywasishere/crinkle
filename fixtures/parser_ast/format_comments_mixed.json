@@ -1,0 +1,129 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Comment",
+      "text": " File header comment "
+    },
+    {
+      "type": "Text",
+      "value": "\n<html>\n<head>\n"
+    },
+    {
+      "type": "Comment",
+      "text": " Meta tags section "
+    },
+    {
+      "type": "Text",
+      "value": "\n<title>"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "title"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "</title>\n</head>\n<body>\n"
+    },
+    {
+      "type": "Comment",
+      "text": " Main content area "
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "user"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "Comment",
+          "text": " User is logged in "
+        },
+        {
+          "type": "Text",
+          "value": "\n<div class=\"welcome\">\nHello, "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "user"
+            },
+            "name": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "!"
+        },
+        {
+          "type": "Comment",
+          "text": " Inline greeting "
+        },
+        {
+          "type": "Text",
+          "value": "\n</div>\n"
+        }
+      ],
+      "else": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "Comment",
+          "text": " Show login form "
+        },
+        {
+          "type": "Text",
+          "value": "\n<form>\n"
+        },
+        {
+          "type": "Comment",
+          "text": " TODO: Add CSRF token "
+        },
+        {
+          "type": "Text",
+          "value": "\n<input type=\"text\" name=\"username\">\n</form>\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Comment",
+      "text": "\n  Multi-line comment\n  explaining the footer\n"
+    },
+    {
+      "type": "Text",
+      "value": "\n<footer>\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "copyright"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n</footer>\n</body>\n</html>\n"
+    }
+  ]
+}

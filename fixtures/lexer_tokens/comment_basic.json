@@ -1,0 +1,146 @@
+[
+  {
+    "type": "Comment",
+    "lexeme": "{# This is a basic comment #}",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 29,
+        "line": 1,
+        "column": 30
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\nHello, ",
+    "span": {
+      "start": {
+        "offset": 29,
+        "line": 1,
+        "column": 30
+      },
+      "end": {
+        "offset": 37,
+        "line": 2,
+        "column": 8
+      }
+    }
+  },
+  {
+    "type": "VarStart",
+    "lexeme": "{{",
+    "span": {
+      "start": {
+        "offset": 37,
+        "line": 2,
+        "column": 8
+      },
+      "end": {
+        "offset": 39,
+        "line": 2,
+        "column": 10
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 39,
+        "line": 2,
+        "column": 10
+      },
+      "end": {
+        "offset": 40,
+        "line": 2,
+        "column": 11
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "name",
+    "span": {
+      "start": {
+        "offset": 40,
+        "line": 2,
+        "column": 11
+      },
+      "end": {
+        "offset": 44,
+        "line": 2,
+        "column": 15
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 44,
+        "line": 2,
+        "column": 15
+      },
+      "end": {
+        "offset": 45,
+        "line": 2,
+        "column": 16
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "}}",
+    "span": {
+      "start": {
+        "offset": 45,
+        "line": 2,
+        "column": 16
+      },
+      "end": {
+        "offset": 47,
+        "line": 2,
+        "column": 18
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "!",
+    "span": {
+      "start": {
+        "offset": 47,
+        "line": 2,
+        "column": 18
+      },
+      "end": {
+        "offset": 48,
+        "line": 2,
+        "column": 19
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 48,
+        "line": 2,
+        "column": 19
+      },
+      "end": {
+        "offset": 48,
+        "line": 2,
+        "column": 19
+      }
+    }
+  }
+]

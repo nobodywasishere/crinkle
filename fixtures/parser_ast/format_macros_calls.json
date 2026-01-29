@@ -1,0 +1,189 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Macro",
+      "name": "input",
+      "params": [
+        {
+          "name": "name",
+          "default": null
+        },
+        {
+          "name": "value",
+          "default": {
+            "type": "Literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "type",
+          "default": {
+            "type": "Literal",
+            "value": "text"
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<input type=\""
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "type"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\" name=\""
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\" value=\""
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "value"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\">\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Macro",
+      "name": "form_field",
+      "params": [
+        {
+          "name": "label",
+          "default": null
+        },
+        {
+          "name": "name",
+          "default": null
+        },
+        {
+          "name": "required",
+          "default": {
+            "type": "Literal",
+            "value": false
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<div class=\"field\">\n<label>"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "label"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "</label>\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Call",
+            "callee": {
+              "type": "Name",
+              "value": "input"
+            },
+            "args": [
+              {
+                "type": "Name",
+                "value": "name"
+              }
+            ],
+            "kwargs": []
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "If",
+          "test": {
+            "type": "Name",
+            "value": "required"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n<span class=\"required\">*</span>\n"
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n</div>\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "CallBlock",
+      "callee": {
+        "type": "Name",
+        "value": "form_field"
+      },
+      "args": [
+        {
+          "type": "Literal",
+          "value": "Username"
+        },
+        {
+          "type": "Literal",
+          "value": "username"
+        }
+      ],
+      "kwargs": [
+        {
+          "name": "required",
+          "value": {
+            "type": "Literal",
+            "value": true
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nExtra content in call block\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

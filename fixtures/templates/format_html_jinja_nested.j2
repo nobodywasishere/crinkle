@@ -1,0 +1,16 @@
+<div class="container">
+{% if show_header %}
+<header>
+<nav>
+{% for item in menu %}
+<a href="{{ item.url }}">{{ item.name }}</a>
+{% endfor %}
+</nav>
+</header>
+{% endif %}
+<main>
+{% block content %}
+<p>Default content</p>
+{% endblock %}
+</main>
+</div>

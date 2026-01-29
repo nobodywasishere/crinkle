@@ -1,0 +1,28 @@
+{% if condition %}
+  True branch
+{% endif %}
+
+{% if a %}
+  A
+{% else %}
+  Not A
+{% endif %}
+
+{% for item in items %}
+  {{ item }}
+{% else %}
+  No items
+{% endfor %}
+
+{% for pair in pairs %}
+  {{ pair }}
+{% endfor %}
+
+{% set x = 42 %}
+{% set greeting %}
+  Hello, {{ name }}!
+{% endset %}
+
+{% block sidebar %}
+  Default sidebar
+{% endblock %}

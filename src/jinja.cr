@@ -6,6 +6,7 @@ require "./ast/nodes"
 require "./ast/serializer"
 require "./parser/parser"
 require "./renderer/renderer"
+require "./formatter/formatter"
 
 module Jinja
 end

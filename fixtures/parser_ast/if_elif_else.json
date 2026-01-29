@@ -1,0 +1,43 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Literal",
+        "value": true
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "A"
+        }
+      ],
+      "else": [
+        {
+          "type": "If",
+          "test": {
+            "type": "Literal",
+            "value": false
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "B"
+            }
+          ],
+          "else": [
+            {
+              "type": "Text",
+              "value": "C"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

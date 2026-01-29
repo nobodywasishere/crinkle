@@ -1,0 +1,13 @@
+{{ name | upper | trim }}
+{{ items | join(", ") | default("none") }}
+{{ user.profile.avatar | default(fallback_image) }}
+{{ data["key"]["nested"] }}
+{{ greet(name) }}
+{{ (a + b) * (c - d) }}
+{{ not is_active and has_permission }}
+{{ value }}
+{{ [1, 2, 3] }}
+{{ {"key": "value", "other": 123} }}
+{{ (single_item,) }}
+{{ lower_name is lower }}
+{{ name is not lower }}

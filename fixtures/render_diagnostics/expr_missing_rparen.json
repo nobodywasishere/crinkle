@@ -1,22 +1,5 @@
 [
   {
-    "id": "E_UNKNOWN_VARIABLE",
-    "severity": "error",
-    "message": "Unknown variable 'foo'.",
-    "span": {
-      "start": {
-        "offset": 4,
-        "line": 1,
-        "column": 5
-      },
-      "end": {
-        "offset": 7,
-        "line": 1,
-        "column": 8
-      }
-    }
-  },
-  {
     "id": "E_INVALID_OPERAND",
     "severity": "error",
     "message": "Expected a number.",

@@ -1,0 +1,71 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div>\n<img src=\""
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "image_url"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\" alt=\""
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "alt_text"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\">\n<br>\n<input type=\"text\" value=\""
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "default_value"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\">\n<hr>\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "show_meta"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<meta name=\"description\" content=\""
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "description"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\">\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n</div>\n"
+    }
+  ]
+}

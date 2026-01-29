@@ -132,10 +132,28 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 
 ### Phase 7 — Formatter (Optional, HTML-aware)
 **Outcome:** Format templates with HTML-structural awareness.
+- Comment preservation: extend lexer/parser with `{# #}` support, ignored by renderer.
+- Fault-tolerant: continue formatting when AST contains errors.
 - Build formatter over AST + token spans (preserve trivia where possible).
 - HTML-aware mode: align Jinja blocks with HTML indentation.
 - Configurable options (indent width, line length, whitespace control).
-- Add fixtures with before/after formatting samples.
+- Add fixtures with before/after formatting samples (reuse `fixtures/templates/`).
+
+#### Phase 7 Checklist
+- [x] Lexer: CommentStart/CommentEnd token types
+- [x] Parser: AST::Comment node type
+- [x] Renderer: ignore Comment nodes
+- [x] Formatter::Options struct implemented
+- [x] Formatter::Printer class implemented
+- [x] Formatter::HtmlContext class implemented
+- [x] Formatter class with AST traversal
+- [x] Expression formatting complete
+- [x] Statement formatting complete
+- [x] Comment formatting with indentation
+- [x] Fault-tolerance for parse errors
+- [x] HTML-aware indentation working
+- [x] Formatter fixtures created
+- [x] Formatter specs passing
 
 ### Phase 8 — Linter
 **Outcome:** Useful diagnostics beyond syntax.

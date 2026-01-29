@@ -1,0 +1,42 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<html>\n<head>\n<title>"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "title"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "</title>\n</head>\n<body>\n<h1>"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "heading"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "</h1>\n<p>"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "content"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "</p>\n</body>\n</html>\n"
+    }
+  ]
+}

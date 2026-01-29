@@ -1,0 +1,100 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div class=\"level1\">\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "a"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<div class=\"level2\">\n"
+        },
+        {
+          "type": "For",
+          "target": {
+            "type": "Name",
+            "value": "item"
+          },
+          "iter": {
+            "type": "Name",
+            "value": "items"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n<div class=\"level3\">\n"
+            },
+            {
+              "type": "If",
+              "test": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "item"
+                },
+                "name": "active"
+              },
+              "body": [
+                {
+                  "type": "Text",
+                  "value": "\n<div class=\"level4\">\n"
+                },
+                {
+                  "type": "Block",
+                  "name": "content",
+                  "body": [
+                    {
+                      "type": "Text",
+                      "value": "\n<p>"
+                    },
+                    {
+                      "type": "Output",
+                      "expr": {
+                        "type": "GetAttr",
+                        "target": {
+                          "type": "Name",
+                          "value": "item"
+                        },
+                        "name": "value"
+                      }
+                    },
+                    {
+                      "type": "Text",
+                      "value": "</p>\n"
+                    }
+                  ]
+                },
+                {
+                  "type": "Text",
+                  "value": "\n</div>\n"
+                }
+              ],
+              "else": []
+            },
+            {
+              "type": "Text",
+              "value": "\n</div>\n"
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n</div>\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n</div>\n"
+    }
+  ]
+}

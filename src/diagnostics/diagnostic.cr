@@ -3,6 +3,7 @@ module Jinja
     UnterminatedExpression
     UnterminatedBlock
     UnterminatedString
+    UnterminatedComment
     UnexpectedChar
     UnexpectedToken
     ExpectedToken
@@ -60,6 +61,7 @@ module Jinja
       in DiagnosticType::UnterminatedExpression then "E_UNTERMINATED_EXPRESSION"
       in DiagnosticType::UnterminatedBlock      then "E_UNTERMINATED_BLOCK"
       in DiagnosticType::UnterminatedString     then "E_UNTERMINATED_STRING"
+      in DiagnosticType::UnterminatedComment    then "E_UNTERMINATED_COMMENT"
       in DiagnosticType::UnexpectedChar         then "E_UNEXPECTED_CHAR"
       in DiagnosticType::UnexpectedToken        then "E_UNEXPECTED_TOKEN"
       in DiagnosticType::ExpectedToken          then "E_EXPECTED_TOKEN"

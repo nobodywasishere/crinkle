@@ -1,0 +1,50 @@
+[
+  {
+    "type": "Comment",
+    "lexeme": "{#- trim me -#}",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      },
+      "end": {
+        "offset": 16,
+        "line": 2,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 16,
+        "line": 2,
+        "column": 1
+      },
+      "end": {
+        "offset": 16,
+        "line": 2,
+        "column": 1
+      }
+    }
+  }
+]

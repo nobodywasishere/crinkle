@@ -1,0 +1,35 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Comment",
+      "text": "\n  This is a multiline comment\n  that spans multiple lines\n"
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "flag_true"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Comment",
+          "text": " Nested comment inside block "
+        },
+        {
+          "type": "Text",
+          "value": "\n  Content here\n"
+        }
+      ],
+      "else": []
+    }
+  ]
+}

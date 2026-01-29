@@ -1,0 +1,13 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Comment",
+      "text": "- trim me -"
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

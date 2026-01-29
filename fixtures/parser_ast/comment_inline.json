@@ -1,0 +1,48 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "Before "
+    },
+    {
+      "type": "Comment",
+      "text": " inline "
+    },
+    {
+      "type": "Text",
+      "value": " after\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "name"
+      }
+    },
+    {
+      "type": "Comment",
+      "text": " comment after expression "
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Comment",
+      "text": " empty comment "
+    },
+    {
+      "type": "Comment",
+      "text": ""
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Comment",
+      "text": " comment with special chars: {{ }} {% %} "
+    }
+  ]
+}

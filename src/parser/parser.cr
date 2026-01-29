@@ -19,6 +19,8 @@ module Jinja
         when TokenType::Text
           nodes << AST::Text.new(current.lexeme, current.span)
           advance
+        when TokenType::Comment
+          nodes << parse_comment
         when TokenType::VarStart
           nodes << parse_output
         when TokenType::BlockStart
@@ -58,6 +60,19 @@ module Jinja
                  end
 
       AST::Output.new(expr, span_between(start_span, end_span))
+    end
+
+    private def parse_comment : AST::Comment
+      token = current
+      # Extract comment text without delimiters {# and #}
+      lexeme = token.lexeme
+      text = if lexeme.size > 4
+               lexeme[2, lexeme.size - 4]
+             else
+               ""
+             end
+      advance
+      AST::Comment.new(text, token.span)
     end
 
     private def parse_block : AST::Node?
@@ -124,9 +139,24 @@ module Jinja
         advance if current.type == TokenType::BlockEnd
       end
 
-      body, end_span = parse_until_end_tag("endif")
+      body, hit_tag = parse_until_any_end_tag_peek(["endif", "else", "elif"])
+      else_body = Array(AST::Node).new
+      end_span = start_span
+
+      case hit_tag
+      when "else"
+        consume_block_tag("else")
+        else_body, end_span = parse_until_end_tag("endif")
+      when "elif"
+        elif_node = parse_elif
+        else_body = [elif_node] of AST::Node
+        end_span = elif_node.span
+      when "endif"
+        end_span = consume_end_tag
+      end
+
       end_span ||= start_span
-      AST::If.new(test, body, Array(AST::Node).new, span_between(start_span, end_span))
+      AST::If.new(test, body, else_body, span_between(start_span, end_span))
     end
 
     private def parse_for(start_span : Span) : AST::For
@@ -154,9 +184,16 @@ module Jinja
         advance if current.type == TokenType::BlockEnd
       end
 
-      body, end_span = parse_until_end_tag("endfor")
+      body, body_end, hit_tag = parse_until_any_end_tag(["endfor", "else"])
+      else_body = Array(AST::Node).new
+      end_span = body_end
+
+      if hit_tag == "else"
+        else_body, end_span = parse_until_end_tag("endfor")
+      end
+
       end_span ||= start_span
-      AST::For.new(target, iter, body, Array(AST::Node).new, span_between(start_span, end_span))
+      AST::For.new(target, iter, body, else_body, span_between(start_span, end_span))
     end
 
     private def parse_set(start_span : Span) : AST::Node
@@ -427,6 +464,8 @@ module Jinja
         when TokenType::Text
           nodes << AST::Text.new(current.lexeme, current.span)
           advance
+        when TokenType::Comment
+          nodes << parse_comment
         when TokenType::VarStart
           nodes << parse_output
         when TokenType::EOF
@@ -464,6 +503,8 @@ module Jinja
         when TokenType::Text
           nodes << AST::Text.new(current.lexeme, current.span)
           advance
+        when TokenType::Comment
+          nodes << parse_comment
         when TokenType::VarStart
           nodes << parse_output
         when TokenType::EOF
@@ -484,6 +525,95 @@ module Jinja
       end
 
       {nodes, nil, nil}
+    end
+
+    private def parse_until_any_end_tag_peek(end_tags : Array(String)) : {Array(AST::Node), String?}
+      nodes = Array(AST::Node).new
+
+      while !at_end?
+        if current.type == TokenType::BlockStart
+          tag = peek_block_tag
+          return {nodes, tag} if tag && end_tags.includes?(tag)
+
+          node = parse_block
+          nodes << node if node
+          next
+        end
+
+        case current.type
+        when TokenType::Text
+          nodes << AST::Text.new(current.lexeme, current.span)
+          advance
+        when TokenType::Comment
+          nodes << parse_comment
+        when TokenType::VarStart
+          nodes << parse_output
+        when TokenType::EOF
+          break
+        else
+          emit_unexpected_token("block body")
+          advance
+        end
+      end
+
+      unless end_tags.empty?
+        message = if end_tags.size == 1
+                    "Missing end tag '#{end_tags.first}'."
+                  else
+                    "Missing end tag (one of: #{end_tags.join(", ")})."
+                  end
+        emit_diagnostic(DiagnosticType::MissingEndTag, message)
+      end
+
+      {nodes, nil}
+    end
+
+    private def consume_block_tag(expected : String) : Span
+      start_span = current.span
+      advance
+      skip_whitespace
+      if current.type == TokenType::Identifier && current.lexeme == expected
+        advance
+      else
+        emit_expected_token("Expected '#{expected}'.")
+      end
+      skip_whitespace
+      end_span = expect_block_end("Expected '%}' to close #{expected} tag.")
+      span_between(start_span, end_span)
+    end
+
+    private def parse_elif : AST::If
+      start_span = current.span
+      advance
+      skip_whitespace
+      if current.type == TokenType::Identifier && current.lexeme == "elif"
+        advance
+      else
+        emit_expected_token("Expected 'elif'.")
+      end
+      skip_whitespace
+      test = parse_expression([TokenType::BlockEnd])
+      skip_whitespace
+      expect_block_end("Expected '%}' to close elif tag.")
+
+      body, hit_tag = parse_until_any_end_tag_peek(["endif", "else", "elif"])
+      else_body = Array(AST::Node).new
+      end_span = start_span
+
+      case hit_tag
+      when "else"
+        consume_block_tag("else")
+        else_body, end_span = parse_until_end_tag("endif")
+      when "elif"
+        elif_node = parse_elif
+        else_body = [elif_node] of AST::Node
+        end_span = elif_node.span
+      when "endif"
+        end_span = consume_end_tag
+      end
+
+      end_span ||= start_span
+      AST::If.new(test, body, else_body, span_between(start_span, end_span))
     end
 
     private def parse_assignment_target(message : String) : AST::Target

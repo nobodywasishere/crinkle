@@ -1,0 +1,93 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div class=\"container\">\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "show_header"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<header>\n<nav>\n"
+        },
+        {
+          "type": "For",
+          "target": {
+            "type": "Name",
+            "value": "item"
+          },
+          "iter": {
+            "type": "Name",
+            "value": "menu"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n<a href=\""
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "item"
+                },
+                "name": "url"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "\">"
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "item"
+                },
+                "name": "name"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "</a>\n"
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n</nav>\n</header>\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n<main>\n"
+    },
+    {
+      "type": "Block",
+      "name": "content",
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<p>Default content</p>\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n</main>\n</div>\n"
+    }
+  ]
+}

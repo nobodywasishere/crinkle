@@ -51,6 +51,8 @@ module Jinja
         return lex_var_start
       elsif starts_block?
         return lex_block_start
+      elsif starts_comment?
+        return lex_comment
       end
 
       start_offset = current_offset
@@ -58,11 +60,36 @@ module Jinja
       start_col = @column
 
       while !at_eof?
-        break if starts_var? || starts_block?
+        break if starts_var? || starts_block? || starts_comment?
         advance_char
       end
 
       token_from(TokenType::Text, start_offset, start_line, start_col)
+    end
+
+    private def lex_comment : Token
+      start_offset = current_offset
+      start_line = @line
+      start_col = @column
+
+      # Skip {#
+      advance_char
+      advance_char
+      # Skip optional whitespace control dash
+      advance_char if current_char == '-'
+
+      # Scan until #} or EOF
+      while !at_eof?
+        if end_len = comment_end_length
+          end_len.times { advance_char }
+          return token_from(TokenType::Comment, start_offset, start_line, start_col)
+        end
+        advance_char
+      end
+
+      # Unterminated comment
+      emit_diagnostic(DiagnosticType::UnterminatedComment, "Unterminated comment; expected '#}'.", start_offset, start_line, start_col)
+      token_from(TokenType::Comment, start_offset, start_line, start_col)
     end
 
     private def lex_expr_or_block(end_type : TokenType, next_mode : Mode) : Token
@@ -116,6 +143,21 @@ module Jinja
       b0 = byte_at(current_offset)
       b1 = byte_at(current_offset + 1)
       b0 == '{'.ord.to_u8 && b1 == '%'.ord.to_u8
+    end
+
+    private def starts_comment? : Bool
+      b0 = byte_at(current_offset)
+      b1 = byte_at(current_offset + 1)
+      b0 == '{'.ord.to_u8 && b1 == '#'.ord.to_u8
+    end
+
+    private def comment_end_length : Int32?
+      b0 = byte_at(current_offset)
+      b1 = byte_at(current_offset + 1)
+      b2 = byte_at(current_offset + 2)
+      return 2 if b0 == '#'.ord.to_u8 && b1 == '}'.ord.to_u8
+      return 3 if b0 == '-'.ord.to_u8 && b1 == '#'.ord.to_u8 && b2 == '}'.ord.to_u8
+      nil
     end
 
     private def starts_var_end? : Bool

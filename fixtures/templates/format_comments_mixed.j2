@@ -1,0 +1,29 @@
+{# File header comment #}
+<html>
+<head>
+{# Meta tags section #}
+<title>{{ title }}</title>
+</head>
+<body>
+{# Main content area #}
+{% if user %}
+{# User is logged in #}
+<div class="welcome">
+Hello, {{ user.name }}!{# Inline greeting #}
+</div>
+{% else %}
+{# Show login form #}
+<form>
+{# TODO: Add CSRF token #}
+<input type="text" name="username">
+</form>
+{% endif %}
+{#
+  Multi-line comment
+  explaining the footer
+#}
+<footer>
+{{ copyright }}
+</footer>
+</body>
+</html>

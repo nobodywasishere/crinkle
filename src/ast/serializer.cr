@@ -29,6 +29,11 @@ module Jinja
             json.field "type", "Text"
             json.field "value", node.value
           end
+        when Comment
+          json.object do
+            json.field "type", "Comment"
+            json.field "text", node.text
+          end
         when Output
           json.object do
             json.field "type", "Output"

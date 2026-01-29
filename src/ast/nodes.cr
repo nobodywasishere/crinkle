@@ -1,6 +1,7 @@
 module Jinja
   module AST
     alias Node = Text |
+                 Comment |
                  Output |
                  If |
                  For |
@@ -47,6 +48,14 @@ module Jinja
       getter span : Span
 
       def initialize(@value : String, @span : Span) : Nil
+      end
+    end
+
+    class Comment
+      getter text : String
+      getter span : Span
+
+      def initialize(@text : String, @span : Span) : Nil
       end
     end
 

@@ -1,0 +1,67 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div>\n<pre>\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "show_code"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\ndef hello():\n    print(\"Hello\")\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n</pre>\n<code>"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "inline_code"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "</code>\n<script>\nvar x = "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "json_value"
+      }
+    },
+    {
+      "type": "Text",
+      "value": ";\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "debug"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nconsole.log(x);\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n</script>\n</div>\n"
+    }
+  ]
+}

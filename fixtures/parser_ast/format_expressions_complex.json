@@ -1,0 +1,320 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          },
+          "name": "upper",
+          "args": [],
+          "kwargs": []
+        },
+        "name": "trim",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "Name",
+            "value": "items"
+          },
+          "name": "join",
+          "args": [
+            {
+              "type": "Literal",
+              "value": ", "
+            }
+          ],
+          "kwargs": []
+        },
+        "name": "default",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "none"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "GetAttr",
+          "target": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "user"
+            },
+            "name": "profile"
+          },
+          "name": "avatar"
+        },
+        "name": "default",
+        "args": [
+          {
+            "type": "Name",
+            "value": "fallback_image"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetItem",
+        "target": {
+          "type": "GetItem",
+          "target": {
+            "type": "Name",
+            "value": "data"
+          },
+          "index": {
+            "type": "Literal",
+            "value": "key"
+          }
+        },
+        "index": {
+          "type": "Literal",
+          "value": "nested"
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "greet"
+        },
+        "args": [
+          {
+            "type": "Name",
+            "value": "name"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Binary",
+        "op": "*",
+        "left": {
+          "type": "Group",
+          "expr": {
+            "type": "Binary",
+            "op": "+",
+            "left": {
+              "type": "Name",
+              "value": "a"
+            },
+            "right": {
+              "type": "Name",
+              "value": "b"
+            }
+          }
+        },
+        "right": {
+          "type": "Group",
+          "expr": {
+            "type": "Binary",
+            "op": "-",
+            "left": {
+              "type": "Name",
+              "value": "c"
+            },
+            "right": {
+              "type": "Name",
+              "value": "d"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Binary",
+        "op": "and",
+        "left": {
+          "type": "Unary",
+          "op": "not",
+          "expr": {
+            "type": "Name",
+            "value": "is_active"
+          }
+        },
+        "right": {
+          "type": "Name",
+          "value": "has_permission"
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "value"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "ListLiteral",
+        "items": [
+          {
+            "type": "Literal",
+            "value": 1
+          },
+          {
+            "type": "Literal",
+            "value": 2
+          },
+          {
+            "type": "Literal",
+            "value": 3
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "DictLiteral",
+        "pairs": [
+          {
+            "key": {
+              "type": "Literal",
+              "value": "key"
+            },
+            "value": {
+              "type": "Literal",
+              "value": "value"
+            }
+          },
+          {
+            "key": {
+              "type": "Literal",
+              "value": "other"
+            },
+            "value": {
+              "type": "Literal",
+              "value": 123
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "TupleLiteral",
+        "items": [
+          {
+            "type": "Name",
+            "value": "single_item"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "lower_name"
+        },
+        "name": "lower",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "name"
+        },
+        "name": "lower",
+        "negated": true,
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

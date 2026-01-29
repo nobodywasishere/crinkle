@@ -67,6 +67,8 @@ module Jinja
       case node
       when AST::Text
         node.value
+      when AST::Comment
+        "" # Comments produce no output
       when AST::Raw
         node.text
       when AST::Output

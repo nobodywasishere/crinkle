@@ -1,0 +1,914 @@
+[
+  {
+    "type": "Comment",
+    "lexeme": "{# File header comment #}",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 25,
+        "line": 1,
+        "column": 26
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n<html>\n<head>\n",
+    "span": {
+      "start": {
+        "offset": 25,
+        "line": 1,
+        "column": 26
+      },
+      "end": {
+        "offset": 40,
+        "line": 4,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "Comment",
+    "lexeme": "{# Meta tags section #}",
+    "span": {
+      "start": {
+        "offset": 40,
+        "line": 4,
+        "column": 1
+      },
+      "end": {
+        "offset": 63,
+        "line": 4,
+        "column": 24
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n<title>",
+    "span": {
+      "start": {
+        "offset": 63,
+        "line": 4,
+        "column": 24
+      },
+      "end": {
+        "offset": 71,
+        "line": 5,
+        "column": 8
+      }
+    }
+  },
+  {
+    "type": "VarStart",
+    "lexeme": "{{",
+    "span": {
+      "start": {
+        "offset": 71,
+        "line": 5,
+        "column": 8
+      },
+      "end": {
+        "offset": 73,
+        "line": 5,
+        "column": 10
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 73,
+        "line": 5,
+        "column": 10
+      },
+      "end": {
+        "offset": 74,
+        "line": 5,
+        "column": 11
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "title",
+    "span": {
+      "start": {
+        "offset": 74,
+        "line": 5,
+        "column": 11
+      },
+      "end": {
+        "offset": 79,
+        "line": 5,
+        "column": 16
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 79,
+        "line": 5,
+        "column": 16
+      },
+      "end": {
+        "offset": 80,
+        "line": 5,
+        "column": 17
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "}}",
+    "span": {
+      "start": {
+        "offset": 80,
+        "line": 5,
+        "column": 17
+      },
+      "end": {
+        "offset": 82,
+        "line": 5,
+        "column": 19
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "</title>\n</head>\n<body>\n",
+    "span": {
+      "start": {
+        "offset": 82,
+        "line": 5,
+        "column": 19
+      },
+      "end": {
+        "offset": 106,
+        "line": 8,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "Comment",
+    "lexeme": "{# Main content area #}",
+    "span": {
+      "start": {
+        "offset": 106,
+        "line": 8,
+        "column": 1
+      },
+      "end": {
+        "offset": 129,
+        "line": 8,
+        "column": 24
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 129,
+        "line": 8,
+        "column": 24
+      },
+      "end": {
+        "offset": 130,
+        "line": 9,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 130,
+        "line": 9,
+        "column": 1
+      },
+      "end": {
+        "offset": 132,
+        "line": 9,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 132,
+        "line": 9,
+        "column": 3
+      },
+      "end": {
+        "offset": 133,
+        "line": 9,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "if",
+    "span": {
+      "start": {
+        "offset": 133,
+        "line": 9,
+        "column": 4
+      },
+      "end": {
+        "offset": 135,
+        "line": 9,
+        "column": 6
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 135,
+        "line": 9,
+        "column": 6
+      },
+      "end": {
+        "offset": 136,
+        "line": 9,
+        "column": 7
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "user",
+    "span": {
+      "start": {
+        "offset": 136,
+        "line": 9,
+        "column": 7
+      },
+      "end": {
+        "offset": 140,
+        "line": 9,
+        "column": 11
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 140,
+        "line": 9,
+        "column": 11
+      },
+      "end": {
+        "offset": 141,
+        "line": 9,
+        "column": 12
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 141,
+        "line": 9,
+        "column": 12
+      },
+      "end": {
+        "offset": 143,
+        "line": 9,
+        "column": 14
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 143,
+        "line": 9,
+        "column": 14
+      },
+      "end": {
+        "offset": 144,
+        "line": 10,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "Comment",
+    "lexeme": "{# User is logged in #}",
+    "span": {
+      "start": {
+        "offset": 144,
+        "line": 10,
+        "column": 1
+      },
+      "end": {
+        "offset": 167,
+        "line": 10,
+        "column": 24
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n<div class=\"welcome\">\nHello, ",
+    "span": {
+      "start": {
+        "offset": 167,
+        "line": 10,
+        "column": 24
+      },
+      "end": {
+        "offset": 197,
+        "line": 12,
+        "column": 8
+      }
+    }
+  },
+  {
+    "type": "VarStart",
+    "lexeme": "{{",
+    "span": {
+      "start": {
+        "offset": 197,
+        "line": 12,
+        "column": 8
+      },
+      "end": {
+        "offset": 199,
+        "line": 12,
+        "column": 10
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 199,
+        "line": 12,
+        "column": 10
+      },
+      "end": {
+        "offset": 200,
+        "line": 12,
+        "column": 11
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "user",
+    "span": {
+      "start": {
+        "offset": 200,
+        "line": 12,
+        "column": 11
+      },
+      "end": {
+        "offset": 204,
+        "line": 12,
+        "column": 15
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": ".",
+    "span": {
+      "start": {
+        "offset": 204,
+        "line": 12,
+        "column": 15
+      },
+      "end": {
+        "offset": 205,
+        "line": 12,
+        "column": 16
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "name",
+    "span": {
+      "start": {
+        "offset": 205,
+        "line": 12,
+        "column": 16
+      },
+      "end": {
+        "offset": 209,
+        "line": 12,
+        "column": 20
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 209,
+        "line": 12,
+        "column": 20
+      },
+      "end": {
+        "offset": 210,
+        "line": 12,
+        "column": 21
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "}}",
+    "span": {
+      "start": {
+        "offset": 210,
+        "line": 12,
+        "column": 21
+      },
+      "end": {
+        "offset": 212,
+        "line": 12,
+        "column": 23
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "!",
+    "span": {
+      "start": {
+        "offset": 212,
+        "line": 12,
+        "column": 23
+      },
+      "end": {
+        "offset": 213,
+        "line": 12,
+        "column": 24
+      }
+    }
+  },
+  {
+    "type": "Comment",
+    "lexeme": "{# Inline greeting #}",
+    "span": {
+      "start": {
+        "offset": 213,
+        "line": 12,
+        "column": 24
+      },
+      "end": {
+        "offset": 234,
+        "line": 12,
+        "column": 45
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n</div>\n",
+    "span": {
+      "start": {
+        "offset": 234,
+        "line": 12,
+        "column": 45
+      },
+      "end": {
+        "offset": 242,
+        "line": 14,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 242,
+        "line": 14,
+        "column": 1
+      },
+      "end": {
+        "offset": 244,
+        "line": 14,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 244,
+        "line": 14,
+        "column": 3
+      },
+      "end": {
+        "offset": 245,
+        "line": 14,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "else",
+    "span": {
+      "start": {
+        "offset": 245,
+        "line": 14,
+        "column": 4
+      },
+      "end": {
+        "offset": 249,
+        "line": 14,
+        "column": 8
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 249,
+        "line": 14,
+        "column": 8
+      },
+      "end": {
+        "offset": 250,
+        "line": 14,
+        "column": 9
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 250,
+        "line": 14,
+        "column": 9
+      },
+      "end": {
+        "offset": 252,
+        "line": 14,
+        "column": 11
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 252,
+        "line": 14,
+        "column": 11
+      },
+      "end": {
+        "offset": 253,
+        "line": 15,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "Comment",
+    "lexeme": "{# Show login form #}",
+    "span": {
+      "start": {
+        "offset": 253,
+        "line": 15,
+        "column": 1
+      },
+      "end": {
+        "offset": 274,
+        "line": 15,
+        "column": 22
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n<form>\n",
+    "span": {
+      "start": {
+        "offset": 274,
+        "line": 15,
+        "column": 22
+      },
+      "end": {
+        "offset": 282,
+        "line": 17,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "Comment",
+    "lexeme": "{# TODO: Add CSRF token #}",
+    "span": {
+      "start": {
+        "offset": 282,
+        "line": 17,
+        "column": 1
+      },
+      "end": {
+        "offset": 308,
+        "line": 17,
+        "column": 27
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n<input type=\"text\" name=\"username\">\n</form>\n",
+    "span": {
+      "start": {
+        "offset": 308,
+        "line": 17,
+        "column": 27
+      },
+      "end": {
+        "offset": 353,
+        "line": 20,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 353,
+        "line": 20,
+        "column": 1
+      },
+      "end": {
+        "offset": 355,
+        "line": 20,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 355,
+        "line": 20,
+        "column": 3
+      },
+      "end": {
+        "offset": 356,
+        "line": 20,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "endif",
+    "span": {
+      "start": {
+        "offset": 356,
+        "line": 20,
+        "column": 4
+      },
+      "end": {
+        "offset": 361,
+        "line": 20,
+        "column": 9
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 361,
+        "line": 20,
+        "column": 9
+      },
+      "end": {
+        "offset": 362,
+        "line": 20,
+        "column": 10
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 362,
+        "line": 20,
+        "column": 10
+      },
+      "end": {
+        "offset": 364,
+        "line": 20,
+        "column": 12
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 364,
+        "line": 20,
+        "column": 12
+      },
+      "end": {
+        "offset": 365,
+        "line": 21,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "Comment",
+    "lexeme": "{#\n  Multi-line comment\n  explaining the footer\n#}",
+    "span": {
+      "start": {
+        "offset": 365,
+        "line": 21,
+        "column": 1
+      },
+      "end": {
+        "offset": 415,
+        "line": 24,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n<footer>\n",
+    "span": {
+      "start": {
+        "offset": 415,
+        "line": 24,
+        "column": 3
+      },
+      "end": {
+        "offset": 425,
+        "line": 26,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "VarStart",
+    "lexeme": "{{",
+    "span": {
+      "start": {
+        "offset": 425,
+        "line": 26,
+        "column": 1
+      },
+      "end": {
+        "offset": 427,
+        "line": 26,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 427,
+        "line": 26,
+        "column": 3
+      },
+      "end": {
+        "offset": 428,
+        "line": 26,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "copyright",
+    "span": {
+      "start": {
+        "offset": 428,
+        "line": 26,
+        "column": 4
+      },
+      "end": {
+        "offset": 437,
+        "line": 26,
+        "column": 13
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 437,
+        "line": 26,
+        "column": 13
+      },
+      "end": {
+        "offset": 438,
+        "line": 26,
+        "column": 14
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "}}",
+    "span": {
+      "start": {
+        "offset": 438,
+        "line": 26,
+        "column": 14
+      },
+      "end": {
+        "offset": 440,
+        "line": 26,
+        "column": 16
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n</footer>\n</body>\n</html>\n",
+    "span": {
+      "start": {
+        "offset": 440,
+        "line": 26,
+        "column": 16
+      },
+      "end": {
+        "offset": 467,
+        "line": 30,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 467,
+        "line": 30,
+        "column": 1
+      },
+      "end": {
+        "offset": 467,
+        "line": 30,
+        "column": 1
+      }
+    }
+  }
+]

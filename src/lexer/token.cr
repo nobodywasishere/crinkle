@@ -1,6 +1,7 @@
 module Jinja
   enum TokenType
     Text
+    Comment
     VarStart
     VarEnd
     BlockStart

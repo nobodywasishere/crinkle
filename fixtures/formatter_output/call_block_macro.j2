@@ -1,0 +1,2 @@
+{% macro wrap() %}({{ caller() }}){% endmacro %}
+{% call wrap() %}Body{% endcall %}

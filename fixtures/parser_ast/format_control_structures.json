@@ -1,0 +1,174 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "condition"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nTrue branch\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "a"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nA\n"
+        }
+      ],
+      "else": [
+        {
+          "type": "Text",
+          "value": "\nNot A\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "item"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "items"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "item"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": [
+        {
+          "type": "Text",
+          "value": "\nNo items\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "pair"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "pairs"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "pair"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "x"
+      },
+      "value": {
+        "type": "Literal",
+        "value": 42
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "SetBlock",
+      "target": {
+        "type": "Name",
+        "value": "greeting"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nHello, "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "!\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Block",
+      "name": "sidebar",
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nDefault sidebar\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

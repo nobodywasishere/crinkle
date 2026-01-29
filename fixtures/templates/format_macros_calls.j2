@@ -1,0 +1,17 @@
+{% macro input(name, value="", type="text") %}
+<input type="{{ type }}" name="{{ name }}" value="{{ value }}">
+{% endmacro %}
+
+{% macro form_field(label, name, required=false) %}
+<div class="field">
+<label>{{ label }}</label>
+{{ input(name) }}
+{% if required %}
+<span class="required">*</span>
+{% endif %}
+</div>
+{% endmacro %}
+
+{% call form_field("Username", "username", required=true) %}
+Extra content in call block
+{% endcall %}
