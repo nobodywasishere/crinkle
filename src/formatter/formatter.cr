@@ -735,6 +735,24 @@ module Jinja
     end
 
     private def format_list(expr : AST::ListLiteral) : Nil
+      if pretty_list?(expr)
+        current_level = @printer.indent_level
+        @printer.write("[")
+        @printer.newline
+        @printer.indent_level = current_level + 1
+        expr.items.each_with_index do |item, i|
+          format_expr(item)
+          if i < expr.items.size - 1
+            @printer.write(",")
+            @printer.newline
+          end
+        end
+        @printer.newline
+        @printer.indent_level = current_level
+        @printer.write("]")
+        return
+      end
+
       @printer.write("[")
       expr.items.each_with_index do |item, i|
         @printer.write(", ") if i > 0
@@ -744,6 +762,26 @@ module Jinja
     end
 
     private def format_dict(expr : AST::DictLiteral) : Nil
+      if pretty_dict?(expr)
+        current_level = @printer.indent_level
+        @printer.write("{")
+        @printer.newline
+        @printer.indent_level = current_level + 1
+        expr.pairs.each_with_index do |pair, i|
+          format_expr(pair.key)
+          @printer.write(": ")
+          format_expr(pair.value)
+          if i < expr.pairs.size - 1
+            @printer.write(",")
+            @printer.newline
+          end
+        end
+        @printer.newline
+        @printer.indent_level = current_level
+        @printer.write("}")
+        return
+      end
+
       @printer.write("{")
       expr.pairs.each_with_index do |pair, i|
         @printer.write(", ") if i > 0
@@ -758,6 +796,24 @@ module Jinja
     end
 
     private def format_tuple(expr : AST::TupleLiteral) : Nil
+      if pretty_tuple?(expr)
+        current_level = @printer.indent_level
+        @printer.write("(")
+        @printer.newline
+        @printer.indent_level = current_level + 1
+        expr.items.each_with_index do |item, i|
+          format_expr(item)
+          if i < expr.items.size - 1
+            @printer.write(",")
+            @printer.newline
+          end
+        end
+        @printer.newline
+        @printer.indent_level = current_level
+        @printer.write(")")
+        return
+      end
+
       @printer.write("(")
       expr.items.each_with_index do |item, i|
         @printer.write(", ") if i > 0
@@ -766,6 +822,33 @@ module Jinja
       # Single-element tuples need trailing comma
       @printer.write(",") if expr.items.size == 1
       @printer.write(")")
+    end
+
+    private def pretty_list?(expr : AST::ListLiteral) : Bool
+      return false unless expr.items.size > 2 || expr.items.any? { |item| collection_literal?(item) }
+      pretty_over_length?(expr)
+    end
+
+    private def pretty_dict?(expr : AST::DictLiteral) : Bool
+      return false unless expr.pairs.any? { |pair| collection_literal?(pair.key) || collection_literal?(pair.value) }
+      pretty_over_length?(expr)
+    end
+
+    private def pretty_tuple?(expr : AST::TupleLiteral) : Bool
+      return false unless expr.items.size > 2 || expr.items.any? { |item| collection_literal?(item) }
+      pretty_over_length?(expr)
+    end
+
+    private def collection_literal?(expr : AST::Expr) : Bool
+      expr.is_a?(AST::ListLiteral) || expr.is_a?(AST::DictLiteral) || expr.is_a?(AST::TupleLiteral)
+    end
+
+    private def pretty_over_length?(expr : AST::Expr) : Bool
+      span = expr.span
+      return true unless span.start_pos.line == span.end_pos.line
+
+      length = span.end_pos.column - span.start_pos.column + 1
+      length > @options.max_line_length
     end
 
     private def format_args(args : Array(AST::Expr), kwargs : Array(AST::KeywordArg)) : Nil

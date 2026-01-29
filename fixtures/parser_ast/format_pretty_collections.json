@@ -1,0 +1,83 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "nav"
+      },
+      "value": {
+        "type": "ListLiteral",
+        "items": [
+          {
+            "type": "DictLiteral",
+            "pairs": [
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "segments"
+                },
+                "value": {
+                  "type": "ListLiteral",
+                  "items": [
+                    {
+                      "type": "Literal",
+                      "value": ""
+                    },
+                    {
+                      "type": "Literal",
+                      "value": "panel"
+                    },
+                    {
+                      "type": "Literal",
+                      "value": "home"
+                    },
+                    {
+                      "type": "Literal",
+                      "value": "settings"
+                    }
+                  ]
+                }
+              },
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "label"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": "Start"
+                }
+              },
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "path"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": "/panel/settings/overview"
+                }
+              },
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "icon"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": "grid.svg"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
