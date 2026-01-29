@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<ul>\n  <li>One\n</ul>\n  <li>Two\n"
+    }
+  ]
+}

@@ -69,6 +69,19 @@
    - Preformatted tags with embedded Jinja.
    - Inline tags and nested structures.
 
+## Checklist (Current)
+- [x] HTML tokenizer/parser/indent engine implemented (fault-tolerant, stack-based).
+- [x] Jinja holes handled as opaque HTML tokens.
+- [x] Formatter delegates HTML indentation to the engine (no regex HtmlContext).
+- [x] Multiline attribute indentation and preformatted shifting handled by HTML engine.
+- [x] HTML diagnostics emitted for unexpected/mismatched/unclosed tags.
+- [x] HTML diagnostics surfaced in CLI output (format/lint).
+- [x] Fixtures added for HTML recovery: mismatched tags, missing close, invalid nesting.
+
+## Remaining Scope (If we want to go further)
+- [ ] Consider a true HTML tree model (currently stack-only).
+- [ ] Decide whether HTML diagnostics should remain formatter-only or be promoted to a dedicated HTML diagnostics pipeline.
+
 ## Tests / Fixtures
 - New fixtures in `fixtures/templates` for:
   - Broken HTML with Jinja blocks.
