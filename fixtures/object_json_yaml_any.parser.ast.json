@@ -1,0 +1,65 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "json_any"
+        },
+        "name": "name"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "json_any"
+        },
+        "name": "items"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "yaml_any"
+        },
+        "name": "name"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "yaml_any"
+        },
+        "name": "items"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

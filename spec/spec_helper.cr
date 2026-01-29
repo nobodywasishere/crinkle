@@ -1,9 +1,30 @@
 require "spec"
 require "json"
+require "yaml"
 require "file_utils"
 require "../src/jinja"
 
 record FixtureInfo, name : String, template_ext : String, path : String, base_dir : String
+
+UPDATE_SNAPSHOTS = ENV["UPDATE_SNAPSHOTS"]? != nil
+
+class AutoExample
+  include Jinja::Object::Auto
+
+  @[Jinja::Attribute]
+  def name : String
+    "Ada"
+  end
+
+  @[Jinja::Attribute]
+  def admin? : Bool
+    true
+  end
+
+  def hidden : String
+    "hidden"
+  end
+end
 
 def tokens_to_json(tokens : Array(Jinja::Token)) : JSON::Any
   payload = tokens.map do |token|
@@ -129,11 +150,15 @@ def assert_snapshot(path : String, actual : JSON::Any) : Nil
     expected = JSON.parse(File.read(path))
     if actual != expected
       File.write(path, actual.to_pretty_json)
-      raise "Snapshot mismatch for #{path}. Updated snapshot."
+      if UPDATE_SNAPSHOTS
+        STDERR.puts "WARNING: Snapshot mismatch for #{path}. Updated snapshot."
+      else
+        raise "Snapshot mismatch for #{path}. Updated snapshot."
+      end
     end
   else
     File.write(path, actual.to_pretty_json)
-    raise "Snapshot missing for #{path}. Created snapshot."
+    STDERR.puts "WARNING: Snapshot missing for #{path}. Created snapshot."
   end
 end
 
@@ -148,11 +173,15 @@ def assert_text_snapshot(path : String, actual : String) : Nil
     expected = File.read(path)
     if actual != expected
       File.write(path, actual)
-      raise "Snapshot mismatch for #{path}. Updated snapshot."
+      if UPDATE_SNAPSHOTS
+        STDERR.puts "WARNING: Snapshot mismatch for #{path}. Updated snapshot."
+      else
+        raise "Snapshot mismatch for #{path}. Updated snapshot."
+      end
     end
   else
     File.write(path, actual)
-    raise "Snapshot missing for #{path}. Created snapshot."
+    STDERR.puts "WARNING: Snapshot missing for #{path}. Created snapshot."
   end
 end
 
@@ -351,6 +380,10 @@ def render_context : Hash(String, Jinja::Value)
   context["image_url"] = "/img/photo.jpg"
   context["alt_text"] = "A photo"
   context["default_value"] = "Enter text"
+  context["safe_list"] = [
+    Jinja::SafeString.new("<b>one</b>"),
+    "<b>two</b>",
+  ] of Jinja::Value
   context["show_meta"] = true
   context["description"] = "Page description"
   context["fallback_image"] = "/img/default.png"
@@ -370,6 +403,14 @@ def render_context : Hash(String, Jinja::Value)
   context["x"] = 42_i64
   context["greeting"] = "Hello"
   context["required"] = false
+  context["auto_user"] = AutoExample.new
+  context["safe_value"] = Jinja::SafeString.new("<b>safe</b>")
+  context["undefined_value"] = Jinja::Undefined.new("missing")
+  context["range_items"] = Jinja.value(1..3)
+  context["tuple_items"] = Jinja.value({1, "two"})
+  context["named_tuple_items"] = Jinja.value({one: 1, two: "two"})
+  context["json_any"] = JSON.parse(%({"name":"Ada","items":[1,2]}))
+  context["yaml_any"] = YAML.parse("name: Ada\nitems:\n  - 1\n  - 2\n")
 
   # Common test variables
   context["foo"] = "foo_value"

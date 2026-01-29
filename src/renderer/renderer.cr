@@ -521,19 +521,27 @@ module Jinja
 
     private def eval_get_attr(expr : AST::GetAttr) : Value
       target = eval_expr(expr.target)
+      return target if target.is_a?(Undefined) || target.is_a?(StrictUndefined)
+      if target.responds_to?(:crinja_attribute)
+        return target.crinja_attribute(Jinja.value(expr.name))
+      end
       return target[expr.name]? if target.is_a?(Hash(String, Value))
+      return target[Jinja.value(expr.name)]? if target.is_a?(Hash(Value, Value))
       nil
     end
 
     private def eval_get_item(expr : AST::GetItem) : Value
       target = eval_expr(expr.target)
+      return target if target.is_a?(Undefined) || target.is_a?(StrictUndefined)
       index = eval_expr(expr.index)
       case target
       when Array(Value)
-        return unless index.is_a?(Int64)
-        target[index]?
+        return unless index.is_a?(Int64) || index.is_a?(Int32)
+        target[index.to_i]?
       when Hash(String, Value)
         target[index.to_s]?
+      when Hash(Value, Value)
+        target[Jinja.value(index)]?
       end
       nil
     end
@@ -838,6 +846,10 @@ module Jinja
                  items = Array(Value).new
                  value.each_value { |item| items << item }
                  items
+               when Hash(Value, Value)
+                 items = Array(Value).new
+                 value.each_value { |item| items << item }
+                 items
                end
 
       unless values
@@ -865,6 +877,10 @@ module Jinja
         base[target.name] = value
         return
       end
+      if base.is_a?(Hash(Value, Value))
+        base[Jinja.value(target.name)] = value
+        return
+      end
 
       emit_diagnostic(
         DiagnosticType::InvalidOperand,
@@ -878,7 +894,7 @@ module Jinja
       index = eval_expr(target.index)
       case base
       when Array(Value)
-        unless index.is_a?(Int64)
+        unless index.is_a?(Int64) || index.is_a?(Int32)
           emit_diagnostic(
             DiagnosticType::InvalidOperand,
             "Index must be an integer.",
@@ -886,9 +902,10 @@ module Jinja
           )
           return
         end
-        if index >= 0 && index < base.size
-          base[index] = value
-        elsif index == base.size
+        int_index = index.to_i
+        if int_index >= 0 && int_index < base.size
+          base[int_index] = value
+        elsif int_index == base.size
           base << value
         else
           emit_diagnostic(
@@ -899,6 +916,8 @@ module Jinja
         end
       when Hash(String, Value)
         base[index.to_s] = value
+      when Hash(Value, Value)
+        base[Jinja.value(index)] = value
       else
         emit_diagnostic(
           DiagnosticType::InvalidOperand,
@@ -928,17 +947,25 @@ module Jinja
       case value
       when Nil
         false
+      when Undefined, StrictUndefined
+        false
       when Bool
         value
       when Int64
+        value != 0
+      when Int32
         value != 0
       when Float64
         value != 0.0
       when String
         !value.empty?
+      when SafeString
+        !value.to_s.empty?
       when Array(Value)
         !value.empty?
       when Hash(String, Value)
+        !value.empty?
+      when Hash(Value, Value)
         !value.empty?
       else
         true
@@ -946,18 +973,13 @@ module Jinja
     end
 
     private def value_to_s(value : Value) : String
-      case value
-      when Nil
-        ""
-      when Bool
-        value ? "true" : "false"
-      else
-        value.to_s
-      end
+      Finalizer.stringify(value)
     end
 
     private def to_number(value : Value, span : Span) : Float64?
       case value
+      when Int32
+        value.to_f
       when Int64
         value.to_f
       when Float64
@@ -986,12 +1008,14 @@ module Jinja
           emit_invalid_operand(op, span)
           nil
         end
-      elsif left.is_a?(String) && right.is_a?(String)
+      elsif left.is_a?(String | SafeString) && right.is_a?(String | SafeString)
+        left_str = left.to_s
+        right_str = right.to_s
         case op
-        when "<"  then left < right
-        when "<=" then left <= right
-        when ">"  then left > right
-        when ">=" then left >= right
+        when "<"  then left_str < right_str
+        when "<=" then left_str <= right_str
+        when ">"  then left_str > right_str
+        when ">=" then left_str >= right_str
         else
           emit_invalid_operand(op, span)
           nil
@@ -1037,6 +1061,8 @@ module Jinja
         right.includes?(left)
       when Hash(String, Value)
         right.has_key?(left.to_s)
+      when Hash(Value, Value)
+        right.has_key?(Jinja.value(left))
       when String
         right.includes?(left.to_s)
       else
@@ -1059,6 +1085,13 @@ module Jinja
     private def to_iterable(value : Value) : Array(Value)?
       return value if value.is_a?(Array(Value))
       if value.is_a?(Hash(String, Value))
+        items = Array(Value).new
+        value.each_value do |item|
+          items << item
+        end
+        return items
+      end
+      if value.is_a?(Hash(Value, Value))
         items = Array(Value).new
         value.each_value do |item|
           items << item

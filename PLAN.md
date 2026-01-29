@@ -230,7 +230,20 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - [ ] Fixtures migrated and snapshots regenerated
 - [ ] Extensions directory aligned with the same convention
 
-### Phase 12 — Language Server (LSP)
+### Phase 12 — Crinja Object Serialization Compatibility
+**Outcome:** Match Crinja’s object serialization surface (value conversion + Object::Auto) without pulling in unrelated Crinja APIs.
+- Implemented `Jinja.value` conversions, `Undefined`/`StrictUndefined`, SafeString escaping, and `Finalizer.stringify`.
+- Added the `Jinja::Object::Auto` macro plus JSON/YAML helpers covering object/property casting.
+- Added the `object_*` fixtures (value casting, JSON/YAML accesses, SafeString loops, missing attributes) and refreshed all snapshots.
+
+#### Phase 12 Checklist
+- [x] Value conversion compatibility implemented.
+- [x] Undefined/StrictUndefined + SafeString + Finalizer implemented.
+- [x] Object::Auto compatibility implemented.
+- [x] JSON/YAML integrations implemented.
+- [x] Fixtures/specs cover Crinja serialization scenarios.
+
+### Phase 13 — Language Server (LSP)
 **Outcome:** IDE features for templates.
 - Minimal LSP server (initialize, textDocument/didOpen, didChange, didClose).
 - Diagnostics pipeline using lexer/parser/linter.

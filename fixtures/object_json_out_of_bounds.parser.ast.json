@@ -1,0 +1,53 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "JSON item[5]:\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetItem",
+        "target": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Name",
+            "value": "json_any"
+          },
+          "name": "items"
+        },
+        "index": {
+          "type": "Literal",
+          "value": 5
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\nYAML item[5]:\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetItem",
+        "target": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Name",
+            "value": "yaml_any"
+          },
+          "name": "items"
+        },
+        "index": {
+          "type": "Literal",
+          "value": 5
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

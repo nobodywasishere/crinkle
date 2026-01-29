@@ -1,0 +1,38 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "item"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "safe_list"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "item"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

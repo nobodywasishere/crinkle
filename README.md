@@ -66,3 +66,79 @@ Notes:
 
 ## Development
 - Run specs: `crystal spec`
+
+## Object serialization
+
+The renderer exposes a Crinja-inspired serialization pipeline so templates work with wrapped values consistently while still allowing you to surface missing data or escaped content explicitly.
+
+### `Jinja.value(value)`
+
+- Converts any supported Crystal value into the `Jinja::Value` union that the renderer understands. Supported inputs:
+  - `Hash`, `NamedTuple` → rich dictionaries (`Hash(Value, Value)` or `Hash(String, Value)`)
+  - `Array`, `Tuple`, `Range`, `Iterator` → flatten to `Array(Value)`
+  - `Char`, `String`, numbers, booleans, `Time`, `Nil`, `SafeString`, `Undefined`, `StrictUndefined`, and implementors of `Jinja::Object`.
+- `Jinja.dictionary` / `Jinja.variables` turn hash-like objects into dictionaries while re-wrapping every key/value via `Jinja.value`.
+- Passing an unsupported type raises `type error: can't wrap ... in Jinja::Value`, so serializers stay strict about what data enters the renderer.
+
+### Undefined / StrictUndefined / SafeString
+
+- **`Undefined`** represents missing attributes/variables. It renders as an empty string (`Finalizer.stringify` prints `none` for naked nils) but keeps the missing name for diagnostics so you can report `Unknown variable "foo"`.
+- **`StrictUndefined`** raises whenever you try to stringify, compare, or inspect it—useful if you want Crinja-style strictness without silently falling back to empties.
+- **`SafeString`** wraps pre-escaped HTML content. The `Finalizer` treats `SafeString` specially (quote escaping is skipped unless nested inside arrays/hashes), so loops and filters that re-emit safe strings keep their literal markup.
+
+### `Jinja::Object::Auto`
+
+- Annotate a Crystal class with `@[Jinja::Attribute]` or `@[Jinja::Attributes(expose: ...)]`, include `Jinja::Object::Auto`, and the macro auto-generates `crinja_attribute` logic so templates can call methods directly.
+- Methods ending with `?` automatically expose `is_*` lookups (e.g., `admin?` → `is_admin`). Missing attributes fall back to `Undefined`, so you can call them without extra guard clauses.
+- Every exposed method result is re-wrapped via `Jinja.value`, meaning nested hashes, arrays, or even other `Object::Auto` instances remain serializable.
+
+### JSON / YAML helpers
+
+- `JSON::Any` and `YAML::Any` now include `Jinja::Object` and implement `crinja_attribute`, so you can treat parsed JSON/YAML as dictionaries inside templates. Indexed access respects ints and SafeStrings.
+- Invalid attribute/item lookups on JSON/YAML objects still return `Undefined`, preserving diagnostics without crashing the renderer.
+
+### Edge cases & diagnostics
+
+- Missing keys: templates see `Undefined`, render empty output, and diagnostics can highlight the missing name.
+- Out-of-bounds array indices return `Undefined`, not `nil`, so you can still detect the absence of data.
+- Unsupported types (e.g., custom structs you forget to wrap) raise immediately from `Jinja.value`, preventing hard-to-trace `nil` propagation.
+- `StrictUndefined` prevents your template from silently rendering when a value is missing; every access raises so the caller sees the error.
+- SafeStrings inside arrays/hashes still quote correctly when the container is stringified, avoiding accidental double-escaping.
+
+### Example fixtures
+
+- Inspect `fixtures/object_*` to see attribute access, JSON/YAML lookups, safe-string iteration, undefined/missing attribute cases, and value-casting scenarios.
+
+### Examples
+
+```crystal
+template = env.parse("User: {{ user.name }}, Status: {{ user.active }}")
+context = {"user" => Jinja.value({"name" => "Ada", "active" => true})}
+renderer.render(template, context)
+```
+
+```crystal
+class Badge
+  include Jinja::Object::Auto
+
+  @[Jinja::Attribute]
+  def label
+    "beta"
+  end
+
+  @[Jinja::Attribute]
+  def highlighted?
+    false
+  end
+end
+
+context = {"badge" => Jinja.value(Badge.new)}
+```
+
+```crystal
+safe_list = [
+  Jinja::SafeString.new("<b>safe</b>"),
+  "<i>plain</i>"
+] of Jinja::Value
+context["safe_list"] = safe_list
+```

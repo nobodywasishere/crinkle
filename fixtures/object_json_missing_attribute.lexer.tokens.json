@@ -1,0 +1,290 @@
+[
+  {
+    "type": "Text",
+    "lexeme": "JSON missing attribute:\n",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 24,
+        "line": 2,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "VarStart",
+    "lexeme": "{{",
+    "span": {
+      "start": {
+        "offset": 24,
+        "line": 2,
+        "column": 1
+      },
+      "end": {
+        "offset": 26,
+        "line": 2,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 26,
+        "line": 2,
+        "column": 3
+      },
+      "end": {
+        "offset": 27,
+        "line": 2,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "json_any",
+    "span": {
+      "start": {
+        "offset": 27,
+        "line": 2,
+        "column": 4
+      },
+      "end": {
+        "offset": 35,
+        "line": 2,
+        "column": 12
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": ".",
+    "span": {
+      "start": {
+        "offset": 35,
+        "line": 2,
+        "column": 12
+      },
+      "end": {
+        "offset": 36,
+        "line": 2,
+        "column": 13
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "missing",
+    "span": {
+      "start": {
+        "offset": 36,
+        "line": 2,
+        "column": 13
+      },
+      "end": {
+        "offset": 43,
+        "line": 2,
+        "column": 20
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 43,
+        "line": 2,
+        "column": 20
+      },
+      "end": {
+        "offset": 44,
+        "line": 2,
+        "column": 21
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "}}",
+    "span": {
+      "start": {
+        "offset": 44,
+        "line": 2,
+        "column": 21
+      },
+      "end": {
+        "offset": 46,
+        "line": 2,
+        "column": 23
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\nYAML missing attribute:\n",
+    "span": {
+      "start": {
+        "offset": 46,
+        "line": 2,
+        "column": 23
+      },
+      "end": {
+        "offset": 71,
+        "line": 4,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "VarStart",
+    "lexeme": "{{",
+    "span": {
+      "start": {
+        "offset": 71,
+        "line": 4,
+        "column": 1
+      },
+      "end": {
+        "offset": 73,
+        "line": 4,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 73,
+        "line": 4,
+        "column": 3
+      },
+      "end": {
+        "offset": 74,
+        "line": 4,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "yaml_any",
+    "span": {
+      "start": {
+        "offset": 74,
+        "line": 4,
+        "column": 4
+      },
+      "end": {
+        "offset": 82,
+        "line": 4,
+        "column": 12
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": ".",
+    "span": {
+      "start": {
+        "offset": 82,
+        "line": 4,
+        "column": 12
+      },
+      "end": {
+        "offset": 83,
+        "line": 4,
+        "column": 13
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "missing",
+    "span": {
+      "start": {
+        "offset": 83,
+        "line": 4,
+        "column": 13
+      },
+      "end": {
+        "offset": 90,
+        "line": 4,
+        "column": 20
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 90,
+        "line": 4,
+        "column": 20
+      },
+      "end": {
+        "offset": 91,
+        "line": 4,
+        "column": 21
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "}}",
+    "span": {
+      "start": {
+        "offset": 91,
+        "line": 4,
+        "column": 21
+      },
+      "end": {
+        "offset": 93,
+        "line": 4,
+        "column": 23
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 93,
+        "line": 4,
+        "column": 23
+      },
+      "end": {
+        "offset": 94,
+        "line": 5,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 94,
+        "line": 5,
+        "column": 1
+      },
+      "end": {
+        "offset": 94,
+        "line": 5,
+        "column": 1
+      }
+    }
+  }
+]

@@ -1,6 +1,6 @@
-module Jinja
-  alias Value = (String | Int64 | Float64 | Bool | Array(Value) | Hash(String, Value))?
+require "./runtime/value"
 
+module Jinja
   alias FilterProc = Proc(Value, Array(Value), Hash(String, Value), Value)
   alias TestProc = Proc(Value, Array(Value), Hash(String, Value), Bool)
   alias FunctionProc = Proc(Array(Value), Hash(String, Value), Value)

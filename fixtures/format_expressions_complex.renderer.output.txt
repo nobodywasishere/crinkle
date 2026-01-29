@@ -1,7 +1,7 @@
 ADA
 1, 2
 avatar.png
-
+none
 Hello Ada
 6.0
 false

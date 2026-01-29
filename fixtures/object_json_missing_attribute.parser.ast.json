@@ -1,0 +1,39 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "JSON missing attribute:\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "json_any"
+        },
+        "name": "missing"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\nYAML missing attribute:\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "yaml_any"
+        },
+        "name": "missing"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
