@@ -1,0 +1,41 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<section>\n  "
+    },
+    {
+      "type": "CustomTag",
+      "name": "mystery",
+      "args": [
+        {
+          "type": "Name",
+          "value": "enabled"
+        }
+      ],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n    "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "greeting"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n</section>\n"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<label\n  for=\"lid_"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "a"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\"\n  title=\""
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "heading"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\"\n  class=\"lens-suggestion "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "--active"
+        },
+        "name": "if",
+        "args": [
+          {
+            "type": "Name",
+            "value": "is_active"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\">\n  <span>\n    "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "item"
+        },
+        "name": "value"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n  </span>\n</label>\n"
+    }
+  ]
+}

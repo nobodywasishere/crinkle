@@ -1,0 +1,42 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "data"
+      },
+      "value": {
+        "type": "DictLiteral",
+        "pairs": [
+          {
+            "key": {
+              "type": "Literal",
+              "value": "code"
+            },
+            "value": {
+              "type": "DictLiteral",
+              "pairs": [
+                {
+                  "key": {
+                    "type": "Literal",
+                    "value": "icon"
+                  },
+                  "value": {
+                    "type": "Literal",
+                    "value": "icon.svg"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

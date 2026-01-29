@@ -1,0 +1,42 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "CallBlock",
+      "call_args": [],
+      "call_kwargs": [],
+      "callee": {
+        "type": "Name",
+        "value": "greet"
+      },
+      "args": [
+        {
+          "type": "Name",
+          "value": "name"
+        }
+      ],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "greeting"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

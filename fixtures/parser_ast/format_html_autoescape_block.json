@@ -1,0 +1,45 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div class=\"item\">\n  "
+    },
+    {
+      "type": "CustomTag",
+      "name": "autoescape",
+      "args": [
+        {
+          "type": "Literal",
+          "value": false
+        }
+      ],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n    "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "item"
+            },
+            "name": "value"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n</div>\n"
+    }
+  ]
+}

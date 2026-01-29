@@ -2,6 +2,18 @@
   "type": "Template",
   "body": [
     {
+      "type": "CustomTag",
+      "name": "mystery",
+      "args": [
+        {
+          "type": "Literal",
+          "value": 1
+        }
+      ],
+      "kwargs": [],
+      "body": []
+    },
+    {
       "type": "Text",
       "value": "\n"
     }

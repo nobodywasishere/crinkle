@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_UNKNOWN_TAG",
+    "severity": "error",
+    "message": "Unknown tag 'autoescape'.",
+    "span": {
+      "start": {
+        "offset": 34,
+        "line": 2,
+        "column": 16
+      },
+      "end": {
+        "offset": 35,
+        "line": 2,
+        "column": 17
+      }
+    }
+  }
+]

@@ -1,0 +1,36 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div class=\"note\">\n  "
+    },
+    {
+      "type": "CustomTag",
+      "name": "hint",
+      "args": [
+        {
+          "type": "Literal",
+          "value": "tip"
+        }
+      ],
+      "kwargs": [],
+      "body": []
+    },
+    {
+      "type": "Text",
+      "value": "\n  "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "content"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n</div>\n"
+    }
+  ]
+}

@@ -133,9 +133,7 @@ module Jinja
       end
 
       emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.")
-      recover_to([TokenType::BlockEnd])
-      advance if current.type == TokenType::BlockEnd
-      nil
+      parse_unknown_tag(tag, start_span, start_trim_left)
     end
 
     private def handle_extension(tag : String, extension : TagExtension, start_span : Span, start_trim_left : Bool) : AST::Node?
@@ -522,6 +520,15 @@ module Jinja
 
     private def parse_call_block(start_span : Span, start_trim_left : Bool) : AST::CallBlock
       skip_whitespace
+      call_args = nil
+      call_kwargs = nil
+      if punct?("(")
+        args, kwargs, _end_span = parse_call_args([TokenType::BlockEnd], Array(String).new)
+        call_args = args
+        call_kwargs = kwargs
+        skip_whitespace
+      end
+
       expr = parse_expression([TokenType::BlockEnd])
       skip_whitespace
       end_span = expect_block_end("Expected '%}' to close call tag.")
@@ -545,6 +552,8 @@ module Jinja
         kwargs,
         body,
         span_between(start_span, end_info.span),
+        call_args,
+        call_kwargs,
         start_trim_left,
         start_trim_right,
         end_info.trim_left?,
@@ -593,6 +602,62 @@ module Jinja
 
       emit_diagnostic(DiagnosticType::MissingEndTag, "Missing end tag 'endraw'.")
       AST::Raw.new(tokens.map(&.lexeme).join, start_span, start_trim_left, start_trim_right)
+    end
+
+    private def parse_unknown_tag(tag : String, start_span : Span, start_trim_left : Bool) : AST::CustomTag
+      skip_whitespace
+      args = Array(AST::Expr).new
+      kwargs = Array(AST::KeywordArg).new
+
+      while current.type != TokenType::BlockEnd && !at_end?
+        if keyword_arg_start?
+          name = current.lexeme
+          name_span = current.span
+          advance
+          skip_whitespace
+          if operator?("=")
+            advance
+          else
+            emit_expected_token("Expected '=' for keyword argument.")
+          end
+          skip_whitespace
+          value = parse_expression([TokenType::BlockEnd])
+          kwargs << AST::KeywordArg.new(name, value, span_between(name_span, value.span))
+        else
+          args << parse_expression([TokenType::BlockEnd])
+        end
+        skip_whitespace
+      end
+
+      end_span = expect_block_end("Expected '%}' to close #{tag} tag.")
+      start_trim_right = @last_block_end_trim_right
+
+      end_tag = "end#{tag}"
+      if has_end_tag_ahead?(end_tag)
+        body, end_info = parse_until_end_tag(end_tag, allow_end_name: true)
+        end_info ||= EndTagInfo.new(end_span, false, false)
+        return AST::CustomTag.new(
+          tag,
+          args,
+          kwargs,
+          body,
+          span_between(start_span, end_info.span),
+          start_trim_left,
+          start_trim_right,
+          end_info.trim_left?,
+          end_info.trim_right?
+        )
+      end
+
+      AST::CustomTag.new(
+        tag,
+        args,
+        kwargs,
+        Array(AST::Node).new,
+        span_between(start_span, end_span),
+        start_trim_left,
+        start_trim_right
+      )
     end
 
     private def tag_handlers : Hash(String, BuiltInTagHandler)
@@ -1301,6 +1366,10 @@ module Jinja
           skip_whitespace
           if punct?("(")
             args, kwargs, end_span = parse_call_args(stop_types, stop_lexemes)
+          elsif starts_simple_expression?(stop_types, stop_lexemes)
+            arg = parse_simple_expression(stop_types, stop_lexemes)
+            args << arg
+            end_span = arg.span
           end
 
           left = AST::Filter.new(left, name, args, kwargs, span_between(start_span, end_span))
@@ -1311,6 +1380,68 @@ module Jinja
       end
 
       left
+    end
+
+    private def starts_simple_expression?(stop_types : Array(TokenType), stop_lexemes : Array(String)) : Bool
+      return false if stop_at?(stop_types, stop_lexemes)
+      case current.type
+      when TokenType::Identifier, TokenType::Number, TokenType::String
+        true
+      when TokenType::Punct
+        punct?("(") || punct?("[") || punct?("{")
+      else
+        false
+      end
+    end
+
+    private def parse_simple_expression(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
+      expr = parse_primary(stop_types, stop_lexemes)
+
+      loop do
+        skip_whitespace
+        break if stop_at?(stop_types, stop_lexemes)
+        break if operator?("|")
+
+        if punct?(".")
+          start_span = expr.span
+          advance
+          if current.type == TokenType::Identifier
+            name = current.lexeme
+            end_span = current.span
+            advance
+            expr = AST::GetAttr.new(expr, name, span_between(start_span, end_span))
+          else
+            emit_expected_token("Expected attribute name after '.'.")
+          end
+          next
+        end
+
+        if punct?("[")
+          start_span = expr.span
+          advance
+          index = parse_expression([TokenType::Punct], ["]"])
+          skip_whitespace
+          end_span = index.span
+          if punct?("]")
+            end_span = current.span
+            advance
+          else
+            emit_expected_token("Expected ']' to close index.")
+          end
+          expr = AST::GetItem.new(expr, index, span_between(start_span, end_span))
+          next
+        end
+
+        if punct?("(")
+          args, kwargs, end_span = parse_call_args(stop_types, stop_lexemes)
+          expr = AST::Call.new(expr, args, kwargs, span_between(expr.span, end_span))
+          next
+        end
+
+        break
+      end
+
+      expr
     end
 
     private def parse_primary(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
@@ -1636,6 +1767,24 @@ module Jinja
         i += 1
       end
       nil
+    end
+
+    private def has_end_tag_ahead?(end_tag : String) : Bool
+      i = @index + 1
+      while i < @tokens.size
+        token = @tokens[i]
+        if token.type == TokenType::BlockStart
+          j = i + 1
+          while j < @tokens.size && @tokens[j].type == TokenType::Whitespace
+            j += 1
+          end
+          if j < @tokens.size && @tokens[j].type == TokenType::Identifier && @tokens[j].lexeme == end_tag
+            return true
+          end
+        end
+        i += 1
+      end
+      false
     end
 
     def skip_whitespace : Nil

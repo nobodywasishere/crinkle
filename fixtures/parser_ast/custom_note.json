@@ -2,8 +2,21 @@
   "type": "Template",
   "body": [
     {
-      "type": "Text",
-      "value": "Body"
+      "type": "CustomTag",
+      "name": "note",
+      "args": [
+        {
+          "type": "Literal",
+          "value": "hi"
+        }
+      ],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "Body"
+        }
+      ]
     },
     {
       "type": "Text",

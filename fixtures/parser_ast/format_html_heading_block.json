@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<h1>\nSection Title\n</h1>\n"
+    }
+  ]
+}

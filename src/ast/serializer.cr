@@ -195,6 +195,16 @@ module Jinja
         when CallBlock
           json.object do
             json.field "type", "CallBlock"
+            if call_args = node.call_args
+              json.field "call_args" do
+                write_expr_array(json, call_args)
+              end
+            end
+            if call_kwargs = node.call_kwargs
+              json.field "call_kwargs" do
+                write_kwargs(json, call_kwargs)
+              end
+            end
             json.field "callee" do
               write_expr(json, node.callee)
             end

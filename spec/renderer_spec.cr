@@ -43,6 +43,11 @@ private def build_environment : Jinja::Environment
     end
   end
 
+  env.register_filter("if") do |value, args, _kwargs|
+    condition = args.first?
+    condition == true ? value : ""
+  end
+
   env.register_test("lower") do |value, _args, _kwargs|
     str = value.to_s
     !str.empty? && str == str.downcase

@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_UNKNOWN_TAG_RENDERER",
+    "severity": "error",
+    "message": "No renderer registered for custom tag 'mystery'.",
+    "span": {
+      "start": {
+        "offset": 12,
+        "line": 2,
+        "column": 3
+      },
+      "end": {
+        "offset": 71,
+        "line": 4,
+        "column": 19
+      }
+    }
+  }
+]

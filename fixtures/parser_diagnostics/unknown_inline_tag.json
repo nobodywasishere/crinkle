@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_UNKNOWN_TAG",
+    "severity": "error",
+    "message": "Unknown tag 'hint'.",
+    "span": {
+      "start": {
+        "offset": 28,
+        "line": 2,
+        "column": 10
+      },
+      "end": {
+        "offset": 29,
+        "line": 2,
+        "column": 11
+      }
+    }
+  }
+]

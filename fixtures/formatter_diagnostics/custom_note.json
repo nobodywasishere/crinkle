@@ -15,22 +15,5 @@
         "column": 9
       }
     }
-  },
-  {
-    "id": "E_UNKNOWN_TAG",
-    "severity": "error",
-    "message": "Unknown tag 'endnote'.",
-    "span": {
-      "start": {
-        "offset": 29,
-        "line": 1,
-        "column": 30
-      },
-      "end": {
-        "offset": 30,
-        "line": 1,
-        "column": 31
-      }
-    }
   }
 ]

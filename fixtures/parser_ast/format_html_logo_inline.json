@@ -1,0 +1,30 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<a class=\"logo\" href=\"/\">\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "greet"
+        },
+        "args": [
+          {
+            "type": "Name",
+            "value": "name"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n</a>\n"
+    }
+  ]
+}

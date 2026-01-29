@@ -1,0 +1,65 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<td>\n<div>\n  <a class=\"status-link copy-link\" href=\""
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "foo"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\">\n  "
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "enabled"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n    "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "greeting"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        }
+      ],
+      "else": [
+        {
+          "type": "Text",
+          "value": "\n    "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "foo"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n  </a>\n</div>\n</td>\n"
+    }
+  ]
+}

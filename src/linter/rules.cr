@@ -131,6 +131,12 @@ module Jinja
               collect_macro_calls(node.template, used)
             when AST::CallBlock
               collect_macro_calls(node.callee, used)
+              if call_args = node.call_args
+                call_args.each { |arg| collect_macro_calls(arg, used) }
+              end
+              if call_kwargs = node.call_kwargs
+                call_kwargs.each { |arg| collect_macro_calls(arg.value, used) }
+              end
               node.args.each { |arg| collect_macro_calls(arg, used) }
               node.kwargs.each { |arg| collect_macro_calls(arg.value, used) }
             when AST::CustomTag
@@ -170,6 +176,12 @@ module Jinja
             node.body.each { |child| collect_macro_calls_in_node(child, used) }
           when AST::CallBlock
             collect_macro_calls(node.callee, used)
+            if call_args = node.call_args
+              call_args.each { |arg| collect_macro_calls(arg, used) }
+            end
+            if call_kwargs = node.call_kwargs
+              call_kwargs.each { |arg| collect_macro_calls(arg.value, used) }
+            end
             node.args.each { |arg| collect_macro_calls(arg, used) }
             node.kwargs.each { |arg| collect_macro_calls(arg.value, used) }
             node.body.each { |child| collect_macro_calls_in_node(child, used) }

@@ -292,6 +292,8 @@ module Jinja
       getter callee : Expr
       getter args : Array(Expr)
       getter kwargs : Array(KeywordArg)
+      getter call_args : Array(Expr)?
+      getter call_kwargs : Array(KeywordArg)?
       getter body : Array(Node)
       getter span : Span
       getter? trim_left : Bool
@@ -305,6 +307,8 @@ module Jinja
         @kwargs : Array(KeywordArg),
         @body : Array(Node),
         @span : Span,
+        @call_args : Array(Expr)? = nil,
+        @call_kwargs : Array(KeywordArg)? = nil,
         @trim_left : Bool = false,
         @trim_right : Bool = false,
         @end_trim_left : Bool = false,

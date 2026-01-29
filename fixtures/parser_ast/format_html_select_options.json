@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<select class=\"control\" name=\"plan_type\">\n<option value=\"basic\">basic</option>\n<option value=\"standard\">standard</option>\n<option value=\"premium\">premium</option>\n<option value=\"enterprise\">enterprise</option>\n</select>\n"
+    }
+  ]
+}

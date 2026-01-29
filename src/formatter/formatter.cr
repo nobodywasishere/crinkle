@@ -15,16 +15,28 @@ module Jinja
       getter? normalize_whitespace_control : Bool
       getter? normalize_text_indent : Bool
 
-      # HTML tags that increase indentation
-      HTML_INDENT_TAGS = Set{"html", "head", "body", "div", "section", "article",
-                             "nav", "header", "footer", "main", "aside", "ul",
-                             "ol", "li", "table", "thead", "tbody", "tr", "form",
-                             "dl", "dd", "dt", "figure", "figcaption", "blockquote",
-                             "svg", "i"}
+      # HTML tags that increase indentation (block and container elements)
+      HTML_INDENT_TAGS = Set{
+        "a", "abbr", "address", "article", "aside", "audio",
+        "b", "bdi", "bdo", "blockquote", "body", "button",
+        "canvas", "caption", "center", "cite", "code", "colgroup",
+        "data", "datalist", "dd", "del", "details", "dfn", "dialog",
+        "div", "dl", "dt", "em", "fieldset", "figcaption", "figure",
+        "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "head",
+        "header", "html", "i", "iframe", "ins", "kbd", "label", "legend",
+        "li", "main", "map", "mark", "menu", "meter", "nav", "noscript",
+        "object", "ol", "optgroup", "option", "output", "p", "picture",
+        "pre", "progress", "q", "ruby", "s", "samp", "script", "section",
+        "select", "small", "span", "strong", "style", "sub", "summary",
+        "sup", "svg", "table", "tbody", "td", "template", "textarea",
+        "tfoot", "th", "thead", "time", "tr", "u", "ul", "var", "video",
+      }
 
       # Self-closing HTML tags (void elements)
-      HTML_VOID_TAGS = Set{"br", "hr", "img", "input", "meta", "link", "area",
-                           "base", "col", "embed", "param", "source", "track", "wbr"}
+      HTML_VOID_TAGS = Set{
+        "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+        "meta", "param", "source", "track", "wbr",
+      }
 
       # Tags where whitespace is significant (don't format inside)
       HTML_PREFORMATTED_TAGS = Set{"pre", "code", "script", "style", "textarea"}
@@ -131,6 +143,9 @@ module Jinja
       @jinja_indent = 0
       @html_open_buffer = ""
       @preformatted_indent = nil
+      @html_in_tag = false
+      @html_attr_quote = nil.as(Char?)
+      @string_quote_override = nil.as(Char?)
     end
 
     def format : String
@@ -200,6 +215,7 @@ module Jinja
       # If not normalizing indent, preserve original text
       unless @options.normalize_text_indent?
         @printer.write_raw(text)
+        update_html_attribute_state(text)
         update_html_state_from_text(text)
         return
       end
@@ -214,6 +230,7 @@ module Jinja
 
         if attr_output = @html_engine.handle_attr_line(line, current_indent_string, @options.indent_string, @printer.at_line_start?)
           @printer.write_raw(attr_output) unless attr_output.empty?
+          update_html_attribute_state(attr_output) unless attr_output.empty?
           process_html_opening_with_buffer(line)
           next
         end
@@ -227,6 +244,7 @@ module Jinja
           base_indent = @preformatted_indent || current_indent_string
           preformatted_output = @html_engine.format_preformatted_line(line, base_indent, @options.indent_string, @printer.at_line_start?)
           @printer.write_raw(preformatted_output) unless preformatted_output.empty?
+          update_html_attribute_state(preformatted_output) unless preformatted_output.empty?
           process_html_closing(line)
           process_html_opening_with_buffer(line)
           unless @html_engine.in_preformatted?
@@ -239,16 +257,19 @@ module Jinja
         # Strip leading whitespace (we'll re-indent)
         stripped = line.lstrip
 
+        inline_pair = inline_tag_pair?(stripped)
+
         # Process closing tags first to dedent before writing
-        process_html_closing(stripped)
+        process_html_closing(stripped) unless inline_pair
         sync_indent
 
         unless stripped.empty?
           @printer.write(stripped)
+          update_html_attribute_state(stripped)
         end
 
         # Process opening tags after writing to affect following lines
-        process_html_opening_with_buffer(stripped)
+        process_html_opening_with_buffer(stripped) unless inline_pair
       end
     end
 
@@ -281,6 +302,15 @@ module Jinja
       @html_engine.preformatted_open?(text)
     end
 
+    private def inline_tag_pair?(text : String) : Bool
+      return false unless @options.html_aware?
+      return false unless text.starts_with?("<")
+      return false if text.starts_with?("</")
+      return false unless text.includes?("</")
+
+      text.matches?(/^<([a-zA-Z][a-zA-Z0-9:-]*)\b[^>]*>.*<\/\1>$/)
+    end
+
     private def current_indent_string : String
       level = @options.html_aware? ? (@html_engine.indent_level + @jinja_indent) : @jinja_indent
       @options.indent_string * level
@@ -301,7 +331,11 @@ module Jinja
       start_delim = node.trim_left? ? "{{-" : "{{"
       end_delim = node.trim_right? ? "-}}" : "}}"
       @printer.write("#{start_delim}#{brace_space}")
-      format_expr(node.expr)
+      if quote_override = html_attribute_string_quote_override
+        with_string_quote(quote_override) { format_expr(node.expr) }
+      else
+        format_expr(node.expr)
+      end
       @printer.write("#{brace_space}#{end_delim}")
     end
 
@@ -395,7 +429,11 @@ module Jinja
       sync_indent
       @printer.write("#{block_start(node.trim_left?)} import ")
       format_expr(node.template)
-      @printer.write(" as #{node.alias} #{block_end(node.trim_right?)}")
+      if node.alias.strip.empty?
+        @printer.write(" #{block_end(node.trim_right?)}")
+      else
+        @printer.write(" as #{node.alias} #{block_end(node.trim_right?)}")
+      end
     end
 
     private def format_from_import(node : AST::FromImport) : Nil
@@ -445,7 +483,16 @@ module Jinja
 
     private def format_call_block(node : AST::CallBlock) : Nil
       sync_indent
-      @printer.write("#{block_start(node.trim_left?)} call ")
+      @printer.write("#{block_start(node.trim_left?)} call")
+
+      if call_args = node.call_args
+        @printer.write("(")
+        format_args(call_args, node.call_kwargs || Array(AST::KeywordArg).new)
+        @printer.write(") ")
+      else
+        @printer.write(" ")
+      end
+
       format_expr(node.callee)
       @printer.write("(")
       format_args(node.args, node.kwargs)
@@ -614,9 +661,14 @@ module Jinja
     private def format_literal(expr : AST::Literal) : Nil
       case value = expr.value
       when String
-        # Use double quotes for consistency
-        escaped = value.gsub("\\", "\\\\").gsub("\"", "\\\"")
-        @printer.write("\"#{escaped}\"")
+        quote = @string_quote_override || '"'
+        escaped = value.gsub("\\", "\\\\")
+        if quote == '"'
+          escaped = escaped.gsub("\"", "\\\"")
+        else
+          escaped = escaped.gsub("'", "\\'")
+        end
+        @printer.write("#{quote}#{escaped}#{quote}")
       when Int64
         @printer.write(value.to_s)
       when Float64
@@ -699,6 +751,9 @@ module Jinja
         @printer.write(": ")
         format_expr(pair.value)
       end
+      if expr.pairs.last?.try(&.value).is_a?(AST::DictLiteral)
+        @printer.write(" ")
+      end
       @printer.write("}")
     end
 
@@ -748,6 +803,57 @@ module Jinja
       text.split('\n', remove_empty: false).each do |line|
         process_html_closing(line)
         process_html_opening_with_buffer(line)
+      end
+    end
+
+    private def update_html_attribute_state(text : String) : Nil
+      return unless @options.html_aware?
+
+      i = 0
+      while i < text.bytesize
+        ch = text.byte_at(i)
+        if quote = @html_attr_quote
+          if ch == quote.ord
+            @html_attr_quote = nil
+          end
+          i += 1
+          next
+        end
+
+        if ch == '<'.ord
+          @html_in_tag = true
+          i += 1
+          next
+        end
+
+        if ch == '>'.ord
+          @html_in_tag = false
+          i += 1
+          next
+        end
+
+        if @html_in_tag && (ch == '"'.ord || ch == '\''.ord)
+          @html_attr_quote = ch.chr
+        end
+
+        i += 1
+      end
+    end
+
+    private def html_attribute_string_quote_override : Char?
+      return unless @options.html_aware?
+      quote = @html_attr_quote
+      return unless quote
+      quote == '"' ? '\'' : '"'
+    end
+
+    private def with_string_quote(quote : Char, & : ->) : Nil
+      previous = @string_quote_override
+      @string_quote_override = quote
+      begin
+        yield
+      ensure
+        @string_quote_override = previous
       end
     end
 

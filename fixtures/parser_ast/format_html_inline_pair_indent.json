@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div class=\"row\">\n<div></div>\n  <button name=\"reset\">reset settings</button>\n</div>\n"
+    }
+  ]
+}
