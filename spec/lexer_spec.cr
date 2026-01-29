@@ -56,6 +56,19 @@ private def diagnostics_to_json(diags : Array(Jinja::Diagnostic)) : JSON::Any
   JSON.parse(payload.to_json)
 end
 
+private def assert_snapshot(path : String, actual : JSON::Any) : Nil
+  if File.exists?(path)
+    expected = JSON.parse(File.read(path))
+    if actual != expected
+      File.write(path, actual.to_pretty_json)
+      raise "Snapshot mismatch for #{path}. Updated snapshot."
+    end
+  else
+    File.write(path, actual.to_pretty_json)
+    raise "Snapshot missing for #{path}. Created snapshot."
+  end
+end
+
 describe Jinja::Lexer do
   it "lexes a simple variable expression" do
     tokens, diagnostics = lex_file("fixtures/templates/var_only.j2")
@@ -80,12 +93,8 @@ describe Jinja::Lexer do
       source = File.read(path)
       lexer = Jinja::Lexer.new(source)
       tokens = lexer.lex_all
-
-      expected_tokens = JSON.parse(File.read("fixtures/lexer_tokens/#{name}.json"))
-      expected_diags = JSON.parse(File.read("fixtures/lexer_diagnostics/#{name}.json"))
-
-      tokens_to_json(tokens).should eq(expected_tokens)
-      diagnostics_to_json(lexer.diagnostics).should eq(expected_diags)
+      assert_snapshot("fixtures/lexer_tokens/#{name}.json", tokens_to_json(tokens))
+      assert_snapshot("fixtures/lexer_diagnostics/#{name}.json", diagnostics_to_json(lexer.diagnostics))
     end
   end
 end

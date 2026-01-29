@@ -38,6 +38,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Add lexer tests against fixtures (`.j2`).
 - Prefer fault-tolerant recovery (keep lexing after errors).
 - Add lexer token/diagnostic JSON snapshots for fixtures.
+- Snapshot specs write updated JSON and fail on diffs to surface changes.
 
 #### Phase 1 Checklist
 - [x] Token model + spans implemented
