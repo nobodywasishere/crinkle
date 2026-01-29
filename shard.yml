@@ -10,3 +10,7 @@ license: MIT
 targets:
   jinja:
     main: src/cli/cli.cr
+
+dependencies:
+  lsprotocol:
+    github: nobodywasishere/lsprotocol-crystal
