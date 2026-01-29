@@ -2,7 +2,7 @@ require "spec"
 require "json"
 require "../src/jinja"
 
-private def tokens_to_json(tokens : Array(Jinja::Token)) : JSON::Any
+def tokens_to_json(tokens : Array(Jinja::Token)) : JSON::Any
   payload = tokens.map do |token|
     {
       "type"   => token.type.to_s,
@@ -25,7 +25,7 @@ private def tokens_to_json(tokens : Array(Jinja::Token)) : JSON::Any
   JSON.parse(payload.to_json)
 end
 
-private def diagnostics_to_json(diags : Array(Jinja::Diagnostic)) : JSON::Any
+def diagnostics_to_json(diags : Array(Jinja::Diagnostic)) : JSON::Any
   payload = diags.map do |diag|
     {
       "id"       => diag.id,
@@ -49,7 +49,7 @@ private def diagnostics_to_json(diags : Array(Jinja::Diagnostic)) : JSON::Any
   JSON.parse(payload.to_json)
 end
 
-private def assert_snapshot(path : String, actual : JSON::Any) : Nil
+def assert_snapshot(path : String, actual : JSON::Any) : Nil
   if File.exists?(path)
     expected = JSON.parse(File.read(path))
     if actual != expected

@@ -35,41 +35,6 @@ module Jinja
       AST::Template.new(nodes, template_span(nodes))
     end
 
-    def current_token_for_extension : Token
-      current
-    end
-
-    def advance_for_extension : Token
-      advance
-    end
-
-    def skip_whitespace_for_extension : Nil
-      skip_whitespace
-    end
-
-    def parse_expression_for_extension(
-      stop_types : Array(TokenType),
-      stop_lexemes : Array(String) = Array(String).new,
-    ) : AST::Expr
-      parse_expression(stop_types, stop_lexemes)
-    end
-
-    def expect_block_end_for_extension(message : String) : Span
-      expect_block_end(message)
-    end
-
-    def parse_until_end_tag_for_extension(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), Span?}
-      parse_until_end_tag(end_tag, allow_end_name)
-    end
-
-    def recover_to_for_extension(stop_types : Array(TokenType)) : Nil
-      recover_to(stop_types)
-    end
-
-    def span_between_for_extension(start_span : Span, end_span : Span) : Span
-      span_between(start_span, end_span)
-    end
-
     private def parse_output : AST::Output
       start_span = current.span
       advance
@@ -432,7 +397,7 @@ module Jinja
       advance if current.type == TokenType::BlockEnd
     end
 
-    private def parse_until_end_tag(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), Span?}
+    def parse_until_end_tag(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), Span?}
       nodes = Array(AST::Node).new
 
       while !at_end?
@@ -464,6 +429,51 @@ module Jinja
 
       emit_diagnostic(DiagnosticType::MissingEndTag, "Missing end tag '#{end_tag}'.")
       {nodes, nil}
+    end
+
+    def parse_until_any_end_tag(
+      end_tags : Array(String),
+      allow_end_name : Bool = false,
+    ) : {Array(AST::Node), Span?, String?}
+      nodes = Array(AST::Node).new
+
+      while !at_end?
+        if current.type == TokenType::BlockStart
+          tag = peek_block_tag
+          if tag && end_tags.includes?(tag)
+            end_span = consume_end_tag(allow_end_name)
+            return {nodes, end_span, tag}
+          end
+
+          node = parse_block
+          nodes << node if node
+          next
+        end
+
+        case current.type
+        when TokenType::Text
+          nodes << AST::Text.new(current.lexeme, current.span)
+          advance
+        when TokenType::VarStart
+          nodes << parse_output
+        when TokenType::EOF
+          break
+        else
+          emit_unexpected_token("block body")
+          advance
+        end
+      end
+
+      unless end_tags.empty?
+        message = if end_tags.size == 1
+                    "Missing end tag '#{end_tags.first}'."
+                  else
+                    "Missing end tag (one of: #{end_tags.join(", ")})."
+                  end
+        emit_diagnostic(DiagnosticType::MissingEndTag, message)
+      end
+
+      {nodes, nil, nil}
     end
 
     private def parse_name_target(message : String) : AST::Name
@@ -580,7 +590,7 @@ module Jinja
       params
     end
 
-    private def expect_block_end(message : String) : Span
+    def expect_block_end(message : String) : Span
       if current.type == TokenType::BlockEnd
         end_span = current.span
         advance
@@ -622,7 +632,7 @@ module Jinja
       end
     end
 
-    private def parse_expression(stop_types : Array(TokenType), stop_lexemes : Array(String) = Array(String).new) : AST::Expr
+    def parse_expression(stop_types : Array(TokenType), stop_lexemes : Array(String) = Array(String).new) : AST::Expr
       skip_whitespace
       if stop_at?(stop_types, stop_lexemes)
         emit_diagnostic(DiagnosticType::ExpectedExpression, "Expected expression.")
@@ -1184,7 +1194,7 @@ module Jinja
       end
     end
 
-    private def span_between(start_span : Span, end_span : Span) : Span
+    def span_between(start_span : Span, end_span : Span) : Span
       Span.new(start_span.start_pos, end_span.end_pos)
     end
 
@@ -1201,13 +1211,13 @@ module Jinja
       nil
     end
 
-    private def skip_whitespace : Nil
+    def skip_whitespace : Nil
       while current.type == TokenType::Whitespace
         advance
       end
     end
 
-    private def recover_to(stop_types : Array(TokenType)) : Nil
+    def recover_to(stop_types : Array(TokenType)) : Nil
       while !at_end? && !stop_types.includes?(current.type)
         advance
       end
@@ -1247,7 +1257,7 @@ module Jinja
       @diagnostics << Diagnostic.new(type, Severity::Error, message, current.span)
     end
 
-    private def current : Token
+    def current : Token
       @tokens[@index]
     end
 
@@ -1255,7 +1265,7 @@ module Jinja
       @tokens[@index - 1]
     end
 
-    private def advance : Token
+    def advance : Token
       @index += 1 if @index < @tokens.size - 1
       previous
     end

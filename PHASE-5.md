@@ -44,6 +44,7 @@
   - `expect_block_end`
   - `recover_to`
   - `parse_until_end_tag`
+  - `parse_until_any_end_tag` (multi-end-tag recovery)
 - Integrate environment registry:
   - Built-in dispatch table remains first.
   - If tag not found in built-ins, consult registry.

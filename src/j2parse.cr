@@ -31,16 +31,16 @@ tokens = lexer.lex_all
 environment = Jinja::Environment.new
 if ext_name == "demo"
   environment.register_tag("note", ["endnote"]) do |parser, start_span|
-    parser.skip_whitespace_for_extension
+    parser.skip_whitespace
     tag_args = Array(Jinja::AST::Expr).new
 
-    unless parser.current_token_for_extension.type == Jinja::TokenType::BlockEnd
-      tag_args << parser.parse_expression_for_extension([Jinja::TokenType::BlockEnd])
-      parser.skip_whitespace_for_extension
+    unless parser.current.type == Jinja::TokenType::BlockEnd
+      tag_args << parser.parse_expression([Jinja::TokenType::BlockEnd])
+      parser.skip_whitespace
     end
 
-    end_span = parser.expect_block_end_for_extension("Expected '%}' to close note tag.")
-    body, body_end = parser.parse_until_end_tag_for_extension("endnote", allow_end_name: true)
+    end_span = parser.expect_block_end("Expected '%}' to close note tag.")
+    body, body_end, _end_tag = parser.parse_until_any_end_tag(["endnote"], allow_end_name: true)
     body_end ||= end_span
 
     Jinja::AST::CustomTag.new(
@@ -48,7 +48,7 @@ if ext_name == "demo"
       tag_args,
       Array(Jinja::AST::KeywordArg).new,
       body,
-      parser.span_between_for_extension(start_span, body_end)
+      parser.span_between(start_span, body_end)
     )
   end
 elsif ext_name
