@@ -313,7 +313,7 @@ module Jinja
 
     private def inline_tag_pair?(text : String) : Bool
       return false unless @options.html_aware?
-      return false unless text.starts_with?("<")
+      return false unless text.includes?("<")
       return false unless text.includes?("</")
 
       regex = /<\/?([a-zA-Z][a-zA-Z0-9:-]*)\b/
@@ -532,7 +532,7 @@ module Jinja
 
       if call_args = node.call_args
         @printer.write("(")
-        format_args(call_args, node.call_kwargs || Array(AST::KeywordArg).new)
+        format_args_inline(call_args, node.call_kwargs || Array(AST::KeywordArg).new)
         @printer.write(") ")
       else
         @printer.write(" ")
@@ -540,7 +540,7 @@ module Jinja
 
       format_expr(node.callee)
       @printer.write("(")
-      format_args(node.args, node.kwargs)
+      format_args_inline(node.args, node.kwargs)
       @printer.write(") #{block_end(node.trim_right?)}")
 
       @jinja_indent += 1
@@ -565,7 +565,7 @@ module Jinja
 
       unless node.args.empty? && node.kwargs.empty?
         @printer.write(" ")
-        format_args(node.args, node.kwargs)
+        format_args_inline(node.args, node.kwargs)
       end
 
       if node.body.empty?
@@ -745,9 +745,7 @@ module Jinja
 
     private def format_call(expr : AST::Call) : Nil
       format_expr(expr.callee)
-      @printer.write("(")
-      format_args(expr.args, expr.kwargs)
-      @printer.write(")")
+      format_paren_args(expr.args, expr.kwargs, expr.span)
     end
 
     private def format_filter(expr : AST::Filter) : Nil
@@ -757,9 +755,7 @@ module Jinja
       @printer.write(expr.name)
 
       unless expr.args.empty? && expr.kwargs.empty?
-        @printer.write("(")
-        format_args(expr.args, expr.kwargs)
-        @printer.write(")")
+        format_paren_args(expr.args, expr.kwargs, expr.span)
       end
     end
 
@@ -773,9 +769,7 @@ module Jinja
       @printer.write(expr.name)
 
       unless expr.args.empty? && expr.kwargs.empty?
-        @printer.write("(")
-        format_args(expr.args, expr.kwargs)
-        @printer.write(")")
+        format_paren_args(expr.args, expr.kwargs, expr.span)
       end
     end
 
@@ -896,7 +890,7 @@ module Jinja
       length > @options.max_line_length
     end
 
-    private def format_args(args : Array(AST::Expr), kwargs : Array(AST::KeywordArg)) : Nil
+    private def format_args_inline(args : Array(AST::Expr), kwargs : Array(AST::KeywordArg)) : Nil
       index = 0
 
       args.each do |arg|
@@ -912,6 +906,56 @@ module Jinja
         format_expr(kwarg.value)
         index += 1
       end
+    end
+
+    private def format_args_multiline(args : Array(AST::Expr), kwargs : Array(AST::KeywordArg)) : Nil
+      index = 0
+      total = args.size + kwargs.size
+
+      args.each do |arg|
+        format_expr(arg)
+        index += 1
+        if index < total
+          @printer.write(",")
+          @printer.newline
+        end
+      end
+
+      kwargs.each do |kwarg|
+        @printer.write(kwarg.name)
+        @printer.write("=")
+        format_expr(kwarg.value)
+        index += 1
+        if index < total
+          @printer.write(",")
+          @printer.newline
+        end
+      end
+    end
+
+    private def format_paren_args(args : Array(AST::Expr), kwargs : Array(AST::KeywordArg), span : Span) : Nil
+      if pretty_args?(args, kwargs, span)
+        current_level = @printer.indent_level
+        @printer.write("(")
+        @printer.newline
+        @printer.indent_level = current_level + 1
+        format_args_multiline(args, kwargs)
+        @printer.newline
+        @printer.indent_level = current_level
+        @printer.write(")")
+      else
+        @printer.write("(")
+        format_args_inline(args, kwargs)
+        @printer.write(")")
+      end
+    end
+
+    private def pretty_args?(args : Array(AST::Expr), kwargs : Array(AST::KeywordArg), span : Span) : Bool
+      return false if args.empty? && kwargs.empty?
+      return true unless span.start_pos.line == span.end_pos.line
+
+      length = span.end_pos.column - span.start_pos.column + 1
+      length > @options.max_line_length
     end
 
     private def compute_effective_indent : Int32

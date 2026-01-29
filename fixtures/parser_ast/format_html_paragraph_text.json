@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<p>\n  The \"Merge History\" button will <i>visually</i> hide items below the selected item.\n  It will not delete them from the database.\n  This is useful when a value has a lot of older items.\n  It will skip loading these hidden items from the database, so it can improve the performance of this page as well.\n</p>\n"
+    }
+  ]
+}

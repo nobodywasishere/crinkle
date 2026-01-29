@@ -1,0 +1,171 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Macro",
+      "name": "feature",
+      "params": [
+        {
+          "name": "icon",
+          "default": null
+        },
+        {
+          "name": "title",
+          "default": null
+        },
+        {
+          "name": "desc",
+          "default": null
+        },
+        {
+          "name": "path",
+          "default": null
+        },
+        {
+          "name": "slug",
+          "default": null
+        },
+        {
+          "name": "label",
+          "default": null
+        },
+        {
+          "name": "extra",
+          "default": null
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "icon"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "title"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "desc"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "path"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "slug"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "label"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "extra"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "feature"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": "icon.svg"
+          },
+          {
+            "type": "Literal",
+            "value": "Search Title"
+          },
+          {
+            "type": "Literal",
+            "value": "Search Description"
+          },
+          {
+            "type": "Literal",
+            "value": "/search"
+          },
+          {
+            "type": "Literal",
+            "value": "search"
+          },
+          {
+            "type": "Literal",
+            "value": "super_long_label_value"
+          },
+          {
+            "type": "Literal",
+            "value": "Extra Detail"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

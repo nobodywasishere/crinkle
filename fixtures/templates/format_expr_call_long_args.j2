@@ -1,0 +1,13 @@
+{% macro feature(icon, title, desc, path, slug, label, extra) %}
+  {{ icon }} {{ title }} {{ desc }} {{ path }} {{ slug }} {{ label }} {{ extra }}
+{% endmacro %}
+
+{{ feature(
+  "icon.svg",
+  "Search Title",
+  "Search Description",
+  "/search",
+  "search",
+  "super_long_label_value",
+  "Extra Detail"
+) }}
