@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_EXPECTED_TOKEN",
+    "severity": "error",
+    "message": "Expected variable name after 'set'.",
+    "span": {
+      "start": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      },
+      "end": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      }
+    }
+  }
+]

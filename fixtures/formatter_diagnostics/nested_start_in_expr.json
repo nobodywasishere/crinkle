@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_UNTERMINATED_EXPRESSION",
+    "severity": "error",
+    "message": "Unterminated expression; expected '}}'.",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      }
+    }
+  }
+]

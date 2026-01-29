@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_UNEXPECTED_TOKEN",
+    "severity": "error",
+    "message": "Unexpected token in expression.",
+    "span": {
+      "start": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      },
+      "end": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      }
+    }
+  }
+]

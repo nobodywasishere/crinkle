@@ -12,6 +12,7 @@ describe Jinja::Formatter do
         output = formatter.format
 
         assert_text_snapshot("fixtures/formatter_output/#{name}.j2", output)
+        assert_diagnostics_snapshot("fixtures/formatter_diagnostics/#{name}.json", formatter.diagnostics)
       end
     end
   end

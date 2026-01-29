@@ -1,0 +1,19 @@
+[
+  {
+    "id": "E_UNEXPECTED_END_TAG",
+    "severity": "error",
+    "message": "Unexpected 'endblock'.",
+    "span": {
+      "start": {
+        "offset": 11,
+        "line": 1,
+        "column": 12
+      },
+      "end": {
+        "offset": 12,
+        "line": 1,
+        "column": 13
+      }
+    }
+  }
+]

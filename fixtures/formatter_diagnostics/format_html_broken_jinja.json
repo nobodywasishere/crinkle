@@ -1,0 +1,70 @@
+[
+  {
+    "id": "E_HTML_UNEXPECTED_END_TAG",
+    "severity": "warning",
+    "message": "Unexpected HTML end tag 'p'.",
+    "span": {
+      "start": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      },
+      "end": {
+        "offset": 12,
+        "line": 1,
+        "column": 13
+      }
+    }
+  },
+  {
+    "id": "E_HTML_UNCLOSED_TAG",
+    "severity": "warning",
+    "message": "Unclosed HTML tag 'div'.",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 19,
+        "line": 1,
+        "column": 20
+      }
+    }
+  },
+  {
+    "id": "E_HTML_UNCLOSED_TAG",
+    "severity": "warning",
+    "message": "Unclosed HTML tag 'span'.",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 20,
+        "line": 1,
+        "column": 21
+      }
+    }
+  },
+  {
+    "id": "E_HTML_UNCLOSED_TAG",
+    "severity": "warning",
+    "message": "Unclosed HTML tag 'p'.",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      }
+    }
+  }
+]
