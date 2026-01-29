@@ -1,4 +1,3 @@
-require "spec"
 require "./spec_helper"
 
 # Phase 0 placeholder: fixtures exist and are loadable.
