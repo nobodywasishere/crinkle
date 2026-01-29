@@ -143,6 +143,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - [x] Lexer: CommentStart/CommentEnd token types
 - [x] Parser: AST::Comment node type
 - [x] Renderer: ignore Comment nodes
+- [x] Preserve whitespace control delimiters (`-`) in AST + formatter output
 - [x] Formatter::Options struct implemented
 - [x] Formatter::Printer class implemented
 - [x] Formatter::HtmlContext class implemented

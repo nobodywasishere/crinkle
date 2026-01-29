@@ -189,6 +189,7 @@ Hello, {{ user.name }}
 - [x] Comment formatting with indentation
 - [x] Fault-tolerance for parse errors
 - [x] HTML-aware indentation working
+- [x] Whitespace-control delimiter preservation (`-` in `{%-`, `-%}`, `{{-`, `-}}`, `{#-`, `-#}`)
 - [x] Formatter fixtures created
 - [x] Formatter specs passing
 - [x] Idempotency verified
