@@ -3,6 +3,24 @@ Metrics/CyclomaticComplexity:
 
 Typing/MethodParameterTypeRestriction:
   Enabled: true
+  DefaultValue: true
+  BlockParameters: true
+  PrivateMethods: true
+  ProtectedMethods: true
+  NodocMethods: true
 
 Typing/MethodReturnTypeRestriction:
+  Enabled: true
+  PrivateMethods: true
+  ProtectedMethods: true
+  NodocMethods: true
+
+Typing/MacroCallArgumentTypeRestriction:
+  Enabled: true
+  DefaultValue: true
+
+Style/ArrayLiteralSyntax:
+  Enabled: true
+
+Style/HashLiteralSyntax:
   Enabled: true

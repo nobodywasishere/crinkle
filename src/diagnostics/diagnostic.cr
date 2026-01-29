@@ -46,28 +46,16 @@ module Jinja
 
     def id : String
       case @type
-      when DiagnosticType::UnterminatedExpression
-        "E_UNTERMINATED_EXPRESSION"
-      when DiagnosticType::UnterminatedBlock
-        "E_UNTERMINATED_BLOCK"
-      when DiagnosticType::UnterminatedString
-        "E_UNTERMINATED_STRING"
-      when DiagnosticType::UnexpectedChar
-        "E_UNEXPECTED_CHAR"
-      when DiagnosticType::UnexpectedToken
-        "E_UNEXPECTED_TOKEN"
-      when DiagnosticType::ExpectedToken
-        "E_EXPECTED_TOKEN"
-      when DiagnosticType::ExpectedExpression
-        "E_EXPECTED_EXPRESSION"
-      when DiagnosticType::MissingEndTag
-        "E_MISSING_END_TAG"
-      when DiagnosticType::UnknownTag
-        "E_UNKNOWN_TAG"
-      when DiagnosticType::UnexpectedEndTag
-        "E_UNEXPECTED_END_TAG"
-      else
-        "E_UNKNOWN_DIAGNOSTIC"
+      in DiagnosticType::UnterminatedExpression then "E_UNTERMINATED_EXPRESSION"
+      in DiagnosticType::UnterminatedBlock      then "E_UNTERMINATED_BLOCK"
+      in DiagnosticType::UnterminatedString     then "E_UNTERMINATED_STRING"
+      in DiagnosticType::UnexpectedChar         then "E_UNEXPECTED_CHAR"
+      in DiagnosticType::UnexpectedToken        then "E_UNEXPECTED_TOKEN"
+      in DiagnosticType::ExpectedToken          then "E_EXPECTED_TOKEN"
+      in DiagnosticType::ExpectedExpression     then "E_EXPECTED_EXPRESSION"
+      in DiagnosticType::MissingEndTag          then "E_MISSING_END_TAG"
+      in DiagnosticType::UnknownTag             then "E_UNKNOWN_TAG"
+      in DiagnosticType::UnexpectedEndTag       then "E_UNEXPECTED_END_TAG"
       end
     end
   end

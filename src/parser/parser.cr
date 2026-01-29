@@ -5,11 +5,11 @@ module Jinja
     def initialize(tokens : Array(Token)) : Nil
       @tokens = tokens
       @index = 0
-      @diagnostics = [] of Diagnostic
+      @diagnostics = Array(Diagnostic).new
     end
 
     def parse : AST::Template
-      nodes = [] of AST::Node
+      nodes = Array(AST::Node).new
 
       while !at_end?
         case current.type
@@ -106,7 +106,7 @@ module Jinja
 
       body, end_span = parse_until_end_tag("endif")
       end_span ||= start_span
-      AST::If.new(test, body, [] of AST::Node, span_between(start_span, end_span))
+      AST::If.new(test, body, Array(AST::Node).new, span_between(start_span, end_span))
     end
 
     private def parse_for(start_span : Span) : AST::For
@@ -143,11 +143,11 @@ module Jinja
 
       body, end_span = parse_until_end_tag("endfor")
       end_span ||= start_span
-      AST::For.new(target, iter, body, [] of AST::Node, span_between(start_span, end_span))
+      AST::For.new(target, iter, body, Array(AST::Node).new, span_between(start_span, end_span))
     end
 
     private def parse_until_end_tag(end_tag : String) : {Array(AST::Node), Span?}
-      nodes = [] of AST::Node
+      nodes = Array(AST::Node).new
 
       while !at_end?
         if current.type == TokenType::BlockStart

@@ -2,7 +2,7 @@ require "spec"
 require "./spec_helper"
 require "json"
 
-private def lex_file(path : String)
+private def lex_file(path : String) : {Array(Jinja::Token), Array(Jinja::Diagnostic)}
   source = File.read(path)
   lexer = Jinja::Lexer.new(source)
   tokens = lexer.lex_all

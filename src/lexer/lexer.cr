@@ -18,11 +18,11 @@ module Jinja
       @mode_start_offset = 0
       @mode_start_line = 1
       @mode_start_col = 1
-      @diagnostics = [] of Diagnostic
+      @diagnostics = Array(Diagnostic).new
     end
 
     def lex_all : Array(Token)
-      tokens = [] of Token
+      tokens = Array(Token).new
       loop do
         token = next_token
         tokens << token
@@ -363,7 +363,7 @@ module Jinja
       Token.new(end_type, "", span)
     end
 
-    private def emit_unexpected_char
+    private def emit_unexpected_char : Nil
       start_offset = current_offset
       start_line = @line
       start_col = @column
@@ -373,12 +373,12 @@ module Jinja
       @diagnostics << Diagnostic.new(DiagnosticType::UnexpectedChar, Severity::Error, message, span)
     end
 
-    private def emit_diagnostic(type : DiagnosticType, message : String)
+    private def emit_diagnostic(type : DiagnosticType, message : String) : Nil
       span = make_span(current_offset, @line, @column)
       @diagnostics << Diagnostic.new(type, Severity::Error, message, span)
     end
 
-    private def emit_diagnostic(type : DiagnosticType, message : String, start_offset : Int32, start_line : Int32, start_col : Int32)
+    private def emit_diagnostic(type : DiagnosticType, message : String, start_offset : Int32, start_line : Int32, start_col : Int32) : Nil
       span = make_span(start_offset, start_line, start_col)
       @diagnostics << Diagnostic.new(type, Severity::Error, message, span)
     end
@@ -405,7 +405,7 @@ module Jinja
       Token.new(type, lexeme, span)
     end
 
-    private def mark_mode_start(start_offset : Int32, start_line : Int32, start_col : Int32)
+    private def mark_mode_start(start_offset : Int32, start_line : Int32, start_col : Int32) : Nil
       @mode_start_offset = start_offset
       @mode_start_line = start_line
       @mode_start_col = start_col
@@ -434,7 +434,7 @@ module Jinja
       current_char == '\0'
     end
 
-    private def advance_char
+    private def advance_char : Nil
       ch = current_char
       @reader.next_char
       if ch == '\n'

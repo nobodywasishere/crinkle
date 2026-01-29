@@ -117,7 +117,7 @@ module Jinja
         end
       end
 
-      private def self.literal_value(value : (String | Int64 | Float64 | Bool)?)
+      private def self.literal_value(value : (String | Int64 | Float64 | Bool)?) : (String | Int64 | Float64 | Bool)?
         case value
         when String
           value
