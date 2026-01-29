@@ -1,0 +1,15 @@
+#!/usr/bin/env crystal
+
+# Minimal CLI scaffold for Phase 0.
+# This will later run the real lexer/parser once implemented.
+
+if ARGV.size != 1
+  STDERR.puts "Usage: j2parse <template.j2>"
+  exit 1
+end
+
+path = ARGV[0]
+content = File.read(path)
+
+puts "[phase0] Loaded #{path} (#{content.bytesize} bytes)"
+puts "[phase0] Lexer/parser not implemented yet"

@@ -57,7 +57,7 @@
 - Linting and LSP consume the AST and diagnostics, not the executor.
 
 ## CLI Contract (Phase 0)
-- `bin/j2parse <template.j2>` reads the file and prints a simple status message.
+- `scripts/j2parse <template.j2>` reads the file and prints a simple status message.
 - Later phases will print tokens, AST, and diagnostics in JSON.
 
 ## Fixture Plan

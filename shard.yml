@@ -6,3 +6,7 @@ authors:
   - GPT-5.2-Codex
 
 license: MIT
+
+targets:
+  j2parse:
+    main: scripts/j2parse

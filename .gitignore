@@ -2,7 +2,6 @@
 /.shards/
 /lib/
 /bin/
-!/bin/j2parse
 /docs/
 /.crystal/
 

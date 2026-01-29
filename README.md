@@ -18,7 +18,7 @@ A Jinja2-compatible lexer, parser, linter, and language server written in Crysta
   - Naming convention: `Jinja::Lexer`, `Jinja::Parser`, `Jinja::AST`, `Jinja::Diagnostics`
 
 ## CLI
-- `bin/j2parse <template.j2>`
+- `scripts/j2parse <template.j2>`
 
 ## Development
 - Run specs: `crystal spec`
