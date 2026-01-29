@@ -1,5 +1,7 @@
 module Jinja
   class Parser
+    private alias TagHandler = Proc(Span, AST::Node?)
+
     getter diagnostics : Array(Diagnostic)
 
     def initialize(tokens : Array(Token)) : Nil
@@ -73,34 +75,8 @@ module Jinja
       tag = tag_token.lexeme
       advance
 
-      case tag
-      when "if"
-        parse_if(start_span)
-      when "for"
-        parse_for(start_span)
-      when "set"
-        parse_set(start_span)
-      when "block"
-        parse_block_tag(start_span)
-      when "extends"
-        parse_extends(start_span)
-      when "include"
-        parse_include(start_span)
-      when "import"
-        parse_import(start_span)
-      when "from"
-        parse_from(start_span)
-      when "macro"
-        parse_macro(start_span)
-      when "call"
-        parse_call_block(start_span)
-      when "raw"
-        parse_raw_block(start_span)
-      when "endif", "endfor", "endset", "endblock", "endmacro", "endcall", "endraw"
-        emit_diagnostic(DiagnosticType::UnexpectedEndTag, "Unexpected '#{tag}'.")
-        recover_to([TokenType::BlockEnd])
-        advance if current.type == TokenType::BlockEnd
-        nil
+      if handler = tag_handlers[tag]?
+        handler.call(start_span)
       else
         emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.")
         recover_to([TokenType::BlockEnd])
@@ -381,6 +357,35 @@ module Jinja
 
       emit_diagnostic(DiagnosticType::MissingEndTag, "Missing end tag 'endraw'.")
       AST::Raw.new(tokens.map(&.lexeme).join, start_span)
+    end
+
+    private def tag_handlers : Hash(String, TagHandler)
+      @tag_handlers ||= {
+        "if"       => ->(span : Span) : AST::Node? { parse_if(span) },
+        "for"      => ->(span : Span) : AST::Node? { parse_for(span) },
+        "set"      => ->(span : Span) : AST::Node? { parse_set(span) },
+        "block"    => ->(span : Span) : AST::Node? { parse_block_tag(span) },
+        "extends"  => ->(span : Span) : AST::Node? { parse_extends(span) },
+        "include"  => ->(span : Span) : AST::Node? { parse_include(span) },
+        "import"   => ->(span : Span) : AST::Node? { parse_import(span) },
+        "from"     => ->(span : Span) : AST::Node? { parse_from(span) },
+        "macro"    => ->(span : Span) : AST::Node? { parse_macro(span) },
+        "call"     => ->(span : Span) : AST::Node? { parse_call_block(span) },
+        "raw"      => ->(span : Span) : AST::Node? { parse_raw_block(span) },
+        "endif"    => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endif") },
+        "endfor"   => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endfor") },
+        "endset"   => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endset") },
+        "endblock" => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endblock") },
+        "endmacro" => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endmacro") },
+        "endcall"  => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endcall") },
+        "endraw"   => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endraw") },
+      } of String => TagHandler
+    end
+
+    private def parse_unexpected_end_tag(tag : String) : Nil
+      emit_diagnostic(DiagnosticType::UnexpectedEndTag, "Unexpected '#{tag}'.")
+      recover_to([TokenType::BlockEnd])
+      advance if current.type == TokenType::BlockEnd
     end
 
     private def parse_until_end_tag(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), Span?}

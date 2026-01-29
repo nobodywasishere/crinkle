@@ -92,7 +92,7 @@
 - Snapshot specs pass for added fixtures.
 
 ## Progress Checklist
-- [ ] Parser tag-dispatch framework
+- [x] Parser tag-dispatch framework
 - [x] AST nodes + serializer updates
 - [x] Tag parsing: set/block/extends/include/import/from
 - [x] Tag parsing: macro/call/raw
