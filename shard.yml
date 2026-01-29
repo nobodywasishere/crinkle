@@ -8,5 +8,5 @@ authors:
 license: MIT
 
 targets:
-  j2parse:
-    main: src/j2parse.cr
+  jinja:
+    main: src/cli/cli.cr

@@ -175,7 +175,31 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - [ ] Linter output style aligned with ameba conventions
 - [x] Initial lint rules implemented + snapshots
 
-### Phase 9 — Language Server (LSP)
+### Phase 9 — CLI (Unified Tooling)
+**Outcome:** A cohesive command-line interface for core workflows.
+- Provide a single CLI entrypoint with subcommands: `lex`, `parse`, `render`, `format`, `lint`.
+- Sane defaults: read from stdin, write to stdout, exit non-zero on errors.
+- Consistent flags across subcommands:
+  - `path` positional + `--stdin`
+  - `--format` for output (json/text/html)
+  - `--pretty` for JSON
+  - `--no-color` to disable colorized diagnostics
+  - `--strict` to treat warnings as errors
+- Support snapshot output for debugging (`--snapshots-dir`).
+- Exit codes aligned with common CLI conventions.
+- Document CLI usage in README.
+
+#### Phase 9 Checklist
+- [ ] CLI command structure defined
+- [ ] `lex` outputs tokens + diagnostics
+- [ ] `parse` outputs AST + diagnostics
+- [ ] `render` outputs rendered HTML + diagnostics
+- [ ] `format` outputs formatted template
+- [ ] `lint` outputs lint diagnostics
+- [ ] Consistent flags across commands
+- [ ] CLI usage documented
+
+### Phase 10 — Language Server (LSP)
 **Outcome:** IDE features for templates.
 - Minimal LSP server (initialize, textDocument/didOpen, didChange, didClose).
 - Diagnostics pipeline using lexer/parser/linter.
@@ -183,7 +207,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Document symbols, folding ranges, semantic tokens (optional).
 - Performance: incremental parsing and caching.
 
-### Phase 10 — Compatibility + UX Polish
+### Phase 11 — Compatibility + UX Polish
 **Outcome:** Confidence + developer adoption.
 - Add compatibility test suite using real-world Jinja2 templates.
 - Benchmark parsing on large templates.

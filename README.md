@@ -19,8 +19,11 @@ A Jinja2-compatible lexer, parser, linter, and language server written in Crysta
   - Naming convention: `Jinja::Lexer`, `Jinja::Parser`, `Jinja::AST`, `Jinja::Diagnostics`
 
 ## CLI
-- `src/j2parse.cr [--ast] [--ext NAME] <template.j2>`
-- Demo extensions: `--ext demo`
+- `jinja lex [path] [--stdin] [--format json|text] [--pretty]`
+- `jinja parse [path] [--stdin] [--format json|text] [--pretty]`
+- `jinja render [path] [--stdin] [--format html|text]`
+- `jinja format [path] [--stdin] [--output path]`
+- `jinja lint [path] [--stdin] [--format json|text] [--pretty]`
 
 ## Custom Extensions
 Register custom tags, filters, tests, and functions through `Jinja::Environment`.
