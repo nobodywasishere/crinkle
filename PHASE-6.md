@@ -17,6 +17,7 @@
   - Scoped variables (stack)
   - Macros registered at render time (minimal support)
 - Custom tags without renderers emit diagnostics but still render their body.
+- Environment exposes a template loader used by include/import/extends.
 - Diagnostics for runtime errors:
   - Unknown variable, unknown filter/test/function, invalid operand, non-iterable loop.
 - Fixtures:

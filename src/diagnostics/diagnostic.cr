@@ -18,6 +18,8 @@ module Jinja
     InvalidOperand
     NotIterable
     UnsupportedNode
+    TemplateNotFound
+    UnknownMacro
   end
 
   enum Severity
@@ -72,6 +74,8 @@ module Jinja
       in DiagnosticType::InvalidOperand         then "E_INVALID_OPERAND"
       in DiagnosticType::NotIterable            then "E_NOT_ITERABLE"
       in DiagnosticType::UnsupportedNode        then "E_UNSUPPORTED_NODE"
+      in DiagnosticType::TemplateNotFound       then "E_TEMPLATE_NOT_FOUND"
+      in DiagnosticType::UnknownMacro           then "E_UNKNOWN_MACRO"
       end
     end
   end

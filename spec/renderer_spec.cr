@@ -17,6 +17,11 @@ private def build_environment : Jinja::Environment
     "Hello #{name}"
   end
 
+  env.set_loader do |name|
+    path = File.join("fixtures", "templates", name)
+    File.read(path) if File.exists?(path)
+  end
+
   env
 end
 

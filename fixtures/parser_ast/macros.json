@@ -1,0 +1,77 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Macro",
+      "name": "greet",
+      "params": [
+        {
+          "name": "name",
+          "default": null
+        },
+        {
+          "name": "title",
+          "default": {
+            "type": "Literal",
+            "value": "Ms"
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "Hello "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "title"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Macro",
+      "name": "title",
+      "params": [
+        {
+          "name": "value",
+          "default": null
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "Title: "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "value"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

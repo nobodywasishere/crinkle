@@ -5,6 +5,10 @@ module Jinja
     def initialize(@environment : Environment = Environment.new) : Nil
       @diagnostics = Array(Diagnostic).new
       @scopes = Array(Hash(String, Value)).new
+      @macros = Hash(String, AST::Macro).new
+      @macro_namespaces = Hash(String, Hash(String, AST::Macro)).new
+      @caller_stack = Array(String).new
+      @block_overrides = Hash(String, Array(AST::Node)).new
     end
 
     def render(
@@ -13,7 +17,22 @@ module Jinja
     ) : String
       @diagnostics.clear
       @scopes.clear
+      @macros.clear
+      @macro_namespaces.clear
+      @caller_stack.clear
+      @block_overrides.clear
       @scopes << context.dup
+
+      register_macros(template.body)
+      extends = find_extends(template.body)
+      if extends
+        @block_overrides = collect_blocks(template.body)
+        parent = load_template_from_expr(extends.template, extends.span)
+        return "" unless parent
+        register_macros(parent.body)
+        return render_nodes(parent.body)
+      end
+
       render_nodes(template.body)
     end
 
@@ -48,6 +67,27 @@ module Jinja
       when AST::SetBlock
         assign(node.target.value, render_nodes(node.body))
         ""
+      when AST::Block
+        if override = @block_overrides[node.name]?
+          render_nodes(override)
+        else
+          render_nodes(node.body)
+        end
+      when AST::Extends
+        ""
+      when AST::Include
+        render_include(node)
+      when AST::Import
+        render_import(node)
+        ""
+      when AST::FromImport
+        render_from_import(node)
+        ""
+      when AST::Macro
+        @macros[node.name] = node
+        ""
+      when AST::CallBlock
+        render_call_block(node)
       when AST::CustomTag
         emit_diagnostic(
           DiagnosticType::UnknownTagRenderer,
@@ -90,6 +130,71 @@ module Jinja
           pop_scope
         end
       end
+    end
+
+    private def render_include(node : AST::Include) : String
+      template = load_template_from_expr(node.template, node.span)
+      return "" unless template
+
+      if node.with_context?
+        push_scope
+        output = render_nodes(template.body)
+        pop_scope
+        output
+      else
+        with_isolated_context(Hash(String, Value).new) do
+          render_nodes(template.body)
+        end
+      end
+    end
+
+    private def render_import(node : AST::Import) : Nil
+      template = load_template_from_expr(node.template, node.span)
+      return unless template
+
+      macros = collect_macros(template.body)
+      @macro_namespaces[node.alias] = macros
+    end
+
+    private def render_from_import(node : AST::FromImport) : Nil
+      template = load_template_from_expr(node.template, node.span)
+      return unless template
+
+      macros = collect_macros(template.body)
+      node.names.each do |import_name|
+        name = import_name.name
+        alias_name = import_name.alias || name
+        if macro_def = macros[name]?
+          @macros[alias_name] = macro_def
+        else
+          emit_diagnostic(
+            DiagnosticType::UnknownMacro,
+            "Unknown macro '#{name}'.",
+            import_name.span
+          )
+        end
+      end
+    end
+
+    private def render_call_block(node : AST::CallBlock) : String
+      caller_body = render_nodes(node.body)
+      args, kwargs = eval_args(node.args, node.kwargs)
+
+      if macro_def = resolve_macro(node.callee)
+        return render_macro(macro_def, args, kwargs, caller_body)
+      end
+
+      if fn = resolve_function(node.callee)
+        result = fn.call(args, kwargs)
+        return value_to_s(result) + caller_body
+      end
+
+      emit_diagnostic(
+        DiagnosticType::UnknownFunction,
+        "Unknown function for call block.",
+        node.callee.span
+      )
+      caller_body
     end
 
     private def eval_expr(expr : AST::Expr) : Value
@@ -182,26 +287,25 @@ module Jinja
 
     private def eval_call(expr : AST::Call) : Value
       args, kwargs = eval_args(expr.args, expr.kwargs)
-      case callee = expr.callee
-      when AST::Name
-        name = callee.value
-        if fn = @environment.functions[name]?
-          return fn.call(args, kwargs)
-        end
-        emit_diagnostic(
-          DiagnosticType::UnknownFunction,
-          "Unknown function '#{name}'.",
-          callee.span
-        )
-        nil
-      else
-        emit_diagnostic(
-          DiagnosticType::UnsupportedNode,
-          "Renderer only supports calling named functions.",
-          callee.span
-        )
-        nil
+      callee = expr.callee
+      if macro_def = resolve_macro(callee)
+        return render_macro(macro_def, args, kwargs, nil)
       end
+
+      if callee.is_a?(AST::Name) && callee.value == "caller" && !@caller_stack.empty?
+        return @caller_stack.last
+      end
+
+      if fn = resolve_function(callee)
+        return fn.call(args, kwargs)
+      end
+
+      emit_diagnostic(
+        DiagnosticType::UnknownFunction,
+        "Unknown function '#{callee_name(callee)}'.",
+        callee.span
+      )
+      nil
     end
 
     private def eval_filter(expr : AST::Filter) : Value
@@ -262,6 +366,195 @@ module Jinja
       pairs
     end
 
+    private def register_macros(nodes : Array(AST::Node)) : Nil
+      collect_macros(nodes).each do |name, macro_def|
+        @macros[name] = macro_def
+      end
+    end
+
+    private def collect_macros(nodes : Array(AST::Node)) : Hash(String, AST::Macro)
+      macros = Hash(String, AST::Macro).new
+      nodes.each do |node|
+        case node
+        when AST::Macro
+          macros[node.name] = node
+        when AST::If
+          macros.merge!(collect_macros(node.body))
+          macros.merge!(collect_macros(node.else_body))
+        when AST::For
+          macros.merge!(collect_macros(node.body))
+          macros.merge!(collect_macros(node.else_body))
+        when AST::SetBlock
+          macros.merge!(collect_macros(node.body))
+        when AST::Block
+          macros.merge!(collect_macros(node.body))
+        when AST::CallBlock
+          macros.merge!(collect_macros(node.body))
+        when AST::CustomTag
+          macros.merge!(collect_macros(node.body))
+        end
+      end
+      macros
+    end
+
+    private def collect_blocks(nodes : Array(AST::Node)) : Hash(String, Array(AST::Node))
+      blocks = Hash(String, Array(AST::Node)).new
+      nodes.each do |node|
+        case node
+        when AST::Block
+          blocks[node.name] = node.body
+        when AST::If
+          blocks.merge!(collect_blocks(node.body))
+          blocks.merge!(collect_blocks(node.else_body))
+        when AST::For
+          blocks.merge!(collect_blocks(node.body))
+          blocks.merge!(collect_blocks(node.else_body))
+        when AST::SetBlock
+          blocks.merge!(collect_blocks(node.body))
+        when AST::CallBlock
+          blocks.merge!(collect_blocks(node.body))
+        when AST::CustomTag
+          blocks.merge!(collect_blocks(node.body))
+        end
+      end
+      blocks
+    end
+
+    private def find_extends(nodes : Array(AST::Node)) : AST::Extends?
+      nodes.each do |node|
+        return node if node.is_a?(AST::Extends)
+      end
+      nil
+    end
+
+    private def load_template_from_expr(expr : AST::Expr, span : Span) : AST::Template?
+      value = eval_expr(expr)
+      name = value_to_template_name(value, span)
+      return load_template(name, span) if name
+      nil
+    end
+
+    private def load_template(name : String, span : Span) : AST::Template?
+      loader = @environment.template_loader
+      unless loader
+        emit_diagnostic(
+          DiagnosticType::TemplateNotFound,
+          "No template loader configured.",
+          span
+        )
+        return
+      end
+
+      source = loader.call(name)
+      unless source
+        emit_diagnostic(
+          DiagnosticType::TemplateNotFound,
+          "Template '#{name}' not found.",
+          span
+        )
+        return
+      end
+
+      parse_template(source)
+    end
+
+    private def parse_template(source : String) : AST::Template
+      lexer = Lexer.new(source)
+      tokens = lexer.lex_all
+      parser = Parser.new(tokens, @environment)
+      template = parser.parse
+      @diagnostics.concat(lexer.diagnostics)
+      @diagnostics.concat(parser.diagnostics)
+      template
+    end
+
+    private def render_macro(
+      macro_def : AST::Macro,
+      args : Array(Value),
+      kwargs : Hash(String, Value),
+      caller : String?,
+    ) : String
+      push_scope
+      @caller_stack << caller if caller
+
+      bind_macro_params(macro_def, args, kwargs)
+      output = render_nodes(macro_def.body)
+
+      @caller_stack.pop if caller
+      pop_scope
+      output
+    end
+
+    private def bind_macro_params(
+      macro_def : AST::Macro,
+      args : Array(Value),
+      kwargs : Hash(String, Value),
+    ) : Nil
+      macro_def.params.each_with_index do |param, index|
+        if index < args.size
+          assign(param.name, args[index])
+          next
+        end
+
+        if kwargs.has_key?(param.name)
+          assign(param.name, kwargs[param.name])
+          next
+        end
+
+        if default_value = param.default_value
+          assign(param.name, eval_expr(default_value))
+        else
+          assign(param.name, nil)
+        end
+      end
+    end
+
+    private def resolve_macro(callee : AST::Expr) : AST::Macro?
+      case callee
+      when AST::Name
+        @macros[callee.value]?
+      when AST::GetAttr
+        target = callee.target
+        return unless target.is_a?(AST::Name)
+        namespace = @macro_namespaces[target.value]?
+        return namespace[callee.name]? if namespace
+        return
+      else
+        return
+      end
+    end
+
+    private def resolve_function(callee : AST::Expr) : FunctionProc?
+      return unless callee.is_a?(AST::Name)
+      @environment.functions[callee.value]?
+    end
+
+    private def callee_name(callee : AST::Expr) : String
+      case callee
+      when AST::Name
+        callee.value
+      when AST::GetAttr
+        target = callee.target
+        if target.is_a?(AST::Name)
+          "#{target.value}.#{callee.name}"
+        else
+          callee.name
+        end
+      else
+        "callable"
+      end
+    end
+
+    private def value_to_template_name(value : Value, span : Span) : String?
+      return value if value.is_a?(String)
+      emit_diagnostic(
+        DiagnosticType::InvalidOperand,
+        "Expected template name string.",
+        span
+      )
+      nil
+    end
+
     private def eval_args(
       args : Array(AST::Expr),
       kwargs : Array(AST::KeywordArg),
@@ -298,6 +591,14 @@ module Jinja
 
     private def pop_scope : Nil
       @scopes.pop
+    end
+
+    private def with_isolated_context(context : Hash(String, Value), & : -> String) : String
+      previous_scopes = @scopes
+      @scopes = [context]
+      result = yield
+      @scopes = previous_scopes
+      result
     end
 
     private def truthy?(value : Value) : Bool

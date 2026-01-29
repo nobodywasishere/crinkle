@@ -1,8 +1,8 @@
 [
   {
-    "id": "E_UNSUPPORTED_NODE",
+    "id": "E_UNKNOWN_FUNCTION",
     "severity": "error",
-    "message": "Renderer only supports calling named functions.",
+    "message": "Unknown function 'lower'.",
     "span": {
       "start": {
         "offset": 3,

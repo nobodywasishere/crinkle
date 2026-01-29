@@ -128,6 +128,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
   - Diagnostics live in `fixtures/render_diagnostics` as `.json`.
 - Renderer emits diagnostics for runtime issues and defaults unknown custom tags to
   rendering their bodies.
+- Renderer uses an environment-provided template loader for include/import/extends.
 
 ### Phase 7 — Formatter (Optional, HTML-aware)
 **Outcome:** Format templates with HTML-structural awareness.

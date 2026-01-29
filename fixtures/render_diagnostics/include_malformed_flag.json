@@ -1,8 +1,8 @@
 [
   {
-    "id": "E_UNSUPPORTED_NODE",
+    "id": "E_TEMPLATE_NOT_FOUND",
     "severity": "error",
-    "message": "Renderer does not support Jinja::AST::Include.",
+    "message": "Template 'a.j2' not found.",
     "span": {
       "start": {
         "offset": 0,

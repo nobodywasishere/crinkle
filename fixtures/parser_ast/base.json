@@ -1,0 +1,23 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "Base\n"
+    },
+    {
+      "type": "Block",
+      "name": "content",
+      "body": [
+        {
+          "type": "Text",
+          "value": "Default"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

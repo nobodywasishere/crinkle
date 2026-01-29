@@ -6,6 +6,7 @@ module Jinja
   alias FunctionProc = Proc(Array(Value), Hash(String, Value), Value)
 
   alias TagHandler = Proc(Parser, Span, AST::Node?)
+  alias TemplateLoader = Proc(String, String?)
 
   class TagExtension
     getter name : String
@@ -28,12 +29,14 @@ module Jinja
     getter tests : Hash(String, TestProc)
     getter functions : Hash(String, FunctionProc)
     getter? override_builtins : Bool
+    getter template_loader : TemplateLoader?
 
     def initialize(@override_builtins : Bool = false) : Nil
       @tag_extensions = Hash(String, TagExtension).new
       @filters = Hash(String, FilterProc).new
       @tests = Hash(String, TestProc).new
       @functions = Hash(String, FunctionProc).new
+      @template_loader = nil
     end
 
     def register_tag(
@@ -76,6 +79,10 @@ module Jinja
 
     def register_function(name : String, &fn : FunctionProc) : Nil
       register_function(name, fn)
+    end
+
+    def set_loader(&loader : TemplateLoader) : Nil
+      @template_loader = loader
     end
 
     def tag_extension(name : String) : TagExtension?
