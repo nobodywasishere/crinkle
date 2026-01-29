@@ -34,6 +34,12 @@
 - Consistent ordering: file > line > column > id > message.
 - Optional help text for quick fixes (later).
 
+## Initial Rules (Implemented)
+- `Lint/MultipleExtends`
+- `Lint/ExtendsNotFirst`
+- `Lint/DuplicateBlock`
+- `Style/TrailingWhitespace`
+
 ## Lint Rule Framework (Ameba-like)
 - Rules grouped by category, similar to ameba’s cop architecture.
 - `Linter::Rule` with:
