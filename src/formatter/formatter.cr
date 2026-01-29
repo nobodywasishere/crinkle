@@ -140,6 +140,8 @@ module Jinja
         Options::HTML_VOID_TAGS,
         Options::HTML_PREFORMATTED_TAGS,
       )
+      @html_tokenizer = HTML::Tokenizer.new
+      @source_lines = @source.split('\n', remove_empty: false)
       @jinja_indent = 0
       @html_open_buffer = ""
       @preformatted_indent = nil
@@ -222,8 +224,10 @@ module Jinja
 
       # Split text by lines and handle indentation
       lines = text.split('\n', remove_empty: false)
+      base_line = node.span.start_pos.line - 1
 
       lines.each_with_index do |line, i|
+        source_line = @source_lines[base_line + i]?
         if i > 0
           @printer.newline
         end
@@ -232,6 +236,7 @@ module Jinja
           @printer.write_raw(attr_output) unless attr_output.empty?
           update_html_attribute_state(attr_output) unless attr_output.empty?
           process_html_opening_with_buffer(line)
+          process_html_closing(line)
           next
         end
 
@@ -254,10 +259,10 @@ module Jinja
           next
         end
 
-        # Strip leading whitespace (we'll re-indent)
-        stripped = line.lstrip
-
-        inline_pair = inline_tag_pair?(stripped)
+        # Strip leading whitespace only at line start
+        stripped = @printer.at_line_start? ? line.lstrip : line
+        inline_source = source_line ? source_line.lstrip : stripped
+        inline_pair = inline_tag_pair?(inline_source)
 
         # Process closing tags first to dedent before writing
         process_html_closing(stripped) unless inline_pair
@@ -282,6 +287,10 @@ module Jinja
       return unless @options.html_aware?
 
       combined = @html_open_buffer + text
+      if inline_tag_pair?(combined)
+        @html_open_buffer = pending_open_tag(combined)
+        return
+      end
       @html_engine.process_opening(combined)
 
       @html_open_buffer = pending_open_tag(combined)
@@ -305,10 +314,27 @@ module Jinja
     private def inline_tag_pair?(text : String) : Bool
       return false unless @options.html_aware?
       return false unless text.starts_with?("<")
-      return false if text.starts_with?("</")
       return false unless text.includes?("</")
 
-      text.matches?(/^<([a-zA-Z][a-zA-Z0-9:-]*)\b[^>]*>.*<\/\1>$/)
+      regex = /<\/?([a-zA-Z][a-zA-Z0-9:-]*)\b/
+      stack = Array(String).new
+      index = 0
+
+      while match = regex.match(text, index)
+        tag = match[1].downcase
+        token = match[0]
+        index = match.end(0)
+        next if Options::HTML_VOID_TAGS.includes?(tag)
+
+        if token.starts_with?("</")
+          return false if stack.empty?
+          stack.pop
+        else
+          stack << tag
+        end
+      end
+
+      stack.empty?
     end
 
     private def current_indent_string : String

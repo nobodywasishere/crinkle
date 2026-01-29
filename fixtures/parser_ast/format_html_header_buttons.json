@@ -1,0 +1,20 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div class=\"header\">\n  <h2><a href=\"#ff-"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "foo"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\">flag_name</a></h2>\n    <div>\n      <button type=\"submit\">New Test</button>\n      <button type=\"submit\">Delete All</button>\n    </div>\n</div>\n"
+    }
+  ]
+}

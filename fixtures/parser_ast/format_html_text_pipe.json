@@ -1,0 +1,31 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<p>\n  ID: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "foo"
+      }
+    },
+    {
+      "type": "Text",
+      "value": " | State: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "bar"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n</p>\n"
+    }
+  ]
+}

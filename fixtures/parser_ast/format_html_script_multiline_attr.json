@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<script src=\"/static/ace-builds/src-noconflict/ace.js\"\n        type=\"text/javascript\"\n        charset=\"utf-8\"></script>\n<script>\n  const baseURL = \"/_nt/_d/fiddle\";\n</script>\n"
+    }
+  ]
+}

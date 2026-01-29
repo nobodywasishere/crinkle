@@ -55,9 +55,10 @@ module Jinja
         indent_string : String,
         at_line_start : Bool,
       ) : String?
+        stripped = line.lstrip
         if indent = @attr_indent
           output = if at_line_start
-                     line.strip.empty? ? "" : indent + line.lstrip
+                     stripped.empty? ? "" : indent + stripped
                    else
                      line
                    end
@@ -65,7 +66,7 @@ module Jinja
           return output
         end
 
-        if at_line_start && starts_multiline_tag?(line)
+        if at_line_start && starts_multiline_tag?(stripped)
           @attr_indent = current_indent + indent_string
         end
 
