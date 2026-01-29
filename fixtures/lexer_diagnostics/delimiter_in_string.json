@@ -1,0 +1,19 @@
+[
+  {
+    "id": "Unterminated_string",
+    "severity": "error",
+    "message": "Unterminated string literal.",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 4,
+        "line": 1,
+        "column": 5
+      }
+    }
+  }
+]

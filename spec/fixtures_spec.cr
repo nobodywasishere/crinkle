@@ -15,4 +15,9 @@ describe "fixtures" do
   it "loads diagnostic snapshots" do
     Dir.glob("fixtures/diagnostics/*.json").should_not be_empty
   end
+
+  it "loads lexer snapshots" do
+    Dir.glob("fixtures/lexer_tokens/*.json").should_not be_empty
+    Dir.glob("fixtures/lexer_diagnostics/*.json").should_not be_empty
+  end
 end

@@ -37,6 +37,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Emit diagnostics for malformed delimiters or unexpected EOF.
 - Add lexer tests against fixtures (`.j2`).
 - Prefer fault-tolerant recovery (keep lexing after errors).
+- Add lexer token/diagnostic JSON snapshots for fixtures.
 
 #### Phase 1 Checklist
 - [x] Token model + spans implemented

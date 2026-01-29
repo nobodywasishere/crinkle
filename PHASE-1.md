@@ -69,7 +69,8 @@
 ## Tests / Fixtures
 - Reuse Phase 0 fixtures for basic coverage.
 - Add lexer-specific fixtures if needed (e.g., operators, strings, numbers).
-- Snapshot lexer output to JSON (optional for Phase 1, but preferred).
+- Snapshot lexer output to JSON for tokens + diagnostics.
+- Generator script: `scripts/gen_lexer_snapshots.cr` (keeps snapshots in sync).
 
 ## CLI Integration
 - Update `scripts/j2parse` to print tokens for a `.j2` file once lexer is live.
@@ -89,5 +90,6 @@
 - [x] Spans tracked with byte offsets + line/column
 - [x] Fault-tolerant recovery implemented
 - [x] Diagnostics for unterminated constructs and unexpected chars
-- [x] Lexer specs added
+- [x] Lexer specs added (snapshot-based)
 - [x] CLI updated to print tokens/diagnostics
+- [x] Lexer snapshot fixtures + generator script
