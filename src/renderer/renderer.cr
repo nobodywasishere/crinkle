@@ -133,7 +133,7 @@ module Jinja
     end
 
     private def render_include(node : AST::Include) : String
-      template = load_template_from_expr(node.template, node.span)
+      template = load_template_from_expr(node.template, node.span, node.ignore_missing?)
       return "" unless template
 
       if node.with_context?
@@ -427,16 +427,25 @@ module Jinja
       nil
     end
 
-    private def load_template_from_expr(expr : AST::Expr, span : Span) : AST::Template?
+    private def load_template_from_expr(
+      expr : AST::Expr,
+      span : Span,
+      ignore_missing : Bool = false,
+    ) : AST::Template?
       value = eval_expr(expr)
       name = value_to_template_name(value, span)
-      return load_template(name, span) if name
+      return load_template(name, span, ignore_missing) if name
       nil
     end
 
-    private def load_template(name : String, span : Span) : AST::Template?
+    private def load_template(
+      name : String,
+      span : Span,
+      ignore_missing : Bool = false,
+    ) : AST::Template?
       loader = @environment.template_loader
       unless loader
+        return if ignore_missing
         emit_diagnostic(
           DiagnosticType::TemplateNotFound,
           "No template loader configured.",
@@ -447,6 +456,7 @@ module Jinja
 
       source = loader.call(name)
       unless source
+        return if ignore_missing
         emit_diagnostic(
           DiagnosticType::TemplateNotFound,
           "Template '#{name}' not found.",
