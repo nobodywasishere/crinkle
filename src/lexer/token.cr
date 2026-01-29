@@ -19,7 +19,7 @@ module Jinja
     getter lexeme : String
     getter span : Span
 
-    def initialize(@type : TokenType, @lexeme : String, @span : Span)
+    def initialize(@type : TokenType, @lexeme : String, @span : Span) : Nil
     end
   end
 end

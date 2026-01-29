@@ -1,0 +1,8 @@
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Typing/MethodParameterTypeRestriction:
+  Enabled: true
+
+Typing/MethodReturnTypeRestriction:
+  Enabled: true

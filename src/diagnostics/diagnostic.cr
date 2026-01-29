@@ -17,7 +17,7 @@ module Jinja
     getter line : Int32
     getter column : Int32
 
-    def initialize(@offset : Int32, @line : Int32, @column : Int32)
+    def initialize(@offset : Int32, @line : Int32, @column : Int32) : Nil
     end
   end
 
@@ -25,7 +25,7 @@ module Jinja
     getter start_pos : Position
     getter end_pos : Position
 
-    def initialize(@start_pos : Position, @end_pos : Position)
+    def initialize(@start_pos : Position, @end_pos : Position) : Nil
     end
   end
 
@@ -35,7 +35,7 @@ module Jinja
     getter message : String
     getter span : Span
 
-    def initialize(@type : DiagnosticType, @severity : Severity, @message : String, @span : Span)
+    def initialize(@type : DiagnosticType, @severity : Severity, @message : String, @span : Span) : Nil
     end
 
     def id : String

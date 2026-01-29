@@ -8,7 +8,7 @@ module Jinja
 
     getter diagnostics : Array(Diagnostic)
 
-    def initialize(source : String)
+    def initialize(source : String) : Nil
       @source = source
       @reader = Char::Reader.new(source)
       @length = source.bytesize
@@ -446,7 +446,7 @@ module Jinja
     end
 
     private def byte_at(index : Int32) : UInt8?
-      return nil if index < 0 || index >= @length
+      return if index < 0 || index >= @length
       @source.byte_at(index)
     end
 

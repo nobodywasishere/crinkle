@@ -24,10 +24,11 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 ### Phase 1 — Minimal Lexer
 **Outcome:** Token stream with precise spans.
 - Design token types: text, variable start/end, block start/end, identifiers, literals, operators, punctuation, whitespace control.
-- Implement a streaming lexer over input bytes with line/column tracking.
+- Implement a streaming lexer over UTF-8 chars with line/column tracking.
 - Support Jinja2 delimiters and raw text.
 - Emit diagnostics for malformed delimiters or unexpected EOF.
 - Add lexer tests against fixtures (`.j2`).
+ - Prefer fault-tolerant recovery (keep lexing after errors).
 
 ### Phase 2 — Minimal Parser + AST
 **Outcome:** Parse a limited but useful subset.

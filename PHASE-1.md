@@ -14,6 +14,7 @@
 - Recognize identifiers, numbers, strings, operators, and punctuation (minimal set).
 - Track line/column and byte offsets for every token.
 - Emit diagnostics for unterminated expressions/blocks.
+- UTF-8 support: lexer operates on a char stream (not raw bytes).
 
 ## Token Model (initial)
 - `Text`
@@ -38,12 +39,15 @@
   - Exit on matching `VarEnd` or `BlockEnd`.
 - Support whitespace control markers (`-`) in start/end delimiters.
 - Fault tolerance: on error, emit diagnostic and recover to the next safe delimiter.
+- If a new `{%` or `{{` appears while inside an expression/block, emit an unterminated diagnostic and recover to text mode.
+- Unterminated strings emit diagnostics and recover without aborting the entire lexing pass.
 
 ## Span Tracking
 - Each token has:
   - `span.start.offset` (0-based)
   - `span.start.line` / `span.start.column` (1-based)
   - `span.end.offset`, `span.end.line`, `span.end.column`
+ - Offsets are byte offsets; line/column are character-based.
 
 ## Diagnostics (Phase 1)
 - `E_UNTERMINATED_EXPRESSION` for `{{` without `}}`.
@@ -74,3 +78,7 @@
 - Lexer tokenizes `.j2` fixtures with correct spans.
 - Diagnostics are emitted for malformed delimiters.
 - Tests pass using Crystal `spec`.
+
+## Tooling Notes
+- Lint with Ameba 1.7.x using `/Users/margret/.local/bin/ameba`.
+- Run specs with `CRYSTAL_CACHE_DIR=/tmp/crystal-cache crystal spec` (cache dir override).
