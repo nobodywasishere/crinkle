@@ -777,6 +777,11 @@ module Jinja
     private def format_literal(expr : AST::Literal) : Nil
       case value = expr.value
       when String
+        original = original_text(expr.span)
+        if quoted_literal?(original)
+          @printer.write(original)
+          return
+        end
         quote = @string_quote_override || preferred_string_quote(value)
         normalized = value
         normalized = normalized.gsub("\\\"", "\"") if quote == '\''
@@ -801,6 +806,19 @@ module Jinja
     private def preferred_string_quote(value : String) : Char
       return '\'' if value.includes?('"') && !value.includes?('\'')
       '"'
+    end
+
+    private def original_text(span : Jinja::Span) : String
+      start = span.start_pos.offset
+      length = span.end_pos.offset - start
+      @source.byte_slice(start, length) || ""
+    end
+
+    private def quoted_literal?(value : String) : Bool
+      return false if value.size < 2
+      first = value[0]
+      return false unless first == '"' || first == '\''
+      value.ends_with?(first)
     end
 
     private def format_binary(expr : AST::Binary) : Nil

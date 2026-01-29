@@ -54,4 +54,17 @@ describe Jinja::Formatter do
       output.should eq("{#\n  line1\n  line2\n#}")
     end
   end
+
+  describe "escaping" do
+    it "does not explode backslashes on repeated formatting" do
+      source = "{{ message.prompt | replace(\"\\\\n\", \"\\\\n> \") }}"
+      formatter1 = Jinja::Formatter.new(source)
+      output1 = formatter1.format
+
+      formatter2 = Jinja::Formatter.new(output1)
+      output2 = formatter2.format
+
+      output1.should eq(output2)
+    end
+  end
 end
