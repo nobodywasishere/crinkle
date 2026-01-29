@@ -464,16 +464,12 @@ module Jinja
       format_expr(node.iter)
       @printer.write(" #{block_end(node.trim_right?)}")
 
-      @jinja_indent += 1
-      format_nodes(node.body)
-      @jinja_indent -= 1
+      with_block_indent { format_nodes(node.body) }
 
       unless node.else_body.empty?
         sync_indent
         @printer.write("#{block_start(node.else_trim_left?)} else #{block_end(node.else_trim_right?)}")
-        @jinja_indent += 1
-        format_nodes(node.else_body)
-        @jinja_indent -= 1
+        with_block_indent { format_nodes(node.else_body) }
       end
 
       sync_indent
@@ -495,9 +491,7 @@ module Jinja
       format_target(node.target)
       @printer.write(" #{block_end(node.trim_right?)}")
 
-      @jinja_indent += 1
-      format_nodes(node.body)
-      @jinja_indent -= 1
+      with_block_indent { format_nodes(node.body) }
 
       sync_indent
       @printer.write("#{block_start(node.end_trim_left?)} endset #{block_end(node.end_trim_right?)}")
@@ -507,9 +501,7 @@ module Jinja
       sync_indent
       @printer.write("#{block_start(node.trim_left?)} block #{node.name} #{block_end(node.trim_right?)}")
 
-      @jinja_indent += 1
-      format_nodes(node.body)
-      @jinja_indent -= 1
+      with_block_indent { format_nodes(node.body) }
 
       sync_indent
       @printer.write("#{block_start(node.end_trim_left?)} endblock #{block_end(node.end_trim_right?)}")
@@ -586,9 +578,7 @@ module Jinja
 
       @printer.write(") #{block_end(node.trim_right?)}")
 
-      @jinja_indent += 1
-      format_nodes(node.body)
-      @jinja_indent -= 1
+      with_block_indent { format_nodes(node.body) }
 
       sync_indent
       @printer.write("#{block_start(node.end_trim_left?)} endmacro #{block_end(node.end_trim_right?)}")
@@ -610,9 +600,7 @@ module Jinja
       format_paren_args(node.args, node.kwargs, args_span(node.args, node.kwargs))
       @printer.write(" #{block_end(node.trim_right?)}")
 
-      @jinja_indent += 1
-      format_nodes(node.body)
-      @jinja_indent -= 1
+      with_block_indent { format_nodes(node.body) }
 
       sync_indent
       @printer.write("#{block_start(node.end_trim_left?)} endcall #{block_end(node.end_trim_right?)}")
@@ -639,9 +627,7 @@ module Jinja
         @printer.write(" #{block_end(node.trim_right?)}")
       else
         @printer.write(" #{block_end(node.trim_right?)}")
-        @jinja_indent += 1
-        format_nodes(node.body)
-        @jinja_indent -= 1
+        with_block_indent { format_nodes(node.body) }
         sync_indent
         @printer.write("#{block_start(node.end_trim_left?)} end#{node.name} #{block_end(node.end_trim_right?)}")
       end
@@ -657,9 +643,7 @@ module Jinja
       format_expr(node.test)
       @printer.write(" #{block_end(node.trim_right?)}")
 
-      @jinja_indent += 1
-      format_nodes(node.body)
-      @jinja_indent -= 1
+      with_block_indent { format_nodes(node.body) }
 
       if node.else_body.size == 1
         child = node.else_body.first
@@ -668,22 +652,28 @@ module Jinja
         elsif !node.else_body.empty?
           sync_indent
           @printer.write("#{block_start(node.else_trim_left?)} else #{block_end(node.else_trim_right?)}")
-          @jinja_indent += 1
-          format_nodes(node.else_body)
-          @jinja_indent -= 1
+          with_block_indent { format_nodes(node.else_body) }
         end
       elsif !node.else_body.empty?
         sync_indent
         @printer.write("#{block_start(node.else_trim_left?)} else #{block_end(node.else_trim_right?)}")
-        @jinja_indent += 1
-        format_nodes(node.else_body)
-        @jinja_indent -= 1
+        with_block_indent { format_nodes(node.else_body) }
       end
 
       if first
         end_node = last_elif_node(node)
         sync_indent
         @printer.write("#{block_start(end_node.end_trim_left?)} endif #{block_end(end_node.end_trim_right?)}")
+      end
+    end
+
+    private def with_block_indent(&block) : Nil
+      if @options.html_aware?
+        @jinja_indent += 1
+        block.call
+        @jinja_indent -= 1
+      else
+        block.call
       end
     end
 
