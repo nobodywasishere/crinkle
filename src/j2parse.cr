@@ -32,10 +32,10 @@ environment = Jinja::Environment.new
 if ext_name == "demo"
   environment.register_tag("note", ["endnote"]) do |parser, start_span|
     parser.skip_whitespace_for_extension
-    args = Array(Jinja::AST::Expr).new
+    tag_args = Array(Jinja::AST::Expr).new
 
     unless parser.current_token_for_extension.type == Jinja::TokenType::BlockEnd
-      args << parser.parse_expression_for_extension([Jinja::TokenType::BlockEnd])
+      tag_args << parser.parse_expression_for_extension([Jinja::TokenType::BlockEnd])
       parser.skip_whitespace_for_extension
     end
 
@@ -45,7 +45,7 @@ if ext_name == "demo"
 
     Jinja::AST::CustomTag.new(
       "note",
-      args,
+      tag_args,
       Array(Jinja::AST::KeywordArg).new,
       body,
       parser.span_between_for_extension(start_span, body_end)
