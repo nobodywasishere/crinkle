@@ -54,16 +54,20 @@ module Jinja
     class Comment
       getter text : String
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
 
-      def initialize(@text : String, @span : Span) : Nil
+      def initialize(@text : String, @span : Span, @trim_left : Bool = false, @trim_right : Bool = false) : Nil
       end
     end
 
     class Output
       getter expr : Expr
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
 
-      def initialize(@expr : Expr, @span : Span) : Nil
+      def initialize(@expr : Expr, @span : Span, @trim_left : Bool = false, @trim_right : Bool = false) : Nil
       end
     end
 
@@ -72,8 +76,27 @@ module Jinja
       getter body : Array(Node)
       getter else_body : Array(Node)
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+      getter? else_trim_left : Bool
+      getter? else_trim_right : Bool
+      getter? end_trim_left : Bool
+      getter? end_trim_right : Bool
+      getter? is_elif : Bool
 
-      def initialize(@test : Expr, @body : Array(Node), @else_body : Array(Node), @span : Span) : Nil
+      def initialize(
+        @test : Expr,
+        @body : Array(Node),
+        @else_body : Array(Node),
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+        @else_trim_left : Bool = false,
+        @else_trim_right : Bool = false,
+        @end_trim_left : Bool = false,
+        @end_trim_right : Bool = false,
+        @is_elif : Bool = false,
+      ) : Nil
       end
     end
 
@@ -83,8 +106,26 @@ module Jinja
       getter body : Array(Node)
       getter else_body : Array(Node)
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+      getter? else_trim_left : Bool
+      getter? else_trim_right : Bool
+      getter? end_trim_left : Bool
+      getter? end_trim_right : Bool
 
-      def initialize(@target : Target, @iter : Expr, @body : Array(Node), @else_body : Array(Node), @span : Span) : Nil
+      def initialize(
+        @target : Target,
+        @iter : Expr,
+        @body : Array(Node),
+        @else_body : Array(Node),
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+        @else_trim_left : Bool = false,
+        @else_trim_right : Bool = false,
+        @end_trim_left : Bool = false,
+        @end_trim_right : Bool = false,
+      ) : Nil
       end
     end
 
@@ -92,8 +133,10 @@ module Jinja
       getter target : Target
       getter value : Expr
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
 
-      def initialize(@target : Target, @value : Expr, @span : Span) : Nil
+      def initialize(@target : Target, @value : Expr, @span : Span, @trim_left : Bool = false, @trim_right : Bool = false) : Nil
       end
     end
 
@@ -101,8 +144,20 @@ module Jinja
       getter target : Target
       getter body : Array(Node)
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+      getter? end_trim_left : Bool
+      getter? end_trim_right : Bool
 
-      def initialize(@target : Target, @body : Array(Node), @span : Span) : Nil
+      def initialize(
+        @target : Target,
+        @body : Array(Node),
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+        @end_trim_left : Bool = false,
+        @end_trim_right : Bool = false,
+      ) : Nil
       end
     end
 
@@ -110,16 +165,30 @@ module Jinja
       getter name : String
       getter body : Array(Node)
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+      getter? end_trim_left : Bool
+      getter? end_trim_right : Bool
 
-      def initialize(@name : String, @body : Array(Node), @span : Span) : Nil
+      def initialize(
+        @name : String,
+        @body : Array(Node),
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+        @end_trim_left : Bool = false,
+        @end_trim_right : Bool = false,
+      ) : Nil
       end
     end
 
     class Extends
       getter template : Expr
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
 
-      def initialize(@template : Expr, @span : Span) : Nil
+      def initialize(@template : Expr, @span : Span, @trim_left : Bool = false, @trim_right : Bool = false) : Nil
       end
     end
 
@@ -128,8 +197,17 @@ module Jinja
       getter? with_context : Bool
       getter? ignore_missing : Bool
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
 
-      def initialize(@template : Expr, @with_context : Bool, @ignore_missing : Bool, @span : Span) : Nil
+      def initialize(
+        @template : Expr,
+        @with_context : Bool,
+        @ignore_missing : Bool,
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+      ) : Nil
       end
     end
 
@@ -137,8 +215,16 @@ module Jinja
       getter template : Expr
       getter alias : String
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
 
-      def initialize(@template : Expr, @alias : String, @span : Span) : Nil
+      def initialize(
+        @template : Expr,
+        @alias : String,
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+      ) : Nil
       end
     end
 
@@ -156,8 +242,17 @@ module Jinja
       getter names : Array(ImportName)
       getter? with_context : Bool
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
 
-      def initialize(@template : Expr, @names : Array(ImportName), @with_context : Bool, @span : Span) : Nil
+      def initialize(
+        @template : Expr,
+        @names : Array(ImportName),
+        @with_context : Bool,
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+      ) : Nil
       end
     end
 
@@ -175,8 +270,21 @@ module Jinja
       getter params : Array(MacroParam)
       getter body : Array(Node)
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+      getter? end_trim_left : Bool
+      getter? end_trim_right : Bool
 
-      def initialize(@name : String, @params : Array(MacroParam), @body : Array(Node), @span : Span) : Nil
+      def initialize(
+        @name : String,
+        @params : Array(MacroParam),
+        @body : Array(Node),
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+        @end_trim_left : Bool = false,
+        @end_trim_right : Bool = false,
+      ) : Nil
       end
     end
 
@@ -186,16 +294,41 @@ module Jinja
       getter kwargs : Array(KeywordArg)
       getter body : Array(Node)
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+      getter? end_trim_left : Bool
+      getter? end_trim_right : Bool
 
-      def initialize(@callee : Expr, @args : Array(Expr), @kwargs : Array(KeywordArg), @body : Array(Node), @span : Span) : Nil
+      def initialize(
+        @callee : Expr,
+        @args : Array(Expr),
+        @kwargs : Array(KeywordArg),
+        @body : Array(Node),
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+        @end_trim_left : Bool = false,
+        @end_trim_right : Bool = false,
+      ) : Nil
       end
     end
 
     class Raw
       getter text : String
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+      getter? end_trim_left : Bool
+      getter? end_trim_right : Bool
 
-      def initialize(@text : String, @span : Span) : Nil
+      def initialize(
+        @text : String,
+        @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+        @end_trim_left : Bool = false,
+        @end_trim_right : Bool = false,
+      ) : Nil
       end
     end
 
@@ -205,6 +338,10 @@ module Jinja
       getter kwargs : Array(KeywordArg)
       getter body : Array(Node)
       getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+      getter? end_trim_left : Bool
+      getter? end_trim_right : Bool
 
       def initialize(
         @name : String,
@@ -212,6 +349,10 @@ module Jinja
         @kwargs : Array(KeywordArg),
         @body : Array(Node),
         @span : Span,
+        @trim_left : Bool = false,
+        @trim_right : Bool = false,
+        @end_trim_left : Bool = false,
+        @end_trim_right : Bool = false,
       ) : Nil
       end
     end

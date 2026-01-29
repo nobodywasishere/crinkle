@@ -63,8 +63,8 @@ private def build_environment : Jinja::Environment
     end
 
     end_span = parser.expect_block_end("Expected '%}' to close note tag.")
-    body, body_end, _end_tag = parser.parse_until_any_end_tag(["endnote"], allow_end_name: true)
-    body_end ||= end_span
+    body, end_info, _end_tag = parser.parse_until_any_end_tag(["endnote"], allow_end_name: true)
+    body_end = end_info ? end_info.span : end_span
 
     Jinja::AST::CustomTag.new(
       "note",
@@ -88,6 +88,8 @@ private def render_context : Hash(String, Jinja::Value)
   context["name"] = "Ada"
   context["flag_true"] = true
   context["flag_false"] = false
+  context["outer"] = true
+  context["inner"] = true
   context["items"] = [1_i64, 2_i64] of Jinja::Value
   context["empty_items"] = Array(Jinja::Value).new
   context["count"] = 1_i64

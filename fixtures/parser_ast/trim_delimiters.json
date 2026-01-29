@@ -1,0 +1,42 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "user"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Comment",
+          "text": " note "
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

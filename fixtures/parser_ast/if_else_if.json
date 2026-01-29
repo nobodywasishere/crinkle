@@ -1,0 +1,46 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "outer"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nOuter\n"
+        }
+      ],
+      "else": [
+        {
+          "type": "Text",
+          "value": "\n"
+        },
+        {
+          "type": "If",
+          "test": {
+            "type": "Name",
+            "value": "inner"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\nInner\n"
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

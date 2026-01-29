@@ -298,47 +298,33 @@ module Jinja
     private def format_comment(node : AST::Comment) : Nil
       sync_indent
       brace_space = @options.space_inside_braces? ? " " : ""
+      start_delim = node.trim_left? ? "{#-" : "{#"
+      end_delim = node.trim_right? ? "-#}" : "#}"
       text = node.text.strip
-      @printer.write("{##{brace_space}#{text}#{brace_space}#}")
+      @printer.write("#{start_delim}#{brace_space}#{text}#{brace_space}#{end_delim}")
     end
 
     private def format_output(node : AST::Output) : Nil
       sync_indent
       brace_space = @options.space_inside_braces? ? " " : ""
-      @printer.write("{{#{brace_space}")
+      start_delim = node.trim_left? ? "{{-" : "{{"
+      end_delim = node.trim_right? ? "-}}" : "}}"
+      @printer.write("#{start_delim}#{brace_space}")
       format_expr(node.expr)
-      @printer.write("#{brace_space}}}")
+      @printer.write("#{brace_space}#{end_delim}")
     end
 
     private def format_if(node : AST::If) : Nil
-      sync_indent
-      @printer.write("{% if ")
-      format_expr(node.test)
-      @printer.write(" %}")
-
-      @jinja_indent += 1
-      format_nodes(node.body)
-      @jinja_indent -= 1
-
-      unless node.else_body.empty?
-        sync_indent
-        @printer.write("{% else %}")
-        @jinja_indent += 1
-        format_nodes(node.else_body)
-        @jinja_indent -= 1
-      end
-
-      sync_indent
-      @printer.write("{% endif %}")
+      format_if_chain(node, true)
     end
 
     private def format_for(node : AST::For) : Nil
       sync_indent
-      @printer.write("{% for ")
+      @printer.write("#{block_start(node.trim_left?)} for ")
       format_target(node.target)
       @printer.write(" in ")
       format_expr(node.iter)
-      @printer.write(" %}")
+      @printer.write(" #{block_end(node.trim_right?)}")
 
       @jinja_indent += 1
       format_nodes(node.body)
@@ -346,61 +332,61 @@ module Jinja
 
       unless node.else_body.empty?
         sync_indent
-        @printer.write("{% else %}")
+        @printer.write("#{block_start(node.else_trim_left?)} else #{block_end(node.else_trim_right?)}")
         @jinja_indent += 1
         format_nodes(node.else_body)
         @jinja_indent -= 1
       end
 
       sync_indent
-      @printer.write("{% endfor %}")
+      @printer.write("#{block_start(node.end_trim_left?)} endfor #{block_end(node.end_trim_right?)}")
     end
 
     private def format_set(node : AST::Set) : Nil
       sync_indent
-      @printer.write("{% set ")
+      @printer.write("#{block_start(node.trim_left?)} set ")
       format_target(node.target)
       @printer.write(" = ")
       format_expr(node.value)
-      @printer.write(" %}")
+      @printer.write(" #{block_end(node.trim_right?)}")
     end
 
     private def format_set_block(node : AST::SetBlock) : Nil
       sync_indent
-      @printer.write("{% set ")
+      @printer.write("#{block_start(node.trim_left?)} set ")
       format_target(node.target)
-      @printer.write(" %}")
+      @printer.write(" #{block_end(node.trim_right?)}")
 
       @jinja_indent += 1
       format_nodes(node.body)
       @jinja_indent -= 1
 
       sync_indent
-      @printer.write("{% endset %}")
+      @printer.write("#{block_start(node.end_trim_left?)} endset #{block_end(node.end_trim_right?)}")
     end
 
     private def format_block(node : AST::Block) : Nil
       sync_indent
-      @printer.write("{% block #{node.name} %}")
+      @printer.write("#{block_start(node.trim_left?)} block #{node.name} #{block_end(node.trim_right?)}")
 
       @jinja_indent += 1
       format_nodes(node.body)
       @jinja_indent -= 1
 
       sync_indent
-      @printer.write("{% endblock %}")
+      @printer.write("#{block_start(node.end_trim_left?)} endblock #{block_end(node.end_trim_right?)}")
     end
 
     private def format_extends(node : AST::Extends) : Nil
       sync_indent
-      @printer.write("{% extends ")
+      @printer.write("#{block_start(node.trim_left?)} extends ")
       format_expr(node.template)
-      @printer.write(" %}")
+      @printer.write(" #{block_end(node.trim_right?)}")
     end
 
     private def format_include(node : AST::Include) : Nil
       sync_indent
-      @printer.write("{% include ")
+      @printer.write("#{block_start(node.trim_left?)} include ")
       format_expr(node.template)
 
       if node.ignore_missing?
@@ -411,19 +397,19 @@ module Jinja
         @printer.write(" without context")
       end
 
-      @printer.write(" %}")
+      @printer.write(" #{block_end(node.trim_right?)}")
     end
 
     private def format_import(node : AST::Import) : Nil
       sync_indent
-      @printer.write("{% import ")
+      @printer.write("#{block_start(node.trim_left?)} import ")
       format_expr(node.template)
-      @printer.write(" as #{node.alias} %}")
+      @printer.write(" as #{node.alias} #{block_end(node.trim_right?)}")
     end
 
     private def format_from_import(node : AST::FromImport) : Nil
       sync_indent
-      @printer.write("{% from ")
+      @printer.write("#{block_start(node.trim_left?)} from ")
       format_expr(node.template)
       @printer.write(" import ")
 
@@ -440,12 +426,12 @@ module Jinja
         @printer.write(" without context")
       end
 
-      @printer.write(" %}")
+      @printer.write(" #{block_end(node.trim_right?)}")
     end
 
     private def format_macro(node : AST::Macro) : Nil
       sync_indent
-      @printer.write("{% macro #{node.name}(")
+      @printer.write("#{block_start(node.trim_left?)} macro #{node.name}(")
 
       node.params.each_with_index do |param, i|
         @printer.write(", ") if i > 0
@@ -456,43 +442,43 @@ module Jinja
         end
       end
 
-      @printer.write(") %}")
+      @printer.write(") #{block_end(node.trim_right?)}")
 
       @jinja_indent += 1
       format_nodes(node.body)
       @jinja_indent -= 1
 
       sync_indent
-      @printer.write("{% endmacro %}")
+      @printer.write("#{block_start(node.end_trim_left?)} endmacro #{block_end(node.end_trim_right?)}")
     end
 
     private def format_call_block(node : AST::CallBlock) : Nil
       sync_indent
-      @printer.write("{% call ")
+      @printer.write("#{block_start(node.trim_left?)} call ")
       format_expr(node.callee)
       @printer.write("(")
       format_args(node.args, node.kwargs)
-      @printer.write(") %}")
+      @printer.write(") #{block_end(node.trim_right?)}")
 
       @jinja_indent += 1
       format_nodes(node.body)
       @jinja_indent -= 1
 
       sync_indent
-      @printer.write("{% endcall %}")
+      @printer.write("#{block_start(node.end_trim_left?)} endcall #{block_end(node.end_trim_right?)}")
     end
 
     private def format_raw(node : AST::Raw) : Nil
       sync_indent
-      @printer.write("{% raw %}")
+      @printer.write("#{block_start(node.trim_left?)} raw #{block_end(node.trim_right?)}")
       @printer.write_raw(node.text)
       sync_indent
-      @printer.write("{% endraw %}")
+      @printer.write("#{block_start(node.end_trim_left?)} endraw #{block_end(node.end_trim_right?)}")
     end
 
     private def format_custom_tag(node : AST::CustomTag) : Nil
       sync_indent
-      @printer.write("{% #{node.name}")
+      @printer.write("#{block_start(node.trim_left?)} #{node.name}")
 
       unless node.args.empty? && node.kwargs.empty?
         @printer.write(" ")
@@ -500,15 +486,77 @@ module Jinja
       end
 
       if node.body.empty?
-        @printer.write(" %}")
+        @printer.write(" #{block_end(node.trim_right?)}")
       else
-        @printer.write(" %}")
+        @printer.write(" #{block_end(node.trim_right?)}")
         @jinja_indent += 1
         format_nodes(node.body)
         @jinja_indent -= 1
         sync_indent
-        @printer.write("{% end#{node.name} %}")
+        @printer.write("#{block_start(node.end_trim_left?)} end#{node.name} #{block_end(node.end_trim_right?)}")
       end
+    end
+
+    private def format_if_chain(node : AST::If, first : Bool) : Nil
+      sync_indent
+      if first
+        @printer.write("#{block_start(node.trim_left?)} if ")
+      else
+        @printer.write("#{block_start(node.trim_left?)} elif ")
+      end
+      format_expr(node.test)
+      @printer.write(" #{block_end(node.trim_right?)}")
+
+      @jinja_indent += 1
+      format_nodes(node.body)
+      @jinja_indent -= 1
+
+      if node.else_body.size == 1
+        child = node.else_body.first
+        if child.is_a?(AST::If) && child.is_elif?
+          format_if_chain(child, false)
+        elsif !node.else_body.empty?
+          sync_indent
+          @printer.write("#{block_start(node.else_trim_left?)} else #{block_end(node.else_trim_right?)}")
+          @jinja_indent += 1
+          format_nodes(node.else_body)
+          @jinja_indent -= 1
+        end
+      elsif !node.else_body.empty?
+        sync_indent
+        @printer.write("#{block_start(node.else_trim_left?)} else #{block_end(node.else_trim_right?)}")
+        @jinja_indent += 1
+        format_nodes(node.else_body)
+        @jinja_indent -= 1
+      end
+
+      if first
+        end_node = last_elif_node(node)
+        sync_indent
+        @printer.write("#{block_start(end_node.end_trim_left?)} endif #{block_end(end_node.end_trim_right?)}")
+      end
+    end
+
+    private def last_elif_node(node : AST::If) : AST::If
+      current = node
+      loop do
+        if current.else_body.size == 1
+          child = current.else_body.first
+          if child.is_a?(AST::If) && child.is_elif?
+            current = child
+            next
+          end
+        end
+        return current
+      end
+    end
+
+    private def block_start(trim_left : Bool) : String
+      trim_left ? "{%-" : "{%"
+    end
+
+    private def block_end(trim_right : Bool) : String
+      trim_right ? "-%}" : "%}"
     end
 
     # Expression formatting

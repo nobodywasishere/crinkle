@@ -1,6 +1,24 @@
 module Jinja
   class Parser
-    private alias BuiltInTagHandler = Proc(Span, AST::Node?)
+    private alias BuiltInTagHandler = Proc(Span, Bool, AST::Node?)
+
+    private struct EndTagInfo
+      getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+
+      def initialize(@span : Span, @trim_left : Bool, @trim_right : Bool) : Nil
+      end
+    end
+
+    private struct TagInfo
+      getter span : Span
+      getter? trim_left : Bool
+      getter? trim_right : Bool
+
+      def initialize(@span : Span, @trim_left : Bool, @trim_right : Bool) : Nil
+      end
+    end
 
     getter diagnostics : Array(Diagnostic)
 
@@ -9,6 +27,7 @@ module Jinja
       @index = 0
       @diagnostics = Array(Diagnostic).new
       @environment = environment
+      @last_block_end_trim_right = false
     end
 
     def parse : AST::Template
@@ -38,20 +57,25 @@ module Jinja
     end
 
     private def parse_output : AST::Output
-      start_span = current.span
+      start_token = current
+      start_span = start_token.span
+      trim_left = trim_left_from_start(start_token)
       advance
       skip_whitespace
 
       expr = parse_expression([TokenType::VarEnd])
       skip_whitespace
 
+      trim_right = false
       end_span = if current.type == TokenType::VarEnd
+                   trim_right = trim_right_from_end(current)
                    token = advance
                    token.span
                  else
                    emit_expected_token("Expected '}}' to close expression.")
                    recover_to([TokenType::VarEnd])
                    if current.type == TokenType::VarEnd
+                     trim_right = trim_right_from_end(current)
                      token = advance
                      token.span
                    else
@@ -59,24 +83,29 @@ module Jinja
                    end
                  end
 
-      AST::Output.new(expr, span_between(start_span, end_span))
+      AST::Output.new(expr, span_between(start_span, end_span), trim_left, trim_right)
     end
 
     private def parse_comment : AST::Comment
       token = current
-      # Extract comment text without delimiters {# and #}
       lexeme = token.lexeme
-      text = if lexeme.size > 4
-               lexeme[2, lexeme.size - 4]
+      trim_left = lexeme.starts_with?("{#-")
+      trim_right = lexeme.ends_with?("-#}")
+      content_start = trim_left ? 3 : 2
+      content_end = trim_right ? 3 : 2
+      text = if lexeme.size >= content_start + content_end
+               lexeme[content_start, lexeme.size - content_start - content_end]
              else
                ""
              end
       advance
-      AST::Comment.new(text, token.span)
+      AST::Comment.new(text, token.span, trim_left, trim_right)
     end
 
     private def parse_block : AST::Node?
-      start_span = current.span
+      start_token = current
+      start_span = start_token.span
+      start_trim_left = trim_left_from_start(start_token)
       advance
       skip_whitespace
 
@@ -94,13 +123,13 @@ module Jinja
       if handler = tag_handlers[tag]?
         extension = @environment.tag_extension(tag)
         if extension && @environment.override_builtins? && extension.override?
-          return handle_extension(tag, extension, start_span)
+          return handle_extension(tag, extension, start_span, start_trim_left)
         end
-        return handler.call(start_span)
+        return handler.call(start_span, start_trim_left)
       end
 
       if extension = @environment.tag_extension(tag)
-        return handle_extension(tag, extension, start_span)
+        return handle_extension(tag, extension, start_span, start_trim_left)
       end
 
       emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.")
@@ -109,57 +138,95 @@ module Jinja
       nil
     end
 
-    private def handle_extension(tag : String, extension : TagExtension, start_span : Span) : AST::Node?
+    private def handle_extension(tag : String, extension : TagExtension, start_span : Span, start_trim_left : Bool) : AST::Node?
       node = extension.handler.call(self, start_span)
       return node if node
       return if extension.end_tags.empty?
 
-      body, end_span, _end_tag = parse_until_any_end_tag(extension.end_tags, allow_end_name: true)
-      end_span ||= start_span
+      start_trim_right = @last_block_end_trim_right
+      body, end_info, _end_tag = parse_until_any_end_tag(extension.end_tags, allow_end_name: true)
+      end_info ||= EndTagInfo.new(start_span, false, false)
 
       AST::CustomTag.new(
         tag,
         Array(AST::Expr).new,
         Array(AST::KeywordArg).new,
         body,
-        span_between(start_span, end_span)
+        span_between(start_span, end_info.span),
+        start_trim_left,
+        start_trim_right,
+        end_info.trim_left?,
+        end_info.trim_right?
       )
     end
 
-    private def parse_if(start_span : Span) : AST::If
+    private def parse_if(start_span : Span, start_trim_left : Bool) : AST::If
       skip_whitespace
       test = parse_expression([TokenType::BlockEnd])
       skip_whitespace
 
       if current.type == TokenType::BlockEnd
+        @last_block_end_trim_right = trim_right_from_end(current)
         advance
       else
         emit_expected_token("Expected '%}' to close if tag.")
         recover_to([TokenType::BlockEnd])
-        advance if current.type == TokenType::BlockEnd
+        if current.type == TokenType::BlockEnd
+          @last_block_end_trim_right = trim_right_from_end(current)
+          advance
+        end
       end
 
+      start_trim_right = @last_block_end_trim_right
       body, hit_tag = parse_until_any_end_tag_peek(["endif", "else", "elif"])
       else_body = Array(AST::Node).new
+      else_trim_left = false
+      else_trim_right = false
+      end_trim_left = false
+      end_trim_right = false
       end_span = start_span
 
       case hit_tag
       when "else"
-        consume_block_tag("else")
-        else_body, end_span = parse_until_end_tag("endif")
+        else_info = consume_block_tag("else")
+        else_trim_left = else_info.trim_left?
+        else_trim_right = else_info.trim_right?
+        else_body, end_info = parse_until_end_tag("endif")
+        if end_info
+          end_trim_left = end_info.trim_left?
+          end_trim_right = end_info.trim_right?
+          end_span = end_info.span
+        end
       when "elif"
         elif_node = parse_elif
         else_body = [elif_node] of AST::Node
+        end_trim_left = elif_node.end_trim_left?
+        end_trim_right = elif_node.end_trim_right?
         end_span = elif_node.span
       when "endif"
-        end_span = consume_end_tag
+        end_info = consume_end_tag
+        end_trim_left = end_info.trim_left?
+        end_trim_right = end_info.trim_right?
+        end_span = end_info.span
       end
 
       end_span ||= start_span
-      AST::If.new(test, body, else_body, span_between(start_span, end_span))
+      AST::If.new(
+        test,
+        body,
+        else_body,
+        span_between(start_span, end_span),
+        start_trim_left,
+        start_trim_right,
+        else_trim_left,
+        else_trim_right,
+        end_trim_left,
+        end_trim_right,
+        false
+      )
     end
 
-    private def parse_for(start_span : Span) : AST::For
+    private def parse_for(start_span : Span, start_trim_left : Bool) : AST::For
       skip_whitespace
 
       target = parse_assignment_target("Expected loop variable name after 'for'.")
@@ -177,26 +244,60 @@ module Jinja
       skip_whitespace
 
       if current.type == TokenType::BlockEnd
+        @last_block_end_trim_right = trim_right_from_end(current)
         advance
       else
         emit_expected_token("Expected '%}' to close for tag.")
         recover_to([TokenType::BlockEnd])
-        advance if current.type == TokenType::BlockEnd
+        if current.type == TokenType::BlockEnd
+          @last_block_end_trim_right = trim_right_from_end(current)
+          advance
+        end
       end
 
-      body, body_end, hit_tag = parse_until_any_end_tag(["endfor", "else"])
+      start_trim_right = @last_block_end_trim_right
+      body, hit_tag = parse_until_any_end_tag_peek(["endfor", "else"])
       else_body = Array(AST::Node).new
-      end_span = body_end
+      else_trim_left = false
+      else_trim_right = false
+      end_trim_left = false
+      end_trim_right = false
+      end_span = start_span
 
       if hit_tag == "else"
-        else_body, end_span = parse_until_end_tag("endfor")
+        else_info = consume_block_tag("else")
+        else_trim_left = else_info.trim_left?
+        else_trim_right = else_info.trim_right?
+        else_body, end_info = parse_until_end_tag("endfor")
+        if end_info
+          end_trim_left = end_info.trim_left?
+          end_trim_right = end_info.trim_right?
+          end_span = end_info.span
+        end
+      elsif hit_tag == "endfor"
+        end_info = consume_end_tag
+        end_trim_left = end_info.trim_left?
+        end_trim_right = end_info.trim_right?
+        end_span = end_info.span
       end
 
       end_span ||= start_span
-      AST::For.new(target, iter, body, else_body, span_between(start_span, end_span))
+      AST::For.new(
+        target,
+        iter,
+        body,
+        else_body,
+        span_between(start_span, end_span),
+        start_trim_left,
+        start_trim_right,
+        else_trim_left,
+        else_trim_right,
+        end_trim_left,
+        end_trim_right
+      )
     end
 
-    private def parse_set(start_span : Span) : AST::Node
+    private def parse_set(start_span : Span, start_trim_left : Bool) : AST::Node
       skip_whitespace
       target = parse_assignment_target("Expected variable name after 'set'.")
       skip_whitespace
@@ -207,34 +308,60 @@ module Jinja
         value = parse_expression([TokenType::BlockEnd])
         skip_whitespace
         end_span = expect_block_end("Expected '%}' to close set tag.")
-        return AST::Set.new(target, value, span_between(start_span, end_span))
+        start_trim_right = @last_block_end_trim_right
+        return AST::Set.new(
+          target,
+          value,
+          span_between(start_span, end_span),
+          start_trim_left,
+          start_trim_right
+        )
       end
 
       end_span = expect_block_end("Expected '%}' to close set tag.")
-      body, body_end = parse_until_end_tag("endset")
-      body_end ||= end_span
-      AST::SetBlock.new(target, body, span_between(start_span, body_end))
+      start_trim_right = @last_block_end_trim_right
+      body, end_info = parse_until_end_tag("endset")
+      end_info ||= EndTagInfo.new(end_span, false, false)
+      AST::SetBlock.new(
+        target,
+        body,
+        span_between(start_span, end_info.span),
+        start_trim_left,
+        start_trim_right,
+        end_info.trim_left?,
+        end_info.trim_right?
+      )
     end
 
-    private def parse_block_tag(start_span : Span) : AST::Block
+    private def parse_block_tag(start_span : Span, start_trim_left : Bool) : AST::Block
       skip_whitespace
       name = parse_name("Expected block name after 'block'.")
       skip_whitespace
       end_span = expect_block_end("Expected '%}' to close block tag.")
-      body, body_end = parse_until_end_tag("endblock", allow_end_name: true)
-      body_end ||= end_span
-      AST::Block.new(name, body, span_between(start_span, body_end))
+      start_trim_right = @last_block_end_trim_right
+      body, end_info = parse_until_end_tag("endblock", allow_end_name: true)
+      end_info ||= EndTagInfo.new(end_span, false, false)
+      AST::Block.new(
+        name,
+        body,
+        span_between(start_span, end_info.span),
+        start_trim_left,
+        start_trim_right,
+        end_info.trim_left?,
+        end_info.trim_right?
+      )
     end
 
-    private def parse_extends(start_span : Span) : AST::Extends
+    private def parse_extends(start_span : Span, start_trim_left : Bool) : AST::Extends
       skip_whitespace
       template = parse_expression([TokenType::BlockEnd])
       skip_whitespace
       end_span = expect_block_end("Expected '%}' to close extends tag.")
-      AST::Extends.new(template, span_between(start_span, end_span))
+      start_trim_right = @last_block_end_trim_right
+      AST::Extends.new(template, span_between(start_span, end_span), start_trim_left, start_trim_right)
     end
 
-    private def parse_include(start_span : Span) : AST::Include
+    private def parse_include(start_span : Span, start_trim_left : Bool) : AST::Include
       skip_whitespace
       template = parse_expression([TokenType::BlockEnd])
       with_context = true
@@ -284,10 +411,18 @@ module Jinja
       end
 
       end_span = expect_block_end("Expected '%}' to close include tag.")
-      AST::Include.new(template, with_context, ignore_missing, span_between(start_span, end_span))
+      start_trim_right = @last_block_end_trim_right
+      AST::Include.new(
+        template,
+        with_context,
+        ignore_missing,
+        span_between(start_span, end_span),
+        start_trim_left,
+        start_trim_right
+      )
     end
 
-    private def parse_import(start_span : Span) : AST::Import
+    private def parse_import(start_span : Span, start_trim_left : Bool) : AST::Import
       skip_whitespace
       template = parse_expression([TokenType::BlockEnd])
       skip_whitespace
@@ -303,10 +438,11 @@ module Jinja
 
       skip_whitespace
       end_span = expect_block_end("Expected '%}' to close import tag.")
-      AST::Import.new(template, alias_name, span_between(start_span, end_span))
+      start_trim_right = @last_block_end_trim_right
+      AST::Import.new(template, alias_name, span_between(start_span, end_span), start_trim_left, start_trim_right)
     end
 
-    private def parse_from(start_span : Span) : AST::FromImport
+    private def parse_from(start_span : Span, start_trim_left : Bool) : AST::FromImport
       skip_whitespace
       template = parse_expression([TokenType::BlockEnd])
       skip_whitespace
@@ -352,27 +488,46 @@ module Jinja
       end
 
       end_span = expect_block_end("Expected '%}' to close from import tag.")
-      AST::FromImport.new(template, names, with_context, span_between(start_span, end_span))
+      start_trim_right = @last_block_end_trim_right
+      AST::FromImport.new(
+        template,
+        names,
+        with_context,
+        span_between(start_span, end_span),
+        start_trim_left,
+        start_trim_right
+      )
     end
 
-    private def parse_macro(start_span : Span) : AST::Macro
+    private def parse_macro(start_span : Span, start_trim_left : Bool) : AST::Macro
       skip_whitespace
       name = parse_name("Expected macro name after 'macro'.")
       params = parse_macro_params
       skip_whitespace
       end_span = expect_block_end("Expected '%}' to close macro tag.")
-      body, body_end = parse_until_end_tag("endmacro", allow_end_name: true)
-      body_end ||= end_span
-      AST::Macro.new(name, params, body, span_between(start_span, body_end))
+      start_trim_right = @last_block_end_trim_right
+      body, end_info = parse_until_end_tag("endmacro", allow_end_name: true)
+      end_info ||= EndTagInfo.new(end_span, false, false)
+      AST::Macro.new(
+        name,
+        params,
+        body,
+        span_between(start_span, end_info.span),
+        start_trim_left,
+        start_trim_right,
+        end_info.trim_left?,
+        end_info.trim_right?
+      )
     end
 
-    private def parse_call_block(start_span : Span) : AST::CallBlock
+    private def parse_call_block(start_span : Span, start_trim_left : Bool) : AST::CallBlock
       skip_whitespace
       expr = parse_expression([TokenType::BlockEnd])
       skip_whitespace
       end_span = expect_block_end("Expected '%}' to close call tag.")
-      body, body_end = parse_until_end_tag("endcall", allow_end_name: true)
-      body_end ||= end_span
+      start_trim_right = @last_block_end_trim_right
+      body, end_info = parse_until_end_tag("endcall", allow_end_name: true)
+      end_info ||= EndTagInfo.new(end_span, false, false)
 
       callee = expr
       args = Array(AST::Expr).new
@@ -384,12 +539,23 @@ module Jinja
         kwargs = expr.kwargs
       end
 
-      AST::CallBlock.new(callee, args, kwargs, body, span_between(start_span, body_end))
+      AST::CallBlock.new(
+        callee,
+        args,
+        kwargs,
+        body,
+        span_between(start_span, end_info.span),
+        start_trim_left,
+        start_trim_right,
+        end_info.trim_left?,
+        end_info.trim_right?
+      )
     end
 
-    private def parse_raw_block(start_span : Span) : AST::Raw
+    private def parse_raw_block(start_span : Span, start_trim_left : Bool) : AST::Raw
       skip_whitespace
       expect_block_end("Expected '%}' to close raw tag.")
+      start_trim_right = @last_block_end_trim_right
 
       tokens = Array(Token).new
       content_start = nil
@@ -397,12 +563,26 @@ module Jinja
 
       while !at_end?
         if current.type == TokenType::BlockStart && peek_block_tag == "endraw"
-          end_span = consume_end_tag
+          end_info = consume_end_tag
           text = tokens.map(&.lexeme).join
           if content_start && content_end
-            return AST::Raw.new(text, span_between(content_start, content_end))
+            return AST::Raw.new(
+              text,
+              span_between(content_start, content_end),
+              start_trim_left,
+              start_trim_right,
+              end_info.trim_left?,
+              end_info.trim_right?
+            )
           end
-          return AST::Raw.new(text, span_between(start_span, end_span))
+          return AST::Raw.new(
+            text,
+            span_between(start_span, end_info.span),
+            start_trim_left,
+            start_trim_right,
+            end_info.trim_left?,
+            end_info.trim_right?
+          )
         end
 
         content_start ||= current.span
@@ -412,29 +592,29 @@ module Jinja
       end
 
       emit_diagnostic(DiagnosticType::MissingEndTag, "Missing end tag 'endraw'.")
-      AST::Raw.new(tokens.map(&.lexeme).join, start_span)
+      AST::Raw.new(tokens.map(&.lexeme).join, start_span, start_trim_left, start_trim_right)
     end
 
     private def tag_handlers : Hash(String, BuiltInTagHandler)
       @tag_handlers ||= {
-        "if"       => ->(span : Span) : AST::Node? { parse_if(span) },
-        "for"      => ->(span : Span) : AST::Node? { parse_for(span) },
-        "set"      => ->(span : Span) : AST::Node? { parse_set(span) },
-        "block"    => ->(span : Span) : AST::Node? { parse_block_tag(span) },
-        "extends"  => ->(span : Span) : AST::Node? { parse_extends(span) },
-        "include"  => ->(span : Span) : AST::Node? { parse_include(span) },
-        "import"   => ->(span : Span) : AST::Node? { parse_import(span) },
-        "from"     => ->(span : Span) : AST::Node? { parse_from(span) },
-        "macro"    => ->(span : Span) : AST::Node? { parse_macro(span) },
-        "call"     => ->(span : Span) : AST::Node? { parse_call_block(span) },
-        "raw"      => ->(span : Span) : AST::Node? { parse_raw_block(span) },
-        "endif"    => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endif") },
-        "endfor"   => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endfor") },
-        "endset"   => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endset") },
-        "endblock" => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endblock") },
-        "endmacro" => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endmacro") },
-        "endcall"  => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endcall") },
-        "endraw"   => ->(_span : Span) : AST::Node? { parse_unexpected_end_tag("endraw") },
+        "if"       => ->(span : Span, trim_left : Bool) : AST::Node? { parse_if(span, trim_left) },
+        "for"      => ->(span : Span, trim_left : Bool) : AST::Node? { parse_for(span, trim_left) },
+        "set"      => ->(span : Span, trim_left : Bool) : AST::Node? { parse_set(span, trim_left) },
+        "block"    => ->(span : Span, trim_left : Bool) : AST::Node? { parse_block_tag(span, trim_left) },
+        "extends"  => ->(span : Span, trim_left : Bool) : AST::Node? { parse_extends(span, trim_left) },
+        "include"  => ->(span : Span, trim_left : Bool) : AST::Node? { parse_include(span, trim_left) },
+        "import"   => ->(span : Span, trim_left : Bool) : AST::Node? { parse_import(span, trim_left) },
+        "from"     => ->(span : Span, trim_left : Bool) : AST::Node? { parse_from(span, trim_left) },
+        "macro"    => ->(span : Span, trim_left : Bool) : AST::Node? { parse_macro(span, trim_left) },
+        "call"     => ->(span : Span, trim_left : Bool) : AST::Node? { parse_call_block(span, trim_left) },
+        "raw"      => ->(span : Span, trim_left : Bool) : AST::Node? { parse_raw_block(span, trim_left) },
+        "endif"    => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endif") },
+        "endfor"   => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endfor") },
+        "endset"   => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endset") },
+        "endblock" => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endblock") },
+        "endmacro" => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endmacro") },
+        "endcall"  => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endcall") },
+        "endraw"   => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endraw") },
       } of String => BuiltInTagHandler
     end
 
@@ -444,15 +624,15 @@ module Jinja
       advance if current.type == TokenType::BlockEnd
     end
 
-    def parse_until_end_tag(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), Span?}
+    def parse_until_end_tag(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), EndTagInfo?}
       nodes = Array(AST::Node).new
 
       while !at_end?
         if current.type == TokenType::BlockStart
           tag = peek_block_tag
           if tag == end_tag
-            end_span = consume_end_tag(allow_end_name)
-            return {nodes, end_span}
+            end_info = consume_end_tag(allow_end_name)
+            return {nodes, end_info}
           end
 
           node = parse_block
@@ -483,15 +663,15 @@ module Jinja
     def parse_until_any_end_tag(
       end_tags : Array(String),
       allow_end_name : Bool = false,
-    ) : {Array(AST::Node), Span?, String?}
+    ) : {Array(AST::Node), EndTagInfo?, String?}
       nodes = Array(AST::Node).new
 
       while !at_end?
         if current.type == TokenType::BlockStart
           tag = peek_block_tag
           if tag && end_tags.includes?(tag)
-            end_span = consume_end_tag(allow_end_name)
-            return {nodes, end_span, tag}
+            end_info = consume_end_tag(allow_end_name)
+            return {nodes, end_info, tag}
           end
 
           node = parse_block
@@ -568,8 +748,10 @@ module Jinja
       {nodes, nil}
     end
 
-    private def consume_block_tag(expected : String) : Span
-      start_span = current.span
+    private def consume_block_tag(expected : String) : TagInfo
+      start_token = current
+      start_span = start_token.span
+      trim_left = trim_left_from_start(start_token)
       advance
       skip_whitespace
       if current.type == TokenType::Identifier && current.lexeme == expected
@@ -579,11 +761,14 @@ module Jinja
       end
       skip_whitespace
       end_span = expect_block_end("Expected '%}' to close #{expected} tag.")
-      span_between(start_span, end_span)
+      trim_right = @last_block_end_trim_right
+      TagInfo.new(span_between(start_span, end_span), trim_left, trim_right)
     end
 
     private def parse_elif : AST::If
-      start_span = current.span
+      start_token = current
+      start_span = start_token.span
+      start_trim_left = trim_left_from_start(start_token)
       advance
       skip_whitespace
       if current.type == TokenType::Identifier && current.lexeme == "elif"
@@ -595,25 +780,52 @@ module Jinja
       test = parse_expression([TokenType::BlockEnd])
       skip_whitespace
       expect_block_end("Expected '%}' to close elif tag.")
+      start_trim_right = @last_block_end_trim_right
 
       body, hit_tag = parse_until_any_end_tag_peek(["endif", "else", "elif"])
       else_body = Array(AST::Node).new
+      else_trim_left = false
+      else_trim_right = false
+      end_trim_left = false
+      end_trim_right = false
       end_span = start_span
 
       case hit_tag
       when "else"
-        consume_block_tag("else")
-        else_body, end_span = parse_until_end_tag("endif")
+        else_info = consume_block_tag("else")
+        else_trim_left = else_info.trim_left?
+        else_trim_right = else_info.trim_right?
+        else_body, end_info = parse_until_end_tag("endif")
+        if end_info
+          end_trim_left = end_info.trim_left?
+          end_trim_right = end_info.trim_right?
+          end_span = end_info.span
+        end
       when "elif"
         elif_node = parse_elif
         else_body = [elif_node] of AST::Node
         end_span = elif_node.span
       when "endif"
-        end_span = consume_end_tag
+        end_info = consume_end_tag
+        end_trim_left = end_info.trim_left?
+        end_trim_right = end_info.trim_right?
+        end_span = end_info.span
       end
 
       end_span ||= start_span
-      AST::If.new(test, body, else_body, span_between(start_span, end_span))
+      AST::If.new(
+        test,
+        body,
+        else_body,
+        span_between(start_span, end_span),
+        start_trim_left,
+        start_trim_right,
+        else_trim_left,
+        else_trim_right,
+        end_trim_left,
+        end_trim_right,
+        true
+      )
     end
 
     private def parse_assignment_target(message : String) : AST::Target
@@ -795,6 +1007,7 @@ module Jinja
 
     def expect_block_end(message : String) : Span
       if current.type == TokenType::BlockEnd
+        @last_block_end_trim_right = trim_right_from_end(current)
         end_span = current.span
         advance
         return end_span
@@ -803,6 +1016,7 @@ module Jinja
       emit_expected_token(message)
       recover_to([TokenType::BlockEnd])
       if current.type == TokenType::BlockEnd
+        @last_block_end_trim_right = trim_right_from_end(current)
         end_span = current.span
         advance
         return end_span
@@ -811,8 +1025,9 @@ module Jinja
       previous.span
     end
 
-    private def consume_end_tag(allow_name : Bool = false) : Span
+    private def consume_end_tag(allow_name : Bool = false) : EndTagInfo
       start_span = current.span
+      trim_left = trim_left_from_start(current)
       advance
       skip_whitespace
       if current.type == TokenType::Identifier
@@ -826,12 +1041,13 @@ module Jinja
         skip_whitespace
       end
       if current.type == TokenType::BlockEnd
+        trim_right = trim_right_from_end(current)
         end_span = current.span
         advance
-        span_between(start_span, end_span)
+        EndTagInfo.new(span_between(start_span, end_span), trim_left, trim_right)
       else
         emit_expected_token("Expected '%}' to close end tag.")
-        start_span
+        EndTagInfo.new(start_span, trim_left, false)
       end
     end
 
@@ -1399,6 +1615,14 @@ module Jinja
 
     def span_between(start_span : Span, end_span : Span) : Span
       Span.new(start_span.start_pos, end_span.end_pos)
+    end
+
+    private def trim_left_from_start(token : Token) : Bool
+      token.lexeme.ends_with?("-")
+    end
+
+    private def trim_right_from_end(token : Token) : Bool
+      token.lexeme.starts_with?("-")
     end
 
     private def peek_block_tag : String?

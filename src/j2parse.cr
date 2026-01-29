@@ -40,8 +40,8 @@ if ext_name == "demo"
     end
 
     end_span = parser.expect_block_end("Expected '%}' to close note tag.")
-    body, body_end, _end_tag = parser.parse_until_any_end_tag(["endnote"], allow_end_name: true)
-    body_end ||= end_span
+    body, end_info, _end_tag = parser.parse_until_any_end_tag(["endnote"], allow_end_name: true)
+    body_end = end_info ? end_info.span : end_span
 
     Jinja::AST::CustomTag.new(
       "note",
