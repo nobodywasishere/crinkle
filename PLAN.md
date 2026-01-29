@@ -109,6 +109,8 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Introduce a tag-extension registry (name -> handler).
 - Extension handlers can consume tokens and return AST nodes.
 - Extensions declare end tags to support recovery/nesting.
+- If a handler returns `nil` and declares end tags, parser recovers to the next end tag
+  and emits a fallback `AST::CustomTag` node.
 - Unknown tags emit diagnostics when no extension matches.
 - Add fixtures for extension tag parsing and error recovery.
 - Add registries for custom filters, tests, and global functions with a consistent API

@@ -45,6 +45,7 @@
   - `recover_to`
   - `parse_until_end_tag`
   - `parse_until_any_end_tag` (multi-end-tag recovery)
+- If a handler returns `nil` and declares `end_tags`, the parser will recover via `parse_until_any_end_tag` and emit a fallback `AST::CustomTag` node.
 - Integrate environment registry:
   - Built-in dispatch table remains first.
   - If tag not found in built-ins, consult registry.

@@ -79,19 +79,36 @@ module Jinja
       if handler = tag_handlers[tag]?
         extension = @environment.tag_extension(tag)
         if extension && @environment.override_builtins? && extension.override?
-          return extension.handler.call(self, start_span)
+          return handle_extension(tag, extension, start_span)
         end
         return handler.call(start_span)
       end
 
       if extension = @environment.tag_extension(tag)
-        return extension.handler.call(self, start_span)
+        return handle_extension(tag, extension, start_span)
       end
 
       emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.")
       recover_to([TokenType::BlockEnd])
       advance if current.type == TokenType::BlockEnd
       nil
+    end
+
+    private def handle_extension(tag : String, extension : TagExtension, start_span : Span) : AST::Node?
+      node = extension.handler.call(self, start_span)
+      return node if node
+      return if extension.end_tags.empty?
+
+      body, end_span, _end_tag = parse_until_any_end_tag(extension.end_tags, allow_end_name: true)
+      end_span ||= start_span
+
+      AST::CustomTag.new(
+        tag,
+        Array(AST::Expr).new,
+        Array(AST::KeywordArg).new,
+        body,
+        span_between(start_span, end_span)
+      )
     end
 
     private def parse_if(start_span : Span) : AST::If

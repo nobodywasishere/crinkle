@@ -45,6 +45,12 @@ private def build_environment : Jinja::Environment
     )
   end
 
+  env.register_tag("recover", ["endrecover"]) do |parser, _start_span|
+    parser.skip_whitespace
+    parser.expect_block_end("Expected '%}' to close recover tag.")
+    nil
+  end
+
   env
 end
 

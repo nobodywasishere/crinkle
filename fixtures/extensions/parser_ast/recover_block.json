@@ -1,0 +1,32 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "CustomTag",
+      "name": "recover",
+      "args": [],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\nInside "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
