@@ -1,0 +1,25 @@
+module Jinja
+  enum TokenType
+    Text
+    VarStart
+    VarEnd
+    BlockStart
+    BlockEnd
+    Identifier
+    Number
+    String
+    Operator
+    Punct
+    Whitespace
+    EOF
+  end
+
+  struct Token
+    getter type : TokenType
+    getter lexeme : String
+    getter span : Span
+
+    def initialize(@type : TokenType, @lexeme : String, @span : Span)
+    end
+  end
+end

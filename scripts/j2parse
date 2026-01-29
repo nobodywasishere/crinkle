@@ -1,15 +1,29 @@
 #!/usr/bin/env crystal
 
-# Minimal CLI scaffold for Phase 0.
-# This will later run the real lexer/parser once implemented.
+# Minimal CLI scaffold for Phase 1.
+# Prints tokens and diagnostics from the lexer.
 
 if ARGV.size != 1
   STDERR.puts "Usage: j2parse <template.j2>"
   exit 1
 end
 
+require "../src/jinja"
+
 path = ARGV[0]
 content = File.read(path)
 
-puts "[phase0] Loaded #{path} (#{content.bytesize} bytes)"
-puts "[phase0] Lexer/parser not implemented yet"
+lexer = Jinja::Lexer.new(content)
+tokens = lexer.lex_all
+
+puts "[phase1] Tokens:"
+tokens.each do |token|
+  puts "  #{token.type}: #{token.lexeme.inspect} @#{token.span.start_pos.line}:#{token.span.start_pos.column}"
+end
+
+if lexer.diagnostics.any?
+  puts "[phase1] Diagnostics:"
+  lexer.diagnostics.each do |diag|
+    puts "  #{diag.id} (#{diag.severity}) at #{diag.span.start_pos.line}:#{diag.span.start_pos.column} - #{diag.message}"
+  end
+end
