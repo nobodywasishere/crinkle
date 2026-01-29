@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [
+    {
+      "id": "E_HTML_UNEXPECTED_END_TAG",
+      "severity": "warning",
+      "message": "Unexpected HTML end tag 'script'.",
+      "span": {
+        "start": {
+          "offset": 24,
+          "line": 1,
+          "column": 25
+        },
+        "end": {
+          "offset": 33,
+          "line": 1,
+          "column": 34
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

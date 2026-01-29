@@ -83,7 +83,7 @@
 - [ ] Decide whether HTML diagnostics should remain formatter-only or be promoted to a dedicated HTML diagnostics pipeline.
 
 ## Tests / Fixtures
-- New fixtures in `fixtures/templates` for:
+- New fixtures in `fixtures/<name>.<ext>.j2` for:
   - Broken HTML with Jinja blocks.
   - Nested tags with Jinja `if/for` boundaries.
   - Multiline attributes on void and non-void tags.

@@ -1,0 +1,17 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Import",
+      "template": {
+        "type": "Literal",
+        "value": "macros.html.j2"
+      },
+      "alias": "macros"
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

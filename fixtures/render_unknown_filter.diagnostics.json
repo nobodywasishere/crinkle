@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_FILTER",
+      "severity": "error",
+      "message": "Unknown filter 'missing'.",
+      "span": {
+        "start": {
+          "offset": 3,
+          "line": 1,
+          "column": 4
+        },
+        "end": {
+          "offset": 15,
+          "line": 1,
+          "column": 16
+        }
+      }
+    }
+  ],
+  "linter": []
+}

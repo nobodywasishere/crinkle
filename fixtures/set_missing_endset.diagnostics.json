@@ -1,0 +1,43 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_MISSING_END_TAG",
+      "severity": "error",
+      "message": "Missing end tag 'endset'.",
+      "span": {
+        "start": {
+          "offset": 21,
+          "line": 3,
+          "column": 1
+        },
+        "end": {
+          "offset": 21,
+          "line": 3,
+          "column": 1
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_MISSING_END_TAG",
+      "severity": "error",
+      "message": "Missing end tag 'endset'.",
+      "span": {
+        "start": {
+          "offset": 21,
+          "line": 3,
+          "column": 1
+        },
+        "end": {
+          "offset": 21,
+          "line": 3,
+          "column": 1
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

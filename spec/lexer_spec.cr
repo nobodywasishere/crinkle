@@ -9,7 +9,7 @@ end
 
 describe Jinja::Lexer do
   it "lexes a simple variable expression" do
-    tokens, diagnostics = lex_file("fixtures/templates/var_only.j2")
+    tokens, diagnostics = lex_file("fixtures/var_only.html.j2")
     diagnostics.should be_empty
 
     types = tokens.map(&.type)
@@ -20,19 +20,8 @@ describe Jinja::Lexer do
   end
 
   it "emits diagnostics for unterminated expressions" do
-    tokens, diagnostics = lex_file("fixtures/templates/bad_delimiter.j2")
+    tokens, diagnostics = lex_file("fixtures/bad_delimiter.html.j2")
     tokens.last.type.should eq(Jinja::TokenType::EOF)
     diagnostics.any?(&.type.unterminated_expression?).should be_true
-  end
-
-  Dir.glob("fixtures/templates/*.j2").each do |path|
-    name = File.basename(path, ".j2")
-    it "matches lexer snapshots for #{name}" do
-      source = File.read(path)
-      lexer = Jinja::Lexer.new(source)
-      tokens = lexer.lex_all
-      assert_snapshot("fixtures/lexer_tokens/#{name}.json", tokens_to_json(tokens))
-      assert_diagnostics_snapshot("fixtures/lexer_diagnostics/#{name}.json", lexer.diagnostics)
-    end
   end
 end

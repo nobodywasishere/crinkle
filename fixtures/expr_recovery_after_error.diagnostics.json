@@ -1,0 +1,78 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_EXPECTED_EXPRESSION",
+      "severity": "error",
+      "message": "Expected expression.",
+      "span": {
+        "start": {
+          "offset": 10,
+          "line": 1,
+          "column": 11
+        },
+        "end": {
+          "offset": 11,
+          "line": 1,
+          "column": 12
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_EXPECTED_EXPRESSION",
+      "severity": "error",
+      "message": "Expected expression.",
+      "span": {
+        "start": {
+          "offset": 10,
+          "line": 1,
+          "column": 11
+        },
+        "end": {
+          "offset": 11,
+          "line": 1,
+          "column": 12
+        }
+      }
+    }
+  ],
+  "renderer": [
+    {
+      "id": "E_INVALID_OPERAND",
+      "severity": "error",
+      "message": "Expected a number.",
+      "span": {
+        "start": {
+          "offset": 4,
+          "line": 1,
+          "column": 5
+        },
+        "end": {
+          "offset": 11,
+          "line": 1,
+          "column": 12
+        }
+      }
+    },
+    {
+      "id": "E_INVALID_OPERAND",
+      "severity": "error",
+      "message": "Expected a number.",
+      "span": {
+        "start": {
+          "offset": 4,
+          "line": 1,
+          "column": 5
+        },
+        "end": {
+          "offset": 11,
+          "line": 1,
+          "column": 12
+        }
+      }
+    }
+  ],
+  "linter": []
+}

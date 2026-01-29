@@ -121,8 +121,8 @@
 
 ## Snapshot + Tests
 - `spec/linter_spec.cr` with snapshots:
-  - `fixtures/linter_diagnostics/*.json`
-- Reuse templates from `fixtures/templates`.
+  - `fixtures/<name>.diagnostics.json`
+- Reuse templates from `fixtures/<name>.<ext>.j2`.
 - Keep empty diagnostics out of snapshots.
 
 ## Acceptance Criteria

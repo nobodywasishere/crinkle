@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [
+    {
+      "id": "E_UNKNOWN_TAG",
+      "severity": "error",
+      "message": "Unknown tag 'note'.",
+      "span": {
+        "start": {
+          "offset": 7,
+          "line": 1,
+          "column": 8
+        },
+        "end": {
+          "offset": 8,
+          "line": 1,
+          "column": 9
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

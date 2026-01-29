@@ -1,0 +1,61 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected 'context' after 'with'.",
+      "span": {
+        "start": {
+          "offset": 28,
+          "line": 1,
+          "column": 29
+        },
+        "end": {
+          "offset": 30,
+          "line": 1,
+          "column": 31
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected 'context' after 'with'.",
+      "span": {
+        "start": {
+          "offset": 28,
+          "line": 1,
+          "column": 29
+        },
+        "end": {
+          "offset": 30,
+          "line": 1,
+          "column": 31
+        }
+      }
+    }
+  ],
+  "renderer": [
+    {
+      "id": "E_TEMPLATE_NOT_FOUND",
+      "severity": "error",
+      "message": "Template 'a.html.j2' not found.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 30,
+          "line": 1,
+          "column": 31
+        }
+      }
+    }
+  ],
+  "linter": []
+}

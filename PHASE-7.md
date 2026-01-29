@@ -36,8 +36,8 @@
   - Whitespace control marker preservation (`{%-`, `-%}`)
   - Raw blocks (preserved exactly)
 - Fixtures:
-  - Unformatted templates in `fixtures/formatter_input`
-  - Expected output in `fixtures/formatter_output`
+  - Unformatted templates in `fixtures/<name>.<ext>.j2`
+  - Expected output in `fixtures/<name>.formatter.output.<ext>.j2`
 
 ## Design Approach
 - **Hybrid AST + Token**: Use AST for structure, tokens for expression reconstruction.
@@ -52,11 +52,11 @@ src/
   jinja.cr            # Add require for formatter
 
 spec/
-  formatter_spec.cr   # Snapshot-based specs
+  fixtures_spec.cr    # Snapshot-based specs
 
 fixtures/
-  templates/          # Existing templates (shared input)
-  formatter_output/   # Expected formatted .j2 output
+  <name>.<ext>.j2             # Existing templates (shared input)
+  <name>.formatter.output.<ext>.j2 # Expected formatted output
 ```
 
 ## API Sketch
@@ -119,8 +119,8 @@ end
 ```
 
 ## Fixtures / Snapshots
-- Input templates: reuse existing `fixtures/templates/*.j2`
-- Expected output in `fixtures/formatter_output/*.j2`
+- Input templates: reuse existing `fixtures/<name>.<ext>.j2`
+- Expected output in `fixtures/<name>.formatter.output.<ext>.j2`
 - Use `assert_text_snapshot` pattern from existing specs
 - Test categories:
   - Basic expressions (literals, operators, filters)

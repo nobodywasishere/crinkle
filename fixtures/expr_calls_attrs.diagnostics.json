@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_FUNCTION",
+      "severity": "error",
+      "message": "Unknown function 'lower'.",
+      "span": {
+        "start": {
+          "offset": 3,
+          "line": 1,
+          "column": 4
+        },
+        "end": {
+          "offset": 47,
+          "line": 1,
+          "column": 48
+        }
+      }
+    }
+  ],
+  "linter": []
+}

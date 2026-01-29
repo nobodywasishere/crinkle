@@ -1,0 +1,43 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected 'as' after import target.",
+      "span": {
+        "start": {
+          "offset": 27,
+          "line": 1,
+          "column": 28
+        },
+        "end": {
+          "offset": 29,
+          "line": 1,
+          "column": 30
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected 'as' after import target.",
+      "span": {
+        "start": {
+          "offset": 27,
+          "line": 1,
+          "column": 28
+        },
+        "end": {
+          "offset": 29,
+          "line": 1,
+          "column": 30
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

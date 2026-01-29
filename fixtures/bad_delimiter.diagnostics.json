@@ -1,0 +1,78 @@
+{
+  "lexer": [
+    {
+      "id": "E_UNTERMINATED_EXPRESSION",
+      "severity": "error",
+      "message": "Unterminated expression; expected '}}'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 10,
+          "line": 2,
+          "column": 1
+        }
+      }
+    }
+  ],
+  "parser": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected '}}' to close expression.",
+      "span": {
+        "start": {
+          "offset": 8,
+          "line": 1,
+          "column": 9
+        },
+        "end": {
+          "offset": 9,
+          "line": 1,
+          "column": 10
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_UNTERMINATED_EXPRESSION",
+      "severity": "error",
+      "message": "Unterminated expression; expected '}}'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 10,
+          "line": 2,
+          "column": 1
+        }
+      }
+    },
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected '}}' to close expression.",
+      "span": {
+        "start": {
+          "offset": 8,
+          "line": 1,
+          "column": 9
+        },
+        "end": {
+          "offset": 9,
+          "line": 1,
+          "column": 10
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

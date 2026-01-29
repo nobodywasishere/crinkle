@@ -15,7 +15,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Capture compatibility targets (which Jinja2 version or subset).
 - Decide error-handling model (recoverable diagnostics vs. hard failures).
 - Set up basic project layout (src/, spec/, fixtures/).
-- Collect/author fixtures: small templates (`.j2`) + expected AST/diagnostics.
+- Collect/author fixtures: small templates (`<name>.<ext>.j2`) + expected AST/diagnostics.
 - Use JSON for AST snapshots and store expected outputs in parallel fixture folders.
 - Add a minimal CLI to run lexer/parser on a fixture.
 - Document how evaluation/execution layers on after parsing.
@@ -35,7 +35,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Implement a streaming lexer over UTF-8 chars with line/column tracking.
 - Support Jinja2 delimiters and raw text.
 - Emit diagnostics for malformed delimiters or unexpected EOF.
-- Add lexer tests against fixtures (`.j2`).
+- Add lexer tests against fixtures (`<name>.<ext>.j2`).
 - Prefer fault-tolerant recovery (keep lexing after errors).
 - Add lexer token/diagnostic JSON snapshots for fixtures.
 - Snapshot specs write updated JSON and fail on diffs to surface changes.
@@ -57,7 +57,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
   - `{% for %}...{% endfor %}`
 - Build error recovery (sync at block end / delimiter).
 - Emit diagnostics with spans for syntax errors.
-- Parser tests with golden AST + diagnostics (stored under `fixtures/parser_*`).
+- Parser tests with golden AST + diagnostics (stored as `fixtures/<name>.parser.ast.json` + `fixtures/<name>.diagnostics.json`).
 - Use self-updating snapshot specs for AST/diagnostics.
 
 #### Phase 2 Checklist
@@ -123,9 +123,9 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Render output with whitespace control (trim delimiters) and raw blocks.
 - Integrate include/extends/import/macro/call behavior.
 - Add rendering fixtures with expected output.
-  - Templates live in `fixtures/templates`.
-  - Outputs live in `fixtures/render_output` as `.html` files.
-  - Diagnostics live in `fixtures/render_diagnostics` as `.json`.
+  - Templates live in `fixtures/<name>.<ext>.j2`.
+  - Outputs live in `fixtures/<name>.renderer.output.txt`.
+  - Diagnostics live in `fixtures/<name>.diagnostics.json`.
 - Renderer emits diagnostics for runtime issues and defaults unknown custom tags to
   rendering their bodies.
 - Renderer uses an environment-provided template loader for include/import/extends.
@@ -138,7 +138,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Build formatter over AST + token spans (preserve trivia where possible).
 - HTML-aware mode: align Jinja blocks with HTML indentation.
 - Configurable options (indent width, line length, whitespace control).
-- Add fixtures with before/after formatting samples (reuse `fixtures/templates/`).
+- Add fixtures with before/after formatting samples (reuse `fixtures/<name>.<ext>.j2`).
 
 #### Phase 7 Checklist
 - [x] Lexer: CommentStart/CommentEnd token types
@@ -215,19 +215,28 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - [ ] Recovery strategy for malformed HTML
 - [ ] Formatter integration + fixtures
 
-### Phase 11 — Language Server (LSP)
+### Phase 11 — Unified fixture & diagnostics layout
+**Outcome:** Each template owns a single bundle of snapshot files, making tokens/AST/output/diagnostics predictable for every pass.
+- Define the naming scheme `fixtures/<name>.<pass>.<type>.<ext>` plus matching structure under `fixtures/extensions`.
+- Replace the scattered helpers with a fixture manager that reads/writes the lexer token JSON, parser AST JSON, formatter output/text, renderer output/text, and a combined diagnostics JSON per template.
+- Update all specs (lexer, parser, formatter, renderer, extensions) to exercise the shared helper and rely on the new filenames.
+- Migrate existing fixtures into the new layout, regenerate snapshots, and ensure diagnostics for every pass land inside `name.diagnostics.json`.
+- Document the workflow so future fixtures adhere to the naming rules.
+
+#### Phase 11 Checklist
+- [ ] Naming/structure documented
+- [ ] Unified fixture helper implemented
+- [ ] Specs updated to use new helper
+- [ ] Fixtures migrated and snapshots regenerated
+- [ ] Extensions directory aligned with the same convention
+
+### Phase 12 — Language Server (LSP)
 **Outcome:** IDE features for templates.
 - Minimal LSP server (initialize, textDocument/didOpen, didChange, didClose).
 - Diagnostics pipeline using lexer/parser/linter.
 - Hover + go-to-definition for variables/macros/blocks.
 - Document symbols, folding ranges, semantic tokens (optional).
 - Performance: incremental parsing and caching.
-
-### Phase 12 — Compatibility + UX Polish
-**Outcome:** Confidence + developer adoption.
-- Add compatibility test suite using real-world Jinja2 templates.
-- Benchmark parsing on large templates.
-- Documentation, examples, and release process.
 
 ## Definition of Done (per phase)
 - Tests passing for all added fixtures.

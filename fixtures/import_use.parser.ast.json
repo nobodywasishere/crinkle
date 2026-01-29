@@ -1,0 +1,38 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Import",
+      "template": {
+        "type": "Literal",
+        "value": "macros.html.j2"
+      },
+      "alias": "macros"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Name",
+            "value": "macros"
+          },
+          "name": "greet"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": "Ada"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

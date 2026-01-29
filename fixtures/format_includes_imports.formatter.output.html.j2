@@ -1,0 +1,17 @@
+{% extends "base.html.j2" %}
+
+{% import "macros.html.j2" as m %}
+
+{% from "helpers.html.j2" import helper1, helper2 as h2 %}
+
+{% include "header.html.j2" %}
+
+{% include "optional.html.j2" ignore missing %}
+
+{% include "partial.html.j2" %}
+
+{% block main %}
+  {{ m.some_macro() }}
+  {{ helper1() }}
+  {{ h2() }}
+{% endblock %}

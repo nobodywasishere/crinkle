@@ -1,0 +1,43 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected 'import' after from target.",
+      "span": {
+        "start": {
+          "offset": 25,
+          "line": 1,
+          "column": 26
+        },
+        "end": {
+          "offset": 30,
+          "line": 1,
+          "column": 31
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected 'import' after from target.",
+      "span": {
+        "start": {
+          "offset": 25,
+          "line": 1,
+          "column": 26
+        },
+        "end": {
+          "offset": 30,
+          "line": 1,
+          "column": 31
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

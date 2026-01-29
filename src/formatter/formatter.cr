@@ -667,7 +667,7 @@ module Jinja
       end
     end
 
-    private def with_block_indent(&block) : Nil
+    private def with_block_indent(&block : ->) : Nil
       if @options.html_aware?
         @jinja_indent += 1
         block.call
@@ -1023,10 +1023,10 @@ module Jinja
       spans = Array(Span).new
       args.each { |arg| spans << arg.span }
       kwargs.each { |kwarg| spans << kwarg.span }
-      return nil if spans.empty?
+      return if spans.empty?
 
-      start = spans.min_by { |span| span.start_pos.offset }.start_pos
-      finish = spans.max_by { |span| span.end_pos.offset }.end_pos
+      start = spans.min_by(&.start_pos.offset).start_pos
+      finish = spans.max_by(&.end_pos.offset).end_pos
       Span.new(start, finish)
     end
 

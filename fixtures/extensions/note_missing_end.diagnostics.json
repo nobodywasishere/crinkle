@@ -1,0 +1,43 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_MISSING_END_TAG",
+      "severity": "error",
+      "message": "Missing end tag 'endnote'.",
+      "span": {
+        "start": {
+          "offset": 25,
+          "line": 3,
+          "column": 1
+        },
+        "end": {
+          "offset": 25,
+          "line": 3,
+          "column": 1
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_UNKNOWN_TAG",
+      "severity": "error",
+      "message": "Unknown tag 'note'.",
+      "span": {
+        "start": {
+          "offset": 7,
+          "line": 1,
+          "column": 8
+        },
+        "end": {
+          "offset": 8,
+          "line": 1,
+          "column": 9
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

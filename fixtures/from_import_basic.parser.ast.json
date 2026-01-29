@@ -1,0 +1,27 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "FromImport",
+      "template": {
+        "type": "Literal",
+        "value": "macros.html.j2"
+      },
+      "names": [
+        {
+          "name": "greet",
+          "alias": null
+        },
+        {
+          "name": "title",
+          "alias": "label"
+        }
+      ],
+      "with_context": true
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

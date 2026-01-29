@@ -34,7 +34,7 @@
   - `parser_spec.cr`
   - `fixtures_spec.cr`
 - `fixtures/`
-  - `templates/`
+  - `*.j2` (templates live in `fixtures/<name>.<ext>.j2`)
   - `ast/`
   - `diagnostics/`
 
@@ -71,8 +71,8 @@ Start with a minimal set and grow iteratively.
 - `bad_delimiter.j2`: `{{ name }` (unterminated).
 
 ### Expected outputs
-- `fixtures/parser_ast/*.json` for parser output.
-- `fixtures/parser_diagnostics/*.json` for errors.
+- `fixtures/<name>.parser.ast.json` for parser output.
+- `fixtures/<name>.diagnostics.json` for errors.
 - Outputs live in parallel folders and are committed when changed.
 
 ## Testing Approach

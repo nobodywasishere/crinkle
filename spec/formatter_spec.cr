@@ -2,28 +2,11 @@ require "./spec_helper"
 require "../src/jinja"
 
 describe Jinja::Formatter do
-  describe "formatting" do
-    Dir.glob("fixtures/templates/*.j2").each do |path|
-      name = File.basename(path, ".j2")
-
-      it "formats #{name}" do
-        source = File.read(path)
-        formatter = Jinja::Formatter.new(source)
-        output = formatter.format
-
-        assert_text_snapshot("fixtures/formatter_output/#{name}.j2", output)
-        assert_diagnostics_snapshot("fixtures/formatter_diagnostics/#{name}.json", formatter.diagnostics)
-      end
-    end
-  end
-
   describe "idempotency" do
     # Test that formatting twice produces the same result
-    Dir.glob("fixtures/templates/*.j2").each do |path|
-      name = File.basename(path, ".j2")
-
-      it "is idempotent for #{name}" do
-        source = File.read(path)
+    fixture_templates.each do |info|
+      it "is idempotent for #{info.name}" do
+        source = File.read(info.path)
         formatter1 = Jinja::Formatter.new(source)
         output1 = formatter1.format
 

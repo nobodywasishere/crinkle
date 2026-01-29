@@ -1,0 +1,61 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_UNKNOWN_TAG",
+      "severity": "error",
+      "message": "Unknown tag 'frobnicate'.",
+      "span": {
+        "start": {
+          "offset": 13,
+          "line": 1,
+          "column": 14
+        },
+        "end": {
+          "offset": 14,
+          "line": 1,
+          "column": 15
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_UNKNOWN_TAG",
+      "severity": "error",
+      "message": "Unknown tag 'frobnicate'.",
+      "span": {
+        "start": {
+          "offset": 13,
+          "line": 1,
+          "column": 14
+        },
+        "end": {
+          "offset": 14,
+          "line": 1,
+          "column": 15
+        }
+      }
+    }
+  ],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_TAG_RENDERER",
+      "severity": "error",
+      "message": "No renderer registered for custom tag 'frobnicate'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 18,
+          "line": 1,
+          "column": 19
+        }
+      }
+    }
+  ],
+  "linter": []
+}

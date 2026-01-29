@@ -49,10 +49,10 @@
 - `spec/parser_spec.cr` — parser specs
 
 ## Fixtures / Snapshots
-- Add parser fixtures in `fixtures/templates/*.j2` as needed.
+- Add parser fixtures in `fixtures/<name>.<ext>.j2` as needed.
 - Add parser snapshots:
-  - `fixtures/parser_ast/*.json`
-  - `fixtures/parser_diagnostics/*.json`
+  - `fixtures/<name>.parser.ast.json`
+  - `fixtures/<name>.diagnostics.json`
 - Parser specs should:
   - Parse each fixture
   - Write AST/diagnostics snapshots when missing or changed

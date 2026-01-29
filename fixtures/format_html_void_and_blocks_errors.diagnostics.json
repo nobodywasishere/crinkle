@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [
+    {
+      "id": "E_HTML_UNCLOSED_TAG",
+      "severity": "warning",
+      "message": "Unclosed HTML tag 'div'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 5,
+          "line": 1,
+          "column": 6
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

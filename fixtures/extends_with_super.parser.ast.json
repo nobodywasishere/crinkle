@@ -1,0 +1,42 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Extends",
+      "template": {
+        "type": "Literal",
+        "value": "base.html.j2"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Block",
+      "name": "content",
+      "body": [
+        {
+          "type": "Text",
+          "value": "Child "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Call",
+            "callee": {
+              "type": "Name",
+              "value": "super"
+            },
+            "args": [],
+            "kwargs": []
+          }
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

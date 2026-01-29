@@ -1,0 +1,42 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [
+    {
+      "id": "E_HTML_UNCLOSED_TAG",
+      "severity": "warning",
+      "message": "Unclosed HTML tag 'section'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 9,
+          "line": 1,
+          "column": 10
+        }
+      }
+    },
+    {
+      "id": "E_HTML_UNCLOSED_TAG",
+      "severity": "warning",
+      "message": "Unclosed HTML tag 'p'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 3,
+          "line": 1,
+          "column": 4
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

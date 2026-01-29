@@ -1,0 +1,43 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected name in import list.",
+      "span": {
+        "start": {
+          "offset": 32,
+          "line": 1,
+          "column": 33
+        },
+        "end": {
+          "offset": 34,
+          "line": 1,
+          "column": 35
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected name in import list.",
+      "span": {
+        "start": {
+          "offset": 32,
+          "line": 1,
+          "column": 33
+        },
+        "end": {
+          "offset": 34,
+          "line": 1,
+          "column": 35
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

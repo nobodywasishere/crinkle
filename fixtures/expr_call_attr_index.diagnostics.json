@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_FUNCTION",
+      "severity": "error",
+      "message": "Unknown function 'get_name'.",
+      "span": {
+        "start": {
+          "offset": 3,
+          "line": 1,
+          "column": 4
+        },
+        "end": {
+          "offset": 24,
+          "line": 1,
+          "column": 25
+        }
+      }
+    }
+  ],
+  "linter": []
+}

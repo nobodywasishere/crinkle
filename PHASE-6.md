@@ -29,9 +29,9 @@
   - Unknown variable, unknown filter/test/function, invalid operand, non-iterable loop.
 - Template cache + cycle detection for recursive includes/extends.
 - Fixtures:
-  - Templates in `fixtures/templates`
-  - Output snapshots in `fixtures/render_output` (`.html`)
-  - Diagnostics snapshots in `fixtures/render_diagnostics` (`.json`)
+  - Templates in `fixtures/<name>.<ext>.j2`
+  - Output snapshots in `fixtures/<name>.renderer.output.txt`
+  - Diagnostics snapshots in `fixtures/<name>.diagnostics.json`
 
 ## API Sketch
 - `Jinja::Renderer`
@@ -48,10 +48,10 @@
 - `TemplateCycle` when an include/extend/import creates recursion.
 
 ## Fixtures / Snapshots
-- Templates live in `fixtures/templates` (same shared folder).
-- Output snapshots in `fixtures/render_output` (`.html`).
-- Diagnostics snapshots in `fixtures/render_diagnostics` (`.json`).
-- Renderer snapshots are produced for all templates in `fixtures/templates`.
+- Templates live in `fixtures/<name>.<ext>.j2` (same shared folder).
+- Output snapshots in `fixtures/<name>.renderer.output.txt`.
+- Diagnostics snapshots in `fixtures/<name>.diagnostics.json`.
+- Renderer snapshots are produced for all templates in `fixtures/<name>.<ext>.j2`.
 - When adding new renderer-focused templates, consider a `render_` prefix to
   highlight intent, but it is optional.
 

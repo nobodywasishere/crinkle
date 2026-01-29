@@ -15,7 +15,7 @@
 - If a git command fails due to permission issues, re-run with escalated permissions.
 - Don't ask to commit; commit as needed.
 - Don't store snapshot diagnostics/text files when empty (delete them).
-- Renderer fixtures use `fixtures/templates` with outputs in `fixtures/render_output` as `.html` and diagnostics in `fixtures/render_diagnostics` as `.json`.
+- Renderer fixtures use `fixtures/<name>.<ext>.j2` with outputs in `fixtures/<name>.renderer.output.txt` and diagnostics in `fixtures/<name>.diagnostics.json`.
 
 ---
 
@@ -45,9 +45,9 @@ Created a full HTML-aware Jinja2 template formatter in `src/formatter/formatter.
 - Fault-tolerant (works with templates that have parse errors)
 
 **Testing:**
-- `spec/formatter_spec.cr` — Snapshot tests for all `fixtures/templates/*.j2`
+- `spec/fixtures_spec.cr` — Snapshot tests for all `fixtures/<name>.<ext>.j2`
 - Idempotency verification (formatting twice yields same result)
-- Fixtures: `fixtures/formatter_output/*.j2`
+- Fixtures: `fixtures/<name>.formatter.output.<ext>.j2`
 
 ### 2. Comment Support Added
 Extended lexer/parser/renderer/formatter to support Jinja2 comments (`{# ... #}`):
@@ -109,7 +109,7 @@ Fixed render diagnostics by adding missing context variables to `spec/renderer_s
   - `src/renderer/renderer.cr`
   - `src/diagnostics/diagnostic.cr`
   - `src/jinja.cr` (requires formatter)
-  - `spec/formatter_spec.cr` (new)
+  - `spec/fixtures_spec.cr` (snapshot fixtures)
   - `spec/renderer_spec.cr`
   - Various fixture files
 
@@ -149,22 +149,22 @@ src/
 ```
 spec/
   spec_helper.cr              # Snapshot assertion helpers
-  lexer_spec.cr               # Lexer snapshot tests
-  parser_spec.cr              # Parser snapshot tests
-  renderer_spec.cr            # Renderer snapshot tests
-  formatter_spec.cr           # NEW: Formatter snapshot tests
+  lexer_spec.cr               # Lexer sanity tests
+  parser_spec.cr              # Parser sanity tests
+  renderer_spec.cr            # Renderer sanity tests
+  fixtures_spec.cr            # Snapshot tests across passes
+  formatter_spec.cr           # Formatter options/idempotency tests
 ```
 
 ### Fixture Directories
 ```
 fixtures/
-  templates/                  # Input templates (.j2)
-  lexer_tokens/               # Lexer output snapshots (.json)
-  parser_ast/                 # Parser AST snapshots (.json)
-  parser_diagnostics/         # Parser error snapshots (.json) — only error tests
-  render_output/              # Rendered HTML snapshots (.html)
-  render_diagnostics/         # Render error snapshots (.json) — only error tests
-  formatter_output/           # Formatted template snapshots (.j2)
+  <name>.<ext>.j2             # Input templates
+  <name>.lexer.tokens.json    # Lexer output snapshots
+  <name>.parser.ast.json      # Parser AST snapshots
+  <name>.formatter.output.<ext>.j2 # Formatted template snapshots
+  <name>.renderer.output.txt  # Rendered output snapshots
+  <name>.diagnostics.json     # Diagnostics snapshots (all passes)
 ```
 
 ---
@@ -212,7 +212,7 @@ CRYSTAL_CACHE_DIR=/tmp/crystal-cache crystal spec
 CRYSTAL_CACHE_DIR=/tmp/crystal-cache crystal spec spec/lexer_spec.cr
 CRYSTAL_CACHE_DIR=/tmp/crystal-cache crystal spec spec/parser_spec.cr
 CRYSTAL_CACHE_DIR=/tmp/crystal-cache crystal spec spec/renderer_spec.cr
-CRYSTAL_CACHE_DIR=/tmp/crystal-cache crystal spec spec/formatter_spec.cr
+CRYSTAL_CACHE_DIR=/tmp/crystal-cache crystal spec spec/fixtures_spec.cr
 
 # Lint
 /Users/margret/.local/bin/ameba

@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [],
+  "linter": [
+    {
+      "id": "Lint/DuplicateMacro",
+      "severity": "warning",
+      "message": "Duplicate macro name 'greet'.",
+      "span": {
+        "start": {
+          "offset": 36,
+          "line": 2,
+          "column": 1
+        },
+        "end": {
+          "offset": 77,
+          "line": 2,
+          "column": 42
+        }
+      }
+    }
+  ]
+}

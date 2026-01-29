@@ -1,0 +1,61 @@
+{
+  "lexer": [],
+  "parser": [
+    {
+      "id": "E_EXPECTED_EXPRESSION",
+      "severity": "error",
+      "message": "Expected expression.",
+      "span": {
+        "start": {
+          "offset": 8,
+          "line": 1,
+          "column": 9
+        },
+        "end": {
+          "offset": 10,
+          "line": 1,
+          "column": 11
+        }
+      }
+    }
+  ],
+  "formatter": [
+    {
+      "id": "E_EXPECTED_EXPRESSION",
+      "severity": "error",
+      "message": "Expected expression.",
+      "span": {
+        "start": {
+          "offset": 8,
+          "line": 1,
+          "column": 9
+        },
+        "end": {
+          "offset": 10,
+          "line": 1,
+          "column": 11
+        }
+      }
+    }
+  ],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_FUNCTION",
+      "severity": "error",
+      "message": "Unknown function for call block.",
+      "span": {
+        "start": {
+          "offset": 8,
+          "line": 1,
+          "column": 9
+        },
+        "end": {
+          "offset": 10,
+          "line": 1,
+          "column": 11
+        }
+      }
+    }
+  ],
+  "linter": []
+}
