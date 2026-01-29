@@ -523,10 +523,21 @@ module Jinja
       target = eval_expr(expr.target)
       return target if target.is_a?(Undefined) || target.is_a?(StrictUndefined)
       if target.responds_to?(:crinja_attribute)
-        return target.crinja_attribute(Jinja.value(expr.name))
+        value = target.crinja_attribute(Jinja.value(expr.name))
+        emit_missing_attribute(expr.name, expr.span) if value.is_a?(Undefined)
+        return value
       end
-      return target[expr.name]? if target.is_a?(Hash(String, Value))
-      return target[Jinja.value(expr.name)]? if target.is_a?(Hash(Value, Value))
+      if target.is_a?(Hash(String, Value))
+        if value = target[expr.name]?
+          return value
+        end
+      elsif target.is_a?(Hash(Value, Value))
+        key = Jinja.value(expr.name)
+        if value = target[key]?
+          return value
+        end
+      end
+      emit_missing_attribute(expr.name, expr.span)
       nil
     end
 
@@ -536,13 +547,27 @@ module Jinja
       index = eval_expr(expr.index)
       case target
       when Array(Value)
-        return unless index.is_a?(Int64) || index.is_a?(Int32)
-        target[index.to_i]?
+        unless index.is_a?(Int64) || index.is_a?(Int32)
+          emit_invalid_operand("[]", expr.span)
+          return nil
+        end
+        int_index = index.to_i
+        if int_index < 0 || int_index >= target.size
+          emit_index_oob(int_index, expr.span)
+          return nil
+        end
+        target[int_index]
       when Hash(String, Value)
-        target[index.to_s]?
+        if value = target[index.to_s]?
+          return value
+        end
       when Hash(Value, Value)
-        target[Jinja.value(index)]?
+        key = Jinja.value(index)
+        if value = target[key]?
+          return value
+        end
       end
+      emit_missing_attribute(index.to_s, expr.span)
       nil
     end
 
@@ -1074,6 +1099,22 @@ module Jinja
       emit_diagnostic(
         DiagnosticType::InvalidOperand,
         "Invalid operand for '#{op}'.",
+        span
+      )
+    end
+
+    private def emit_missing_attribute(name : String, span : Span) : Nil
+      emit_diagnostic(
+        DiagnosticType::UnknownVariable,
+        "Unknown attribute '#{name}'.",
+        span
+      )
+    end
+
+    private def emit_index_oob(index : Int32 | Int64, span : Span) : Nil
+      emit_diagnostic(
+        DiagnosticType::InvalidOperand,
+        "Index #{index} out of bounds.",
         span
       )
     end

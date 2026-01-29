@@ -81,8 +81,12 @@ Implement the Crinja `Object::Auto` macro behavior:
 5. **Fixtures + Specs**
    - Added `object_*` fixtures covering attribute access, safe strings, undefined behavior, value casting, JSON/YAML access, missing/invalid lookups, and SafeString arrays.
    - Specs now run with `UPDATE_SNAPSHOTS=1` to refresh snapshots and succeed without failing on missing files.
-6. **Docs**
-   - Phase 12 plan documents and README references now describe the new serialization surface and fixture coverage.
+6. **Diagnostics**
+   - Created diagnostics fixtures (`object_json_missing_attribute`, `object_json_out_of_bounds`) so missing keys/indexes are proven to emit `Unknown attribute` / `Invalid operand` diagnostics.
+7. **Docs**
+   - Phase 12 docs describe StrictUndefined options and how fixtures capture undefined/error propagation.
+8. **Loader guidance**
+   - Documented how loader contexts (filesystem/choice/baked) can carry serialized hashes so CLI/loader code can feed the same `Jinja.value` payloads shown elsewhere.
 
 ## Fixtures to Add
 - `object_auto.*` — attribute exposure via Object::Auto (name/boolean/missing attribute)

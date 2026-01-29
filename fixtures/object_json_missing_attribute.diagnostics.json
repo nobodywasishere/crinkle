@@ -4,36 +4,36 @@
   "formatter": [],
   "renderer": [
     {
-      "id": "E_UNKNOWN_FUNCTION",
+      "id": "E_UNKNOWN_VARIABLE",
       "severity": "error",
-      "message": "Unknown function 'get_name'.",
+      "message": "Unknown attribute 'missing'.",
       "span": {
         "start": {
-          "offset": 3,
-          "line": 1,
+          "offset": 27,
+          "line": 2,
           "column": 4
         },
         "end": {
-          "offset": 24,
-          "line": 1,
-          "column": 25
+          "offset": 43,
+          "line": 2,
+          "column": 20
         }
       }
     },
     {
       "id": "E_UNKNOWN_VARIABLE",
       "severity": "error",
-      "message": "Unknown attribute '0'.",
+      "message": "Unknown attribute 'missing'.",
       "span": {
         "start": {
-          "offset": 3,
-          "line": 1,
+          "offset": 74,
+          "line": 4,
           "column": 4
         },
         "end": {
-          "offset": 32,
-          "line": 1,
-          "column": 33
+          "offset": 90,
+          "line": 4,
+          "column": 20
         }
       }
     }

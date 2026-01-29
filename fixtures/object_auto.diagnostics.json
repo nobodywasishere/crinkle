@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown attribute 'missing'.",
+      "span": {
+        "start": {
+          "offset": 49,
+          "line": 3,
+          "column": 4
+        },
+        "end": {
+          "offset": 66,
+          "line": 3,
+          "column": 21
+        }
+      }
+    }
+  ],
+  "linter": []
+}

@@ -84,6 +84,7 @@ The renderer exposes a Crinja-inspired serialization pipeline so templates work 
 
 - **`Undefined`** represents missing attributes/variables. It renders as an empty string (`Finalizer.stringify` prints `none` for naked nils) but keeps the missing name for diagnostics so you can report `Unknown variable "foo"`.
 - **`StrictUndefined`** raises whenever you try to stringify, compare, or inspect it—useful if you want Crinja-style strictness without silently falling back to empties.
+- To toggle `StrictUndefined` globally, future environment flags like `Environment.new(strict_undefined: true)` will treat any missing value as an immediate exception. You can also inject `Jinja::StrictUndefined.new("name")` yourself to mimic that behavior today.
 - **`SafeString`** wraps pre-escaped HTML content. The `Finalizer` treats `SafeString` specially (quote escaping is skipped unless nested inside arrays/hashes), so loops and filters that re-emit safe strings keep their literal markup.
 
 ### `Jinja::Object::Auto`
@@ -97,6 +98,29 @@ The renderer exposes a Crinja-inspired serialization pipeline so templates work 
 - `JSON::Any` and `YAML::Any` now include `Jinja::Object` and implement `crinja_attribute`, so you can treat parsed JSON/YAML as dictionaries inside templates. Indexed access respects ints and SafeStrings.
 - Invalid attribute/item lookups on JSON/YAML objects still return `Undefined`, preserving diagnostics without crashing the renderer.
 
+### Diagnostics & loaders
+
+- Missing attributes now emit diagnostics even though the rendered output stays empty (`fixtures/object_json_missing_attribute.*` shows `Unknown attribute 'missing'`).
+- Reading beyond an array’s bounds produces an `Invalid operand` diagnostic (`fixtures/object_json_out_of_bounds.*`), so you can surface those errors in tooling without failing rendering.
+- Since contexts are plain hashes of `Jinja::Value`, you can hydrate templates with serialized objects regardless of loader: use `Loader::FileSystemLoader` or `Loader::ChoiceLoader` to read templates from disk, set `context = {"payload" => Jinja.value(my_hash)}`, and pass that context into the renderer. Baked assets via `Loader::BakedFileLoader` follow the same rules—just build your payload once and store it alongside the baked templates.
+
+### JSON/YAML error propagation
+
+```
+{# fixtures/object_json_missing_attribute.html.j2 #}
+JSON missing attribute:
+{{ json_any.missing }}
+```
+
+The diagnostics snapshot records `Unknown attribute 'missing'` even though the template prints nothing, proving the renderer reports the missing key while still rendering safely.
+
+```
+{# fixtures/object_json_out_of_bounds.html.j2 #}
+JSON item[5]:
+{{ json_any.items[5] }}
+```
+
+Reading past the end of the array logs `Invalid operand: Index 5 out of bounds.` so you can flag the failure separately from the rendered HTML.
 ### Edge cases & diagnostics
 
 - Missing keys: templates see `Undefined`, render empty output, and diagnostics can highlight the missing name.

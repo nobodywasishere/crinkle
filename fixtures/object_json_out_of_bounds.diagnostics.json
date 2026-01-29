@@ -1,0 +1,42 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [
+    {
+      "id": "E_INVALID_OPERAND",
+      "severity": "error",
+      "message": "Index 5 out of bounds.",
+      "span": {
+        "start": {
+          "offset": 17,
+          "line": 2,
+          "column": 4
+        },
+        "end": {
+          "offset": 34,
+          "line": 2,
+          "column": 21
+        }
+      }
+    },
+    {
+      "id": "E_INVALID_OPERAND",
+      "severity": "error",
+      "message": "Index 5 out of bounds.",
+      "span": {
+        "start": {
+          "offset": 55,
+          "line": 4,
+          "column": 4
+        },
+        "end": {
+          "offset": 72,
+          "line": 4,
+          "column": 21
+        }
+      }
+    }
+  ],
+  "linter": []
+}
