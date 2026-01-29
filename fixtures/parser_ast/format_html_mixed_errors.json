@@ -1,0 +1,86 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<section>\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "enabled"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<div class=\"profile\">\n  <h1>"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "item"
+            },
+            "name": "value"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "</h1>\n  <p>"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "greeting"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "</p>\n"
+        },
+        {
+          "type": "For",
+          "target": {
+            "type": "Name",
+            "value": "key"
+          },
+          "iter": {
+            "type": "Name",
+            "value": "dict"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n  <li>"
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "Name",
+                "value": "key"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "</li>\n"
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n</section>\n</div>\n"
+    }
+  ]
+}

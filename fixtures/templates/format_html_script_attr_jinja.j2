@@ -1,0 +1,9 @@
+<div class="panel"
+data-state="{% if enabled %}open{% else %}closed{% endif %}"
+>
+<script>
+  if (ready) {
+    init({{ value }});
+  }
+</script>
+</div>

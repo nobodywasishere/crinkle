@@ -73,13 +73,13 @@ module Jinja
         source, label = read_source(opts)
         formatter = Formatter.new(source)
         output = formatter.format
-        write_snapshots(opts.snapshots_dir, label, output: output, output_ext: "j2")
+        all_diags = formatter.diagnostics
+        write_snapshots(opts.snapshots_dir, label, output: output, diagnostics: all_diags, output_ext: "j2")
         if opts.path
           File.write(label, output)
         else
           STDOUT.print(output)
         end
-        exit 0
       when "lint"
         opts = parse_options(args, default_format: OutputFormat::Json)
         source, label = read_source(opts)

@@ -1,0 +1,70 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<img\n  src=\""
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "foo"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\"\n  alt=\""
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "enabled"
+      },
+      "body": [
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "bar"
+          }
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\"\n>\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "enabled"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<div>\n  <span>"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "baz"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "</span>\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

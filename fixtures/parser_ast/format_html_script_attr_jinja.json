@@ -1,0 +1,43 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div class=\"panel\"\ndata-state=\""
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "enabled"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "open"
+        }
+      ],
+      "else": [
+        {
+          "type": "Text",
+          "value": "closed"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\"\n>\n<script>\n  if (ready) {\n    init("
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "value"
+      }
+    },
+    {
+      "type": "Text",
+      "value": ");\n  }\n</script>\n</div>\n"
+    }
+  ]
+}

@@ -199,7 +199,23 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - [ ] Consistent flags across commands
 - [ ] CLI usage documented
 
-### Phase 10 — Language Server (LSP)
+### Phase 10 — HTML-Aware Formatter Engine
+**Outcome:** Replace regex-based HTML heuristics with a fault-tolerant HTML parser that coexists with Jinja nodes.
+- Build a tolerant HTML tokenizer/parser that treats Jinja nodes as opaque “holes”.
+- Produce a lightweight HTML tree/stack to drive indentation and formatting.
+- Recover from malformed HTML (unclosed tags, mismatches) without failing formatting.
+- Preserve raw/textarea/script/style content with minimal normalization.
+- Integrate with formatter to indent Jinja blocks in HTML context accurately.
+- Add fixtures that mix HTML + Jinja with tricky nesting and multiline attributes.
+
+#### Phase 10 Checklist
+- [ ] HTML tokenizer/parser (fault-tolerant)
+- [ ] Jinja hole nodes (opaque placeholders)
+- [ ] Indent engine driven by HTML stack
+- [ ] Recovery strategy for malformed HTML
+- [ ] Formatter integration + fixtures
+
+### Phase 11 — Language Server (LSP)
 **Outcome:** IDE features for templates.
 - Minimal LSP server (initialize, textDocument/didOpen, didChange, didClose).
 - Diagnostics pipeline using lexer/parser/linter.
@@ -207,7 +223,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Document symbols, folding ranges, semantic tokens (optional).
 - Performance: incremental parsing and caching.
 
-### Phase 11 — Compatibility + UX Polish
+### Phase 12 — Compatibility + UX Polish
 **Outcome:** Confidence + developer adoption.
 - Add compatibility test suite using real-world Jinja2 templates.
 - Benchmark parsing on large templates.

@@ -1,0 +1,38 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<img\nsrc=\""
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "foo"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\"\ndata-id=\""
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "enabled"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "yes"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\"\n/>\n"
+    }
+  ]
+}

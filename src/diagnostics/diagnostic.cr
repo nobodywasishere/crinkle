@@ -22,6 +22,9 @@ module Jinja
     TemplateNotFound
     UnknownMacro
     TemplateCycle
+    HtmlUnexpectedEndTag
+    HtmlMismatchedEndTag
+    HtmlUnclosedTag
   end
 
   enum Severity
@@ -80,6 +83,9 @@ module Jinja
       in DiagnosticType::TemplateNotFound       then "E_TEMPLATE_NOT_FOUND"
       in DiagnosticType::UnknownMacro           then "E_UNKNOWN_MACRO"
       in DiagnosticType::TemplateCycle          then "E_TEMPLATE_CYCLE"
+      in DiagnosticType::HtmlUnexpectedEndTag   then "E_HTML_UNEXPECTED_END_TAG"
+      in DiagnosticType::HtmlMismatchedEndTag   then "E_HTML_MISMATCHED_END_TAG"
+      in DiagnosticType::HtmlUnclosedTag        then "E_HTML_UNCLOSED_TAG"
       end
     end
   end

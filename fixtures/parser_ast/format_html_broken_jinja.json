@@ -1,0 +1,38 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div class=\"outer\">\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Name",
+        "value": "enabled"
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<span class=\"inner\">\n"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "value"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n<p>after</p>\n"
+    }
+  ]
+}

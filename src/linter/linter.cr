@@ -92,6 +92,7 @@ module Jinja
       ruleset.add(Rules::TrailingWhitespace.new)
       ruleset.add(Rules::MixedIndentation.new)
       ruleset.add(Rules::ExcessiveBlankLines.new)
+      ruleset.add(Rules::Formatting.new)
       ruleset
     end
 
@@ -118,6 +119,9 @@ module Jinja
       DiagnosticType::TemplateNotFound       => "Renderer/TemplateNotFound",
       DiagnosticType::UnknownMacro           => "Renderer/UnknownMacro",
       DiagnosticType::TemplateCycle          => "Renderer/TemplateCycle",
+      DiagnosticType::HtmlUnexpectedEndTag   => "Formatter/HtmlUnexpectedEndTag",
+      DiagnosticType::HtmlMismatchedEndTag   => "Formatter/HtmlMismatchedEndTag",
+      DiagnosticType::HtmlUnclosedTag        => "Formatter/HtmlUnclosedTag",
     } of DiagnosticType => String
 
     def self.map_diagnostics(diagnostics : Array(Diagnostic)) : Array(Issue)

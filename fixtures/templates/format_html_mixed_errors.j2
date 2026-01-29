@@ -1,0 +1,11 @@
+<section>
+{% if enabled %}
+<div class="profile">
+  <h1>{{ item.value }}</h1>
+  <p>{{ greeting }}</p>
+{% for key in dict %}
+  <li>{{ key }}</li>
+{% endfor %}
+{% endif %}
+</section>
+</div>
