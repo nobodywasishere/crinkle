@@ -1,0 +1,24 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Binary",
+        "op": "not in",
+        "left": {
+          "type": "Name",
+          "value": "item"
+        },
+        "right": {
+          "type": "Name",
+          "value": "in"
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

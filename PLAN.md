@@ -67,6 +67,13 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - [x] Snapshot fixtures + specs (self-updating)
 - [x] CLI supports AST output
 
+#### Notes: Custom Tags (Future)
+- Add a parser extension registry keyed by tag name.
+- Extensions provide a `parse` hook that consumes tokens and returns AST nodes.
+- Extensions declare their end tags to aid recovery and nesting.
+- Unknown tags emit diagnostics when no extension matches.
+- Consider an `Environment` object that registers extensions before parsing.
+
 ### Phase 3 — Expression Grammar
 **Outcome:** Full expression parsing (no evaluation).
 - Implement precedence/associativity (or Pratt parser).
@@ -74,6 +81,11 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Support literals: strings, numbers, booleans, null, lists, dicts.
 - Add whitespace/line-statement variations (if in scope).
 - Expand fixtures + tests.
+
+#### Phase 3 Checklist
+- [x] Expression parser extended with precedence + postfix operators
+- [x] New AST nodes for calls/filters/tests/attr/index/literals
+- [x] Parser/lexer snapshots updated for new fixtures
 
 ### Phase 4 — Jinja2 Control Structures + Macros
 **Outcome:** Broader language coverage.

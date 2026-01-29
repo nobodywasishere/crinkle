@@ -1,0 +1,274 @@
+[
+  {
+    "type": "VarStart",
+    "lexeme": "{{",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 2,
+        "line": 1,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 2,
+        "line": 1,
+        "column": 3
+      },
+      "end": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "user",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      }
+    }
+  },
+  {
+    "type": "Operator",
+    "lexeme": ".",
+    "span": {
+      "start": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      },
+      "end": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "profile",
+    "span": {
+      "start": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      },
+      "end": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      }
+    }
+  },
+  {
+    "type": "Operator",
+    "lexeme": ".",
+    "span": {
+      "start": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      },
+      "end": {
+        "offset": 16,
+        "line": 1,
+        "column": 17
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "get_name",
+    "span": {
+      "start": {
+        "offset": 16,
+        "line": 1,
+        "column": 17
+      },
+      "end": {
+        "offset": 24,
+        "line": 1,
+        "column": 25
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": "(",
+    "span": {
+      "start": {
+        "offset": 24,
+        "line": 1,
+        "column": 25
+      },
+      "end": {
+        "offset": 25,
+        "line": 1,
+        "column": 26
+      }
+    }
+  },
+  {
+    "type": "String",
+    "lexeme": "\"x\"",
+    "span": {
+      "start": {
+        "offset": 25,
+        "line": 1,
+        "column": 26
+      },
+      "end": {
+        "offset": 28,
+        "line": 1,
+        "column": 29
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": ")",
+    "span": {
+      "start": {
+        "offset": 28,
+        "line": 1,
+        "column": 29
+      },
+      "end": {
+        "offset": 29,
+        "line": 1,
+        "column": 30
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": "[",
+    "span": {
+      "start": {
+        "offset": 29,
+        "line": 1,
+        "column": 30
+      },
+      "end": {
+        "offset": 30,
+        "line": 1,
+        "column": 31
+      }
+    }
+  },
+  {
+    "type": "Number",
+    "lexeme": "0",
+    "span": {
+      "start": {
+        "offset": 30,
+        "line": 1,
+        "column": 31
+      },
+      "end": {
+        "offset": 31,
+        "line": 1,
+        "column": 32
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": "]",
+    "span": {
+      "start": {
+        "offset": 31,
+        "line": 1,
+        "column": 32
+      },
+      "end": {
+        "offset": 32,
+        "line": 1,
+        "column": 33
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 32,
+        "line": 1,
+        "column": 33
+      },
+      "end": {
+        "offset": 33,
+        "line": 1,
+        "column": 34
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "}}",
+    "span": {
+      "start": {
+        "offset": 33,
+        "line": 1,
+        "column": 34
+      },
+      "end": {
+        "offset": 35,
+        "line": 1,
+        "column": 36
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 35,
+        "line": 1,
+        "column": 36
+      },
+      "end": {
+        "offset": 36,
+        "line": 2,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 36,
+        "line": 2,
+        "column": 1
+      },
+      "end": {
+        "offset": 36,
+        "line": 2,
+        "column": 1
+      }
+    }
+  }
+]

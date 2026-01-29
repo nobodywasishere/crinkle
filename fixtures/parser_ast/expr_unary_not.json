@@ -1,0 +1,20 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Unary",
+        "op": "not",
+        "expr": {
+          "type": "Name",
+          "value": "enabled"
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

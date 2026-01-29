@@ -66,6 +66,14 @@
 - Parser handles malformed inputs with diagnostics and continues where possible.
 - Snapshot-based parser specs pass.
 
+## Notes for Custom Tags (Future)
+- Add a parser extension registry (e.g., `Jinja::Parser::Extension`) keyed by tag name.
+- Allow extensions to hook into `parse_block` with a `parse` method that consumes tokens and returns an AST node.
+- Provide a fallback `UnknownTag` diagnostic when no extension matches.
+- Allow extensions to declare which end tags they consume (for recovery and nesting).
+- Separate AST namespace for extension nodes to avoid coupling with core nodes.
+- Load extensions via an environment/config object passed to the parser.
+
 ## Progress Checklist
 - [x] AST types defined with spans
 - [x] Parser skeleton reads tokens and builds AST

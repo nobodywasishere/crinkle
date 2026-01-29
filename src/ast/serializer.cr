@@ -107,11 +107,132 @@ module Jinja
               write_expr(json, expr.right)
             end
           end
+        when Unary
+          json.object do
+            json.field "type", "Unary"
+            json.field "op", expr.op
+            json.field "expr" do
+              write_expr(json, expr.expr)
+            end
+          end
         when Group
           json.object do
             json.field "type", "Group"
             json.field "expr" do
               write_expr(json, expr.expr)
+            end
+          end
+        when Call
+          json.object do
+            json.field "type", "Call"
+            json.field "callee" do
+              write_expr(json, expr.callee)
+            end
+            json.field "args" do
+              write_expr_array(json, expr.args)
+            end
+            json.field "kwargs" do
+              write_kwargs(json, expr.kwargs)
+            end
+          end
+        when Filter
+          json.object do
+            json.field "type", "Filter"
+            json.field "expr" do
+              write_expr(json, expr.expr)
+            end
+            json.field "name", expr.name
+            json.field "args" do
+              write_expr_array(json, expr.args)
+            end
+            json.field "kwargs" do
+              write_kwargs(json, expr.kwargs)
+            end
+          end
+        when Test
+          json.object do
+            json.field "type", "Test"
+            json.field "expr" do
+              write_expr(json, expr.expr)
+            end
+            json.field "name", expr.name
+            json.field "negated", expr.negated?
+            json.field "args" do
+              write_expr_array(json, expr.args)
+            end
+            json.field "kwargs" do
+              write_kwargs(json, expr.kwargs)
+            end
+          end
+        when GetAttr
+          json.object do
+            json.field "type", "GetAttr"
+            json.field "target" do
+              write_expr(json, expr.target)
+            end
+            json.field "name", expr.name
+          end
+        when GetItem
+          json.object do
+            json.field "type", "GetItem"
+            json.field "target" do
+              write_expr(json, expr.target)
+            end
+            json.field "index" do
+              write_expr(json, expr.index)
+            end
+          end
+        when ListLiteral
+          json.object do
+            json.field "type", "ListLiteral"
+            json.field "items" do
+              write_expr_array(json, expr.items)
+            end
+          end
+        when DictLiteral
+          json.object do
+            json.field "type", "DictLiteral"
+            json.field "pairs" do
+              json.array do
+                expr.pairs.each do |pair|
+                  json.object do
+                    json.field "key" do
+                      write_expr(json, pair.key)
+                    end
+                    json.field "value" do
+                      write_expr(json, pair.value)
+                    end
+                  end
+                end
+              end
+            end
+          end
+        when TupleLiteral
+          json.object do
+            json.field "type", "TupleLiteral"
+            json.field "items" do
+              write_expr_array(json, expr.items)
+            end
+          end
+        end
+      end
+
+      private def self.write_expr_array(json : JSON::Builder, items : Array(Expr)) : Nil
+        json.array do
+          items.each do |item|
+            write_expr(json, item)
+          end
+        end
+      end
+
+      private def self.write_kwargs(json : JSON::Builder, kwargs : Array(KeywordArg)) : Nil
+        json.array do
+          kwargs.each do |keyword|
+            json.object do
+              json.field "name", keyword.name
+              json.field "value" do
+                write_expr(json, keyword.value)
+              end
             end
           end
         end

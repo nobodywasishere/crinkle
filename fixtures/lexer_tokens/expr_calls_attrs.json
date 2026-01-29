@@ -1,0 +1,370 @@
+[
+  {
+    "type": "VarStart",
+    "lexeme": "{{",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 2,
+        "line": 1,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 2,
+        "line": 1,
+        "column": 3
+      },
+      "end": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "user",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      }
+    }
+  },
+  {
+    "type": "Operator",
+    "lexeme": ".",
+    "span": {
+      "start": {
+        "offset": 7,
+        "line": 1,
+        "column": 8
+      },
+      "end": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "profile",
+    "span": {
+      "start": {
+        "offset": 8,
+        "line": 1,
+        "column": 9
+      },
+      "end": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      }
+    }
+  },
+  {
+    "type": "Operator",
+    "lexeme": ".",
+    "span": {
+      "start": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      },
+      "end": {
+        "offset": 16,
+        "line": 1,
+        "column": 17
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "get",
+    "span": {
+      "start": {
+        "offset": 16,
+        "line": 1,
+        "column": 17
+      },
+      "end": {
+        "offset": 19,
+        "line": 1,
+        "column": 20
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": "(",
+    "span": {
+      "start": {
+        "offset": 19,
+        "line": 1,
+        "column": 20
+      },
+      "end": {
+        "offset": 20,
+        "line": 1,
+        "column": 21
+      }
+    }
+  },
+  {
+    "type": "String",
+    "lexeme": "\"email\"",
+    "span": {
+      "start": {
+        "offset": 20,
+        "line": 1,
+        "column": 21
+      },
+      "end": {
+        "offset": 27,
+        "line": 1,
+        "column": 28
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": ",",
+    "span": {
+      "start": {
+        "offset": 27,
+        "line": 1,
+        "column": 28
+      },
+      "end": {
+        "offset": 28,
+        "line": 1,
+        "column": 29
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 28,
+        "line": 1,
+        "column": 29
+      },
+      "end": {
+        "offset": 29,
+        "line": 1,
+        "column": 30
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "default",
+    "span": {
+      "start": {
+        "offset": 29,
+        "line": 1,
+        "column": 30
+      },
+      "end": {
+        "offset": 36,
+        "line": 1,
+        "column": 37
+      }
+    }
+  },
+  {
+    "type": "Operator",
+    "lexeme": "=",
+    "span": {
+      "start": {
+        "offset": 36,
+        "line": 1,
+        "column": 37
+      },
+      "end": {
+        "offset": 37,
+        "line": 1,
+        "column": 38
+      }
+    }
+  },
+  {
+    "type": "String",
+    "lexeme": "\"x\"",
+    "span": {
+      "start": {
+        "offset": 37,
+        "line": 1,
+        "column": 38
+      },
+      "end": {
+        "offset": 40,
+        "line": 1,
+        "column": 41
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": ")",
+    "span": {
+      "start": {
+        "offset": 40,
+        "line": 1,
+        "column": 41
+      },
+      "end": {
+        "offset": 41,
+        "line": 1,
+        "column": 42
+      }
+    }
+  },
+  {
+    "type": "Operator",
+    "lexeme": ".",
+    "span": {
+      "start": {
+        "offset": 41,
+        "line": 1,
+        "column": 42
+      },
+      "end": {
+        "offset": 42,
+        "line": 1,
+        "column": 43
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "lower",
+    "span": {
+      "start": {
+        "offset": 42,
+        "line": 1,
+        "column": 43
+      },
+      "end": {
+        "offset": 47,
+        "line": 1,
+        "column": 48
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": "(",
+    "span": {
+      "start": {
+        "offset": 47,
+        "line": 1,
+        "column": 48
+      },
+      "end": {
+        "offset": 48,
+        "line": 1,
+        "column": 49
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": ")",
+    "span": {
+      "start": {
+        "offset": 48,
+        "line": 1,
+        "column": 49
+      },
+      "end": {
+        "offset": 49,
+        "line": 1,
+        "column": 50
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 49,
+        "line": 1,
+        "column": 50
+      },
+      "end": {
+        "offset": 50,
+        "line": 1,
+        "column": 51
+      }
+    }
+  },
+  {
+    "type": "VarEnd",
+    "lexeme": "}}",
+    "span": {
+      "start": {
+        "offset": 50,
+        "line": 1,
+        "column": 51
+      },
+      "end": {
+        "offset": 52,
+        "line": 1,
+        "column": 53
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 52,
+        "line": 1,
+        "column": 53
+      },
+      "end": {
+        "offset": 53,
+        "line": 2,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 53,
+        "line": 2,
+        "column": 1
+      },
+      "end": {
+        "offset": 53,
+        "line": 2,
+        "column": 1
+      }
+    }
+  }
+]

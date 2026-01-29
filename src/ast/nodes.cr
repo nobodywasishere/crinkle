@@ -1,7 +1,19 @@
 module Jinja
   module AST
     alias Node = Text | Output | If | For
-    alias Expr = Name | Literal | Binary | Group
+    alias Expr = Name |
+                 Literal |
+                 Unary |
+                 Binary |
+                 Group |
+                 Call |
+                 Filter |
+                 Test |
+                 GetAttr |
+                 GetItem |
+                 ListLiteral |
+                 DictLiteral |
+                 TupleLiteral
 
     class Template
       getter body : Array(Node)
@@ -74,11 +86,113 @@ module Jinja
       end
     end
 
+    class Unary
+      getter op : String
+      getter expr : Expr
+      getter span : Span
+
+      def initialize(@op : String, @expr : Expr, @span : Span) : Nil
+      end
+    end
+
     class Group
       getter expr : Expr
       getter span : Span
 
       def initialize(@expr : Expr, @span : Span) : Nil
+      end
+    end
+
+    class Call
+      getter callee : Expr
+      getter args : Array(Expr)
+      getter kwargs : Array(KeywordArg)
+      getter span : Span
+
+      def initialize(@callee : Expr, @args : Array(Expr), @kwargs : Array(KeywordArg), @span : Span) : Nil
+      end
+    end
+
+    class KeywordArg
+      getter name : String
+      getter value : Expr
+      getter span : Span
+
+      def initialize(@name : String, @value : Expr, @span : Span) : Nil
+      end
+    end
+
+    class Filter
+      getter expr : Expr
+      getter name : String
+      getter args : Array(Expr)
+      getter kwargs : Array(KeywordArg)
+      getter span : Span
+
+      def initialize(@expr : Expr, @name : String, @args : Array(Expr), @kwargs : Array(KeywordArg), @span : Span) : Nil
+      end
+    end
+
+    class Test
+      getter expr : Expr
+      getter name : String
+      getter args : Array(Expr)
+      getter kwargs : Array(KeywordArg)
+      getter? negated : Bool
+      getter span : Span
+
+      def initialize(@expr : Expr, @name : String, @args : Array(Expr), @kwargs : Array(KeywordArg), @negated : Bool, @span : Span) : Nil
+      end
+    end
+
+    class GetAttr
+      getter target : Expr
+      getter name : String
+      getter span : Span
+
+      def initialize(@target : Expr, @name : String, @span : Span) : Nil
+      end
+    end
+
+    class GetItem
+      getter target : Expr
+      getter index : Expr
+      getter span : Span
+
+      def initialize(@target : Expr, @index : Expr, @span : Span) : Nil
+      end
+    end
+
+    class ListLiteral
+      getter items : Array(Expr)
+      getter span : Span
+
+      def initialize(@items : Array(Expr), @span : Span) : Nil
+      end
+    end
+
+    class DictEntry
+      getter key : Expr
+      getter value : Expr
+      getter span : Span
+
+      def initialize(@key : Expr, @value : Expr, @span : Span) : Nil
+      end
+    end
+
+    class DictLiteral
+      getter pairs : Array(DictEntry)
+      getter span : Span
+
+      def initialize(@pairs : Array(DictEntry), @span : Span) : Nil
+      end
+    end
+
+    class TupleLiteral
+      getter items : Array(Expr)
+      getter span : Span
+
+      def initialize(@items : Array(Expr), @span : Span) : Nil
       end
     end
   end

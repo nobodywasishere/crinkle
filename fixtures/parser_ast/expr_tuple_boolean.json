@@ -1,0 +1,60 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "TupleLiteral",
+        "items": [
+          {
+            "type": "Name",
+            "value": "a"
+          },
+          {
+            "type": "Name",
+            "value": "b"
+          },
+          {
+            "type": "Name",
+            "value": "c"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Binary",
+        "op": "or",
+        "left": {
+          "type": "Binary",
+          "op": "and",
+          "left": {
+            "type": "Unary",
+            "op": "not",
+            "expr": {
+              "type": "Name",
+              "value": "foo"
+            }
+          },
+          "right": {
+            "type": "Name",
+            "value": "bar"
+          }
+        },
+        "right": {
+          "type": "Name",
+          "value": "baz"
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
