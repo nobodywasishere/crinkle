@@ -864,17 +864,14 @@ module Jinja
     end
 
     private def pretty_list?(expr : AST::ListLiteral) : Bool
-      return false unless expr.items.size > 2 || expr.items.any? { |item| collection_literal?(item) }
       pretty_over_length?(expr)
     end
 
     private def pretty_dict?(expr : AST::DictLiteral) : Bool
-      return false unless expr.pairs.any? { |pair| collection_literal?(pair.key) || collection_literal?(pair.value) }
       pretty_over_length?(expr)
     end
 
     private def pretty_tuple?(expr : AST::TupleLiteral) : Bool
-      return false unless expr.items.size > 2 || expr.items.any? { |item| collection_literal?(item) }
       pretty_over_length?(expr)
     end
 

@@ -1,0 +1,225 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Macro",
+      "name": "metrics",
+      "params": [
+        {
+          "name": "icon",
+          "default": null
+        },
+        {
+          "name": "title",
+          "default": null
+        },
+        {
+          "name": "desc",
+          "default": null
+        },
+        {
+          "name": "items",
+          "default": null
+        },
+        {
+          "name": "suffix",
+          "default": null
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "icon"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "title"
+          }
+        },
+        {
+          "type": "Text",
+          "value": " "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "desc"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "For",
+          "target": {
+            "type": "Name",
+            "value": "item"
+          },
+          "iter": {
+            "type": "Name",
+            "value": "items"
+          },
+          "body": [
+            {
+              "type": "Text",
+              "value": "\n    "
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "item"
+                },
+                "name": "title"
+              }
+            },
+            {
+              "type": "Text",
+              "value": " "
+            },
+            {
+              "type": "Output",
+              "expr": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "item"
+                },
+                "name": "description"
+              }
+            },
+            {
+              "type": "Text",
+              "value": "\n  "
+            }
+          ],
+          "else": []
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "suffix"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "metrics"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": "icon.svg"
+          },
+          {
+            "type": "Literal",
+            "value": "Summary Title"
+          },
+          {
+            "type": "Literal",
+            "value": "Summary Description"
+          },
+          {
+            "type": "ListLiteral",
+            "items": [
+              {
+                "type": "DictLiteral",
+                "pairs": [
+                  {
+                    "key": {
+                      "type": "Literal",
+                      "value": "title"
+                    },
+                    "value": {
+                      "type": "Literal",
+                      "value": "Item One"
+                    }
+                  },
+                  {
+                    "key": {
+                      "type": "Literal",
+                      "value": "description"
+                    },
+                    "value": {
+                      "type": "Literal",
+                      "value": "Item One Description"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "DictLiteral",
+                "pairs": [
+                  {
+                    "key": {
+                      "type": "Literal",
+                      "value": "title"
+                    },
+                    "value": {
+                      "type": "Literal",
+                      "value": "Item Two"
+                    }
+                  },
+                  {
+                    "key": {
+                      "type": "Literal",
+                      "value": "description"
+                    },
+                    "value": {
+                      "type": "Literal",
+                      "value": "Item Two Description"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Literal",
+            "value": ""
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

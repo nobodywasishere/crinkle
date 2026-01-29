@@ -1,0 +1,18 @@
+{% macro metrics(icon, title, desc, items, suffix) %}
+  {{ icon }} {{ title }} {{ desc }}
+  {% for item in items %}
+    {{ item.title }} {{ item.description }}
+  {% endfor %}
+  {{ suffix }}
+{% endmacro %}
+
+{{ metrics(
+  "icon.svg",
+  "Summary Title",
+  "Summary Description",
+  [
+    {"title": "Item One", "description": "Item One Description"},
+    {"title": "Item Two", "description": "Item Two Description"}
+  ],
+  ""
+) }}
