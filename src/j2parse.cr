@@ -1,14 +1,12 @@
-#!/usr/bin/env crystal
-
 # Minimal CLI scaffold for Phase 1.
 # Prints tokens and diagnostics from the lexer.
+
+require "./jinja"
 
 if ARGV.size != 1
   STDERR.puts "Usage: j2parse <template.j2>"
   exit 1
 end
-
-require "../src/jinja"
 
 path = ARGV[0]
 content = File.read(path)

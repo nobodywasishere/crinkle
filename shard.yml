@@ -9,4 +9,4 @@ license: MIT
 
 targets:
   j2parse:
-    main: scripts/j2parse
+    main: src/j2parse.cr

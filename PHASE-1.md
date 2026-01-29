@@ -73,7 +73,7 @@
 - Spec behavior: lex input, write snapshots when missing/different, and fail to signal updates.
 
 ## CLI Integration
-- Update `scripts/j2parse` to print tokens for a `.j2` file once lexer is live.
+- Update `src/j2parse.cr` to print tokens for a `.j2` file once lexer is live.
 
 ## Acceptance Criteria
 - Lexer tokenizes `.j2` fixtures with correct spans.
