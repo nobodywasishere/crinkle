@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "Line 1\n\n\n\nLine 2\n"
+    }
+  ]
+}

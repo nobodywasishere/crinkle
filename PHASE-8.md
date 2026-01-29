@@ -38,7 +38,11 @@
 - `Lint/MultipleExtends`
 - `Lint/ExtendsNotFirst`
 - `Lint/DuplicateBlock`
+- `Lint/DuplicateMacro`
+- `Lint/UnusedMacro`
 - `Style/TrailingWhitespace`
+- `Style/MixedIndentation`
+- `Style/ExcessiveBlankLines`
 
 ## Lint Rule Framework (Ameba-like)
 - Rules grouped by category, similar to ameba’s cop architecture.

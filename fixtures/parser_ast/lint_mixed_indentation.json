@@ -1,0 +1,9 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div>\n \tMixed indentation\n</div>\n"
+    }
+  ]
+}

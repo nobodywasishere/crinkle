@@ -1,0 +1,51 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Macro",
+      "name": "greet",
+      "params": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "Hi"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Macro",
+      "name": "greet",
+      "params": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "Hi again"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "greet"
+        },
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

@@ -87,7 +87,11 @@ module Jinja
       ruleset.add(Rules::MultipleExtends.new)
       ruleset.add(Rules::ExtendsNotFirst.new)
       ruleset.add(Rules::DuplicateBlock.new)
+      ruleset.add(Rules::DuplicateMacro.new)
+      ruleset.add(Rules::UnusedMacro.new)
       ruleset.add(Rules::TrailingWhitespace.new)
+      ruleset.add(Rules::MixedIndentation.new)
+      ruleset.add(Rules::ExcessiveBlankLines.new)
       ruleset
     end
 
