@@ -2,21 +2,21 @@ require "spec"
 require "json"
 require "yaml"
 require "file_utils"
-require "../src/jinja"
+require "../src/crinkle"
 
 record FixtureInfo, name : String, template_ext : String, path : String, base_dir : String
 
 UPDATE_SNAPSHOTS = ENV["UPDATE_SNAPSHOTS"]? != nil
 
 class AutoExample
-  include Jinja::Object::Auto
+  include Crinkle::Object::Auto
 
-  @[Jinja::Attribute]
+  @[Crinkle::Attribute]
   def name : String
     "Ada"
   end
 
-  @[Jinja::Attribute]
+  @[Crinkle::Attribute]
   def admin? : Bool
     true
   end
@@ -26,7 +26,7 @@ class AutoExample
   end
 end
 
-def tokens_to_json(tokens : Array(Jinja::Token)) : JSON::Any
+def tokens_to_json(tokens : Array(Crinkle::Token)) : JSON::Any
   payload = tokens.map do |token|
     {
       "type"   => token.type.to_s,
@@ -49,7 +49,7 @@ def tokens_to_json(tokens : Array(Jinja::Token)) : JSON::Any
   JSON.parse(payload.to_json)
 end
 
-def diagnostics_to_json(diags : Array(Jinja::Diagnostic)) : JSON::Any
+def diagnostics_to_json(diags : Array(Crinkle::Diagnostic)) : JSON::Any
   payload = diags.map do |diag|
     {
       "id"       => diag.id,
@@ -73,7 +73,7 @@ def diagnostics_to_json(diags : Array(Jinja::Diagnostic)) : JSON::Any
   JSON.parse(payload.to_json)
 end
 
-def issues_to_json(issues : Array(Jinja::Linter::Issue)) : JSON::Any
+def issues_to_json(issues : Array(Crinkle::Linter::Issue)) : JSON::Any
   payload = issues.map do |issue|
     {
       "id"       => issue.id,
@@ -186,11 +186,11 @@ def assert_text_snapshot(path : String, actual : String) : Nil
 end
 
 def diagnostics_payload(
-  lexer : Array(Jinja::Diagnostic),
-  parser : Array(Jinja::Diagnostic),
-  formatter : Array(Jinja::Diagnostic),
-  renderer : Array(Jinja::Diagnostic),
-  linter : Array(Jinja::Linter::Issue),
+  lexer : Array(Crinkle::Diagnostic),
+  parser : Array(Crinkle::Diagnostic),
+  formatter : Array(Crinkle::Diagnostic),
+  renderer : Array(Crinkle::Diagnostic),
+  linter : Array(Crinkle::Linter::Issue),
 ) : JSON::Any
   payload = {
     "lexer"     => diagnostics_to_json(lexer),
@@ -203,8 +203,8 @@ def diagnostics_payload(
   JSON.parse(payload.to_json)
 end
 
-def build_render_environment : Jinja::Environment
-  env = Jinja::Environment.new
+def build_render_environment : Crinkle::Environment
+  env = Crinkle::Environment.new
 
   env.register_filter("upper") do |value, _args, _kwargs|
     value.to_s.upcase
@@ -263,10 +263,10 @@ def build_render_environment : Jinja::Environment
 
   env.register_tag("note", ["endnote"]) do |parser, start_span|
     parser.skip_whitespace
-    args = Array(Jinja::AST::Expr).new
+    args = Array(Crinkle::AST::Expr).new
 
-    unless parser.current.type == Jinja::TokenType::BlockEnd
-      args << parser.parse_expression([Jinja::TokenType::BlockEnd])
+    unless parser.current.type == Crinkle::TokenType::BlockEnd
+      args << parser.parse_expression([Crinkle::TokenType::BlockEnd])
       parser.skip_whitespace
     end
 
@@ -274,10 +274,10 @@ def build_render_environment : Jinja::Environment
     body, end_info, _end_tag = parser.parse_until_any_end_tag(["endnote"], allow_end_name: true)
     body_end = end_info ? end_info.span : end_span
 
-    Jinja::AST::CustomTag.new(
+    Crinkle::AST::CustomTag.new(
       "note",
       args,
-      Array(Jinja::AST::KeywordArg).new,
+      Array(Crinkle::AST::KeywordArg).new,
       body,
       parser.span_between(start_span, body_end)
     )
@@ -291,15 +291,15 @@ def build_render_environment : Jinja::Environment
   env
 end
 
-def build_extensions_environment : Jinja::Environment
-  env = Jinja::Environment.new
+def build_extensions_environment : Crinkle::Environment
+  env = Crinkle::Environment.new
 
   env.register_tag("note", ["endnote"]) do |parser, start_span|
     parser.skip_whitespace
-    args = Array(Jinja::AST::Expr).new
+    args = Array(Crinkle::AST::Expr).new
 
-    unless parser.current.type == Jinja::TokenType::BlockEnd
-      args << parser.parse_expression([Jinja::TokenType::BlockEnd])
+    unless parser.current.type == Crinkle::TokenType::BlockEnd
+      args << parser.parse_expression([Crinkle::TokenType::BlockEnd])
       parser.skip_whitespace
     end
 
@@ -307,10 +307,10 @@ def build_extensions_environment : Jinja::Environment
     body, end_info, _end_tag = parser.parse_until_any_end_tag(["endnote"], allow_end_name: true)
     body_end = end_info ? end_info.span : end_span
 
-    Jinja::AST::CustomTag.new(
+    Crinkle::AST::CustomTag.new(
       "note",
       args,
-      Array(Jinja::AST::KeywordArg).new,
+      Array(Crinkle::AST::KeywordArg).new,
       body,
       parser.span_between(start_span, body_end)
     )
@@ -318,20 +318,20 @@ def build_extensions_environment : Jinja::Environment
 
   env.register_tag("shout") do |parser, start_span|
     parser.skip_whitespace
-    args = Array(Jinja::AST::Expr).new
+    args = Array(Crinkle::AST::Expr).new
 
-    unless parser.current.type == Jinja::TokenType::BlockEnd
-      args << parser.parse_expression([Jinja::TokenType::BlockEnd])
+    unless parser.current.type == Crinkle::TokenType::BlockEnd
+      args << parser.parse_expression([Crinkle::TokenType::BlockEnd])
       parser.skip_whitespace
     end
 
     end_span = parser.expect_block_end("Expected '%}' to close shout tag.")
 
-    Jinja::AST::CustomTag.new(
+    Crinkle::AST::CustomTag.new(
       "shout",
       args,
-      Array(Jinja::AST::KeywordArg).new,
-      Array(Jinja::AST::Node).new,
+      Array(Crinkle::AST::KeywordArg).new,
+      Array(Crinkle::AST::Node).new,
       parser.span_between(start_span, end_span)
     )
   end
@@ -350,19 +350,19 @@ def build_extensions_environment : Jinja::Environment
   env
 end
 
-def render_context : Hash(String, Jinja::Value)
-  context = Hash(String, Jinja::Value).new
+def render_context : Hash(String, Crinkle::Value)
+  context = Hash(String, Crinkle::Value).new
   context["name"] = "Ada"
   context["flag_true"] = true
   context["flag_false"] = false
   context["outer"] = true
   context["inner"] = true
-  context["items"] = [1_i64, 2_i64] of Jinja::Value
-  context["empty_items"] = Array(Jinja::Value).new
+  context["items"] = [1_i64, 2_i64] of Crinkle::Value
+  context["empty_items"] = Array(Crinkle::Value).new
   context["count"] = 1_i64
   context["lower_name"] = "ada"
-  context["pairs"] = [[1_i64, 2_i64] of Jinja::Value, [3_i64, 4_i64] of Jinja::Value] of Jinja::Value
-  context["user"] = {"name" => "Ada", "profile" => {"avatar" => "avatar.png"} of String => Jinja::Value} of String => Jinja::Value
+  context["pairs"] = [[1_i64, 2_i64] of Crinkle::Value, [3_i64, 4_i64] of Crinkle::Value] of Crinkle::Value
+  context["user"] = {"name" => "Ada", "profile" => {"avatar" => "avatar.png"} of String => Crinkle::Value} of String => Crinkle::Value
 
   # Format template variables
   context["title"] = "Page Title"
@@ -370,9 +370,9 @@ def render_context : Hash(String, Jinja::Value)
   context["content"] = "This is the content."
   context["show_header"] = true
   context["menu"] = [
-    {"url" => "/home", "name" => "Home"} of String => Jinja::Value,
-    {"url" => "/about", "name" => "About"} of String => Jinja::Value,
-  ] of Jinja::Value
+    {"url" => "/home", "name" => "Home"} of String => Crinkle::Value,
+    {"url" => "/about", "name" => "About"} of String => Crinkle::Value,
+  ] of Crinkle::Value
   context["show_code"] = true
   context["inline_code"] = "x = 1"
   context["json_value"] = 42_i64
@@ -381,18 +381,18 @@ def render_context : Hash(String, Jinja::Value)
   context["alt_text"] = "A photo"
   context["default_value"] = "Enter text"
   context["safe_list"] = [
-    Jinja::SafeString.new("<b>one</b>"),
+    Crinkle::SafeString.new("<b>one</b>"),
     "<b>two</b>",
-  ] of Jinja::Value
+  ] of Crinkle::Value
   context["notes"] = [
-    {"title" => "Install", "details" => "Run `shards install`"} of String => Jinja::Value,
-    {"title" => "Build", "details" => "crystal build src/cli/cli.cr"} of String => Jinja::Value,
-    {"title" => "Deploy", "details" => nil} of String => Jinja::Value,
-  ] of Jinja::Value
+    {"title" => "Install", "details" => "Run `shards install`"} of String => Crinkle::Value,
+    {"title" => "Build", "details" => "crystal build src/cli/cli.cr"} of String => Crinkle::Value,
+    {"title" => "Deploy", "details" => nil} of String => Crinkle::Value,
+  ] of Crinkle::Value
   context["show_meta"] = true
   context["description"] = "Page description"
   context["fallback_image"] = "/img/default.png"
-  context["data"] = {"key" => {"nested" => "value"} of String => Jinja::Value} of String => Jinja::Value
+  context["data"] = {"key" => {"nested" => "value"} of String => Crinkle::Value} of String => Crinkle::Value
   context["a"] = 1_i64
   context["b"] = 2_i64
   context["c"] = 5_i64
@@ -402,18 +402,18 @@ def render_context : Hash(String, Jinja::Value)
   context["condition"] = true
   context["value"] = "test value"
   context["single_item"] = "item"
-  context["item"] = {"value" => "Item Value", "active" => true} of String => Jinja::Value
+  context["item"] = {"value" => "Item Value", "active" => true} of String => Crinkle::Value
   context["copyright"] = "2024 Company"
-  context["dict"] = Hash(String, Jinja::Value).new
+  context["dict"] = Hash(String, Crinkle::Value).new
   context["x"] = 42_i64
   context["greeting"] = "Hello"
   context["required"] = false
   context["auto_user"] = AutoExample.new
-  context["safe_value"] = Jinja::SafeString.new("<b>safe</b>")
-  context["undefined_value"] = Jinja::Undefined.new("missing")
-  context["range_items"] = Jinja.value(1..3)
-  context["tuple_items"] = Jinja.value({1, "two"})
-  context["named_tuple_items"] = Jinja.value({one: 1, two: "two"})
+  context["safe_value"] = Crinkle::SafeString.new("<b>safe</b>")
+  context["undefined_value"] = Crinkle::Undefined.new("missing")
+  context["range_items"] = Crinkle.value(1..3)
+  context["tuple_items"] = Crinkle.value({1, "two"})
+  context["named_tuple_items"] = Crinkle.value({one: 1, two: "two"})
   context["json_any"] = JSON.parse(%({"name":"Ada","items":[1,2]}))
   context["yaml_any"] = YAML.parse("name: Ada\nitems:\n  - 1\n  - 2\n")
 

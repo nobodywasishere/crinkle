@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   class Lexer
     enum Mode
       Text

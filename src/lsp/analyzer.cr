@@ -1,14 +1,14 @@
 require "./types"
 
-module Jinja
+module Crinkle
   module LSP
     struct AnalysisResult
-      getter diagnostics : Array(Jinja::Diagnostic)
+      getter diagnostics : Array(Crinkle::Diagnostic)
       getter template : AST::Template
       getter symbols : SymbolIndex
 
       def initialize(
-        @diagnostics : Array(Jinja::Diagnostic),
+        @diagnostics : Array(Crinkle::Diagnostic),
         @template : AST::Template,
         @symbols : SymbolIndex,
       ) : Nil
@@ -19,7 +19,7 @@ module Jinja
       def analyze(text : String) : AnalysisResult
         lexer = Lexer.new(text)
         tokens = lexer.lex_all
-        diagnostics = Array(Jinja::Diagnostic).new
+        diagnostics = Array(Crinkle::Diagnostic).new
         diagnostics.concat(lexer.diagnostics)
         parser = Parser.new(tokens)
         template = parser.parse
@@ -96,7 +96,7 @@ module Jinja
         end
       end
 
-      private def collect_target_definitions(index : SymbolIndex, target : AST::Target, span : Jinja::Span) : Nil
+      private def collect_target_definitions(index : SymbolIndex, target : AST::Target, span : Crinkle::Span) : Nil
         case target
         when AST::Name
           add_definition(index, target.value, LSProtocol::SymbolKind::Variable, span, "set #{target.value}")
@@ -117,7 +117,7 @@ module Jinja
         index : SymbolIndex,
         name : String,
         kind : LSProtocol::SymbolKind,
-        span : Jinja::Span,
+        span : Crinkle::Span,
         detail : String,
       ) : Nil
         index.definitions[name] << SymbolDefinition.new(name, kind, span, detail)

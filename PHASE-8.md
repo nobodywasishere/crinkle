@@ -26,7 +26,7 @@
 - Rendering step is excluded from linting rules for now (renderer diagnostics can still be mapped when provided).
 
 ## Existing Diagnostic Mapping
-- Do not refactor existing diagnostic IDs in `Jinja::Diagnostic`.
+- Do not refactor existing diagnostic IDs in `Crinkle::Diagnostic`.
 - Map `DiagnosticType` values to linter IDs at the linter boundary.
 
 ## Output Style (Ameba-like)
@@ -69,7 +69,7 @@
 - `Lint/UnexpectedEndTag` — end tag without start (if parser didn’t already flag).
 - `Lint/MissingEndTag` — missing close tag (if parser didn’t already flag).
 - `Lint/MultipleExtends` — more than one `{% extends %}` in a template.
-- `Lint/ExtendsNotFirst` — extends not at the top of template (Jinja rule).
+- `Lint/ExtendsNotFirst` — extends not at the top of template (Crinkle rule).
 - `Lint/BlockOutsideExtends` — block usage in template without extends.
 
 ### Expressions

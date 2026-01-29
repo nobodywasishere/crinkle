@@ -22,7 +22,7 @@ Reference implementation: `/Users/margret/dev/crinja/crinja`
 
 ## Outcomes
 - Crinja-style object serialization hooks and conversion rules implemented.
-- `Jinja::Object::Auto` and annotations mirror Crinja behavior.
+- `Crinkle::Object::Auto` and annotations mirror Crinja behavior.
 - Compatibility shims documented and covered by fixtures/specs.
 
 ## Compatibility Targets
@@ -60,24 +60,24 @@ Mirror the Crinja conversion pipeline defined in `Crinja.value` and `Crinja::Val
 
 ### 2) Object::Auto (Annotations + Attribute Exposure)
 Implement the Crinja `Object::Auto` macro behavior:
-- `@[Jinja::Attribute]` and `@[Jinja::Attributes]` annotations
+- `@[Crinkle::Attribute]` and `@[Crinkle::Attributes]` annotations
 - Expose methods based on annotations and defaults
 - Support `is_*` alias for `?`-suffixed methods
 - Return `Undefined` when attribute is missing
-- Wrap returned values through `Jinja.value`
+- Wrap returned values through `Crinkle.value`
 
 ## Work Plan
 1. **Value Conversion Layer**
-   - `Jinja.value` entrypoint now wraps Hash, Tuple, Array, Range, Iterator, Char, Nil, SafeString, Undefined, and Objects.
+   - `Crinkle.value` entrypoint now wraps Hash, Tuple, Array, Range, Iterator, Char, Nil, SafeString, Undefined, and Objects.
    - `dictionary`/`variables` helpers produce the Hash/Hash(String, Value) wrappers used throughout the renderer.
 2. **Undefined/SafeString/Finalizer**
    - Defined `Undefined`/`StrictUndefined` behaviors plus SafeString escaping and the `Finalizer.stringify` helper used by the renderer.
    - `Finalizer` now prints `nil` as `none` and quotes nested structures.
 3. **Object::Auto**
    - Added the annotations and macro to auto-expose methods (including `is_*` aliases).
-   - Exposed values are routed through `Jinja.value`, so missing attributes return `Undefined`.
+   - Exposed values are routed through `Crinkle.value`, so missing attributes return `Undefined`.
 4. **JSON/YAML integration**
-   - Added `src/runtime/json.cr` and `src/runtime/yaml.cr` so `JSON::Any`/`YAML::Any` implement `Jinja::Object` and forward to the same conversion pipeline.
+   - Added `src/runtime/json.cr` and `src/runtime/yaml.cr` so `JSON::Any`/`YAML::Any` implement `Crinkle::Object` and forward to the same conversion pipeline.
 5. **Fixtures + Specs**
    - Added `object_*` fixtures covering attribute access, safe strings, undefined behavior, value casting, JSON/YAML access, missing/invalid lookups, and SafeString arrays.
    - Specs now run with `UPDATE_SNAPSHOTS=1` to refresh snapshots and succeed without failing on missing files.
@@ -86,7 +86,7 @@ Implement the Crinja `Object::Auto` macro behavior:
 7. **Docs**
    - Phase 12 docs describe StrictUndefined options and how fixtures capture undefined/error propagation.
 8. **Loader guidance**
-   - Documented how loader contexts (filesystem/choice/baked) can carry serialized hashes so CLI/loader code can feed the same `Jinja.value` payloads shown elsewhere.
+   - Documented how loader contexts (filesystem/choice/baked) can carry serialized hashes so CLI/loader code can feed the same `Crinkle.value` payloads shown elsewhere.
 
 ## Fixtures to Add
 - `object_auto.*` — attribute exposure via Object::Auto (name/boolean/missing attribute)

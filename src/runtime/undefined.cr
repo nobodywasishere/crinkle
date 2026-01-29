@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   class Undefined
     getter name : String
 
@@ -36,11 +36,11 @@ module Jinja
       raise_error("to_s")
     end
 
-    def ==(other : Jinja::Value) : Bool
+    def ==(other : Crinkle::Value) : Bool
       raise_error("==")
     end
 
-    def <=>(other : Jinja::Value) : Int32
+    def <=>(other : Crinkle::Value) : Int32
       raise_error("<=>")
     end
   end

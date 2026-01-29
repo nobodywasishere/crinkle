@@ -20,7 +20,7 @@
 - Fixtures + snapshots for sample custom tags and error cases.
 
 ## API Design
-- `Jinja::Environment`
+- `Crinkle::Environment`
   - `register_tag(name : String, handler : TagHandler, end_tags : Array(String) = [] of String, override : Bool = false)`
   - `register_filter(name : String, filter : FilterProc)`
   - `register_test(name : String, test : TestProc)`

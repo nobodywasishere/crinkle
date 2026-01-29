@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   module HTML
     class Parser
       getter indent_level : Int32

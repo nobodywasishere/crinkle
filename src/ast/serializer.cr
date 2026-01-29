@@ -1,6 +1,6 @@
 require "json"
 
-module Jinja
+module Crinkle
   module AST
     module Serializer
       def self.to_pretty_json(template : Template) : String

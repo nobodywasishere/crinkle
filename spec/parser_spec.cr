@@ -1,11 +1,11 @@
 require "./spec_helper"
 
-describe Jinja::Parser do
+describe Crinkle::Parser do
   it "parses a basic template" do
     source = File.read("fixtures/var_only.html.j2")
-    lexer = Jinja::Lexer.new(source)
+    lexer = Crinkle::Lexer.new(source)
     tokens = lexer.lex_all
-    parser = Jinja::Parser.new(tokens)
+    parser = Crinkle::Parser.new(tokens)
     parser.parse
     parser.diagnostics.should be_empty
   end

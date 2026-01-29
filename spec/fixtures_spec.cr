@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-private def register_base_renderers(renderer : Jinja::Renderer) : Nil
+private def register_base_renderers(renderer : Crinkle::Renderer) : Nil
   renderer.register_tag_renderer("note") do |render, tag|
     label_value = tag.args.first? ? render.evaluate(tag.args.first) : "note"
     label = label_value.to_s
@@ -8,7 +8,7 @@ private def register_base_renderers(renderer : Jinja::Renderer) : Nil
   end
 end
 
-private def register_extension_renderers(renderer : Jinja::Renderer) : Nil
+private def register_extension_renderers(renderer : Crinkle::Renderer) : Nil
   renderer.register_tag_renderer("note") do |render, tag|
     label_value = tag.args.first? ? render.evaluate(tag.args.first) : "note"
     label = label_value.to_s
@@ -23,39 +23,39 @@ end
 
 private def run_fixture_snapshots(
   info : FixtureInfo,
-  parser_env : Jinja::Environment?,
-  render_env : Jinja::Environment?,
-  context : Hash(String, Jinja::Value),
-  register_renderers : Proc(Jinja::Renderer, Nil)?,
+  parser_env : Crinkle::Environment?,
+  render_env : Crinkle::Environment?,
+  context : Hash(String, Crinkle::Value),
+  register_renderers : Proc(Crinkle::Renderer, Nil)?,
 ) : Nil
   source = File.read(info.path)
-  lexer = Jinja::Lexer.new(source)
+  lexer = Crinkle::Lexer.new(source)
   tokens = lexer.lex_all
 
-  parser = parser_env ? Jinja::Parser.new(tokens, parser_env) : Jinja::Parser.new(tokens)
+  parser = parser_env ? Crinkle::Parser.new(tokens, parser_env) : Crinkle::Parser.new(tokens)
   template = parser.parse
-  ast_json = JSON.parse(Jinja::AST::Serializer.to_pretty_json(template))
+  ast_json = JSON.parse(Crinkle::AST::Serializer.to_pretty_json(template))
 
-  html_aware = Jinja::Formatter.html_aware?(info.template_ext)
-  formatter_options = Jinja::Formatter::Options.new(html_aware: html_aware, normalize_text_indent: html_aware)
-  formatter = Jinja::Formatter.new(source, formatter_options)
+  html_aware = Crinkle::Formatter.html_aware?(info.template_ext)
+  formatter_options = Crinkle::Formatter::Options.new(html_aware: html_aware, normalize_text_indent: html_aware)
+  formatter = Crinkle::Formatter.new(source, formatter_options)
   formatted = formatter.format
 
   renderer_output = ""
-  renderer_diags = Array(Jinja::Diagnostic).new
+  renderer_diags = Array(Crinkle::Diagnostic).new
   if render_env
-    render_parser = Jinja::Parser.new(tokens, render_env)
+    render_parser = Crinkle::Parser.new(tokens, render_env)
     render_template = render_parser.parse
-    renderer = Jinja::Renderer.new(render_env)
+    renderer = Crinkle::Renderer.new(render_env)
     register_renderers.try &.call(renderer)
     renderer_output = renderer.render(render_template, context)
     renderer_diags = renderer.diagnostics
   end
 
-  linter_issues = Array(Jinja::Linter::Issue).new
+  linter_issues = Array(Crinkle::Linter::Issue).new
   if info.name.starts_with?("lint_")
     diagnostics = lexer.diagnostics + parser.diagnostics
-    linter_issues = Jinja::Linter::Runner.new.lint(template, source, diagnostics)
+    linter_issues = Crinkle::Linter::Runner.new.lint(template, source, diagnostics)
   end
 
   assert_json_fixture(info.name, "lexer", "tokens", tokens_to_json(tokens), info.base_dir)
@@ -90,7 +90,7 @@ describe "fixture snapshots" do
         nil,
         env,
         context,
-        ->(renderer : Jinja::Renderer) : Nil { register_base_renderers(renderer) }
+        ->(renderer : Crinkle::Renderer) : Nil { register_base_renderers(renderer) }
       )
     end
   end
@@ -104,7 +104,7 @@ describe "fixture snapshots" do
         env,
         env,
         context,
-        ->(renderer : Jinja::Renderer) : Nil { register_extension_renderers(renderer) }
+        ->(renderer : Crinkle::Renderer) : Nil { register_extension_renderers(renderer) }
       )
     end
   end

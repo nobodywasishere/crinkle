@@ -1,21 +1,21 @@
 require "html"
 
-module Jinja
+module Crinkle
   struct Finalizer
-    def self.stringify(raw : Jinja::Value, escape : Bool = false, in_struct : Bool = false) : String
+    def self.stringify(raw : Crinkle::Value, escape : Bool = false, in_struct : Bool = false) : String
       String.build do |io|
         stringify(io, raw, escape, in_struct)
       end
     end
 
-    def self.stringify(io : IO, raw : Jinja::Value, escape : Bool = false, in_struct : Bool = false) : Nil
+    def self.stringify(io : IO, raw : Crinkle::Value, escape : Bool = false, in_struct : Bool = false) : Nil
       new(io, escape, in_struct).stringify(raw)
     end
 
     protected def initialize(@io : IO, @escape : Bool = false, @inside_struct : Bool = false) : Nil
     end
 
-    protected def stringify(raw : Jinja::Value) : Nil
+    protected def stringify(raw : Crinkle::Value) : Nil
       raw.to_s(@io)
     end
 

@@ -18,13 +18,13 @@
 - Snapshot/debug mode for investigation and fixture work.
 
 ## CLI Structure
-- Binary name: `jinja` (or `jinja-cr`) with subcommands.
+- Binary name: `crinkle` with subcommands.
 - Suggested command shape:
-  - `jinja lex [path] [--stdin] [--format json|text] [--pretty]`
-  - `jinja parse [path] [--stdin] [--format json|text] [--pretty]`
-  - `jinja render [path] [--stdin] [--format html|text]`
-  - `jinja format [path] [--stdin] [--output path]`
-  - `jinja lint [path] [--stdin] [--format json|text] [--pretty]`
+  - `crinkle lex [path] [--stdin] [--format json|text] [--pretty]`
+  - `crinkle parse [path] [--stdin] [--format json|text] [--pretty]`
+  - `crinkle render [path] [--stdin] [--format html|text]`
+  - `crinkle format [path] [--stdin] [--output path]`
+  - `crinkle lint [path] [--stdin] [--format json|text] [--pretty]`
 
 ## Shared Flags
 - Input selection:
@@ -61,7 +61,7 @@
 
 ## Implementation Plan
 1. **Command framework**
-   - Define a CLI entrypoint under `src/jinja.cr` or `src/cli.cr`.
+   - Define a CLI entrypoint under `src/crinkle.cr` or `src/cli.cr`.
    - Parse args and route to subcommands.
    - Add shared option parser utilities.
 

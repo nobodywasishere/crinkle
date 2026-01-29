@@ -1,6 +1,6 @@
 require "html"
 
-module Jinja
+module Crinkle
   struct SafeString
     def initialize(@string : String, @plain_value : Bool = false) : Nil
     end
@@ -95,7 +95,7 @@ module Jinja
 end
 
 class String
-  def ==(other : Jinja::SafeString) : Bool
+  def ==(other : Crinkle::SafeString) : Bool
     other == self
   end
 end

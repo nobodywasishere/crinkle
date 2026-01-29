@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   enum TokenType
     Text
     Comment

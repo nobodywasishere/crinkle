@@ -1,7 +1,7 @@
 require "./tokenizer"
 require "./parser"
 
-module Jinja
+module Crinkle
   module HTML
     class IndentEngine
       getter indent_level : Int32
@@ -86,7 +86,7 @@ module Jinja
         stripped = line.lstrip
         return base_indent + stripped if preformatted_end_tag_line?(stripped)
         @preformatted_source_indent ||= leading_whitespace(line)
-        return base_indent + indent_string + stripped if jinja_line?(stripped)
+        return base_indent + indent_string + stripped if crinkle_line?(stripped)
         rebase_preformatted_line(line, base_indent, indent_string)
       end
 
@@ -130,7 +130,7 @@ module Jinja
         @preformatted_tags.includes?(name.downcase)
       end
 
-      private def jinja_line?(line : String) : Bool
+      private def crinkle_line?(line : String) : Bool
         line.starts_with?("{{") || line.starts_with?("{%") || line.starts_with?("{#")
       end
 

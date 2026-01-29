@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   module Object
   end
 end

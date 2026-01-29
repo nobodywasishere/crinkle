@@ -2,7 +2,7 @@
 
 ## Overview
 
-Welcome to the Ada project! This document demonstrates how Jinja and Markdown work together.
+Welcome to the Ada project! This document demonstrates how Crinkle and Markdown work together.
 
 ### Features
 

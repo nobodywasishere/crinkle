@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   module LSP
     class Transport
       def initialize(@io_in : IO, @io_out : IO) : Nil

@@ -1,4 +1,4 @@
-# Phase 0 — Baseline + Specs (Detailed Plan for jinja-cr)
+# Phase 0 — Baseline + Specs (Detailed Plan for crinkle)
 
 ## Objectives
 - Align on scope, compatibility, and non-goals.
@@ -24,11 +24,11 @@
 
 ## Repository Layout (proposed)
 - `src/`
-  - `lexer/` (module: `Jinja::Lexer`)
-  - `parser/` (module: `Jinja::Parser`)
-  - `ast/` (module: `Jinja::AST`)
-  - `diagnostics/` (module: `Jinja::Diagnostics`)
-  - `lsp/` (module: `Jinja::LSP`, later)
+  - `lexer/` (module: `Crinkle::Lexer`)
+  - `parser/` (module: `Crinkle::Parser`)
+  - `ast/` (module: `Crinkle::AST`)
+  - `diagnostics/` (module: `Crinkle::Diagnostics`)
+  - `lsp/` (module: `Crinkle::LSP`, later)
 - `spec/`
   - `lexer_spec.cr`
   - `parser_spec.cr`

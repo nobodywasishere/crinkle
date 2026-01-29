@@ -1,7 +1,7 @@
 require "./html/tokenizer"
 require "./html/indent_engine"
 
-module Jinja
+module Crinkle
   class Formatter
     @preformatted_indent : String?
     @preformatted_last_indent : String?
@@ -159,7 +159,7 @@ module Jinja
       )
       @html_tokenizer = HTML::Tokenizer.new
       @source_lines = @source.split('\n', remove_empty: false)
-      @jinja_indent = 0
+      @crinkle_indent = 0
       @html_open_buffer = ""
       @preformatted_indent = nil
       @preformatted_last_indent = nil
@@ -372,7 +372,7 @@ module Jinja
     end
 
     private def current_indent_string : String
-      level = @options.html_aware? ? (@html_engine.indent_level + @jinja_indent) : @jinja_indent
+      level = @options.html_aware? ? (@html_engine.indent_level + @crinkle_indent) : @crinkle_indent
       @options.indent_string * level
     end
 
@@ -683,9 +683,9 @@ module Jinja
 
     private def with_block_indent(&block : ->) : Nil
       if @options.html_aware?
-        @jinja_indent += 1
+        @crinkle_indent += 1
         block.call
-        @jinja_indent -= 1
+        @crinkle_indent -= 1
       else
         block.call
       end
@@ -808,7 +808,7 @@ module Jinja
       '"'
     end
 
-    private def original_text(span : Jinja::Span) : String
+    private def original_text(span : Crinkle::Span) : String
       start = span.start_pos.offset
       length = span.end_pos.offset - start
       @source.byte_slice(start, length) || ""
@@ -1067,9 +1067,9 @@ module Jinja
         if @html_engine.in_preformatted? && @preformatted_indent
           return preformatted_indent_level + 1
         end
-        @html_engine.indent_level + @jinja_indent
+        @html_engine.indent_level + @crinkle_indent
       else
-        @jinja_indent
+        @crinkle_indent
       end
     end
 

@@ -1,6 +1,6 @@
 require "./types"
 
-module Jinja
+module Crinkle
   module LSP
     class DocumentStore
       def initialize : Nil

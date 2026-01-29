@@ -1,5 +1,5 @@
 require "lsprotocol"
-require "../jinja"
+require "../crinkle"
 require "./types"
 require "./document_store"
 require "./text_scanner"
@@ -8,7 +8,7 @@ require "./resolver"
 require "./mapper"
 require "./transport"
 
-module Jinja
+module Crinkle
   module LSP
     class Server
       @io_out : IO
@@ -63,7 +63,7 @@ module Jinja
           document_symbol_provider: true,
           folding_range_provider: true,
         )
-        server_info = LSProtocol::ServerInfo.new("jinja-cr")
+        server_info = LSProtocol::ServerInfo.new("crinkle")
         result = LSProtocol::InitializeResult.new(capabilities, server_info)
         response = LSProtocol::InitializeResponse.new(message.id, result)
         @transport.send_message(response.to_json)

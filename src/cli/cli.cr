@@ -1,9 +1,9 @@
-require "../jinja"
+require "../crinkle"
 require "../lsp/server"
 require "option_parser"
 require "json"
 
-module Jinja
+module Crinkle
   module CLI
     enum OutputFormat
       Json
@@ -123,7 +123,7 @@ module Jinja
         emit_issues_results(results, opts)
         exit exit_code_for_issues(all_issues, opts)
       when "lsp"
-        Jinja::LSP::Server.run
+        Crinkle::LSP::Server.run
         exit 0
       when "-h", "--help", "help"
         print_usage
@@ -137,7 +137,7 @@ module Jinja
 
     private def self.print_usage : Nil
       STDERR.puts <<-USAGE
-        Usage: jinja <command> [path ...] [--stdin] [options]
+        Usage: crinkle <command> [path ...] [--stdin] [options]
 
         Commands:
           lex      Lex template and output tokens + diagnostics
@@ -582,4 +582,4 @@ module Jinja
   end
 end
 
-Jinja::CLI.run(ARGV)
+Crinkle::CLI.run(ARGV)

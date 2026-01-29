@@ -2,7 +2,7 @@
 
 ## Objectives
 - Format Jinja2 templates with consistent, configurable style.
-- Provide HTML-aware indentation that aligns Jinja blocks with surrounding markup.
+- Provide HTML-aware indentation that aligns Crinkle blocks with surrounding markup.
 - Preserve semantic content while normalizing whitespace and spacing.
 - Establish fixtures with before/after formatting samples.
 
@@ -23,7 +23,7 @@
   - Configurable indent, spacing, and line length options
 - HTML-aware mode:
   - Track HTML tag nesting in Text nodes via heuristics
-  - Align Jinja block indentation with HTML context
+  - Align Crinkle block indentation with HTML context
   - Skip formatting inside `<pre>`, `<code>`, `<script>` tags
 - Expression formatting:
   - Consistent spacing around operators (`a + b`)
@@ -42,14 +42,14 @@
 ## Design Approach
 - **Hybrid AST + Token**: Use AST for structure, tokens for expression reconstruction.
 - **HTML Heuristics**: Simple regex-based tag detection (no full HTML parser).
-- **Effective Indent**: Combine HTML context level + Jinja block nesting level.
+- **Effective Indent**: Combine HTML context level + Crinkle block nesting level.
 
 ## File Structure
 ```
 src/
   formatter/
-    formatter.cr      # Jinja::Formatter class with nested Options, HtmlContext, Printer
-  jinja.cr            # Add require for formatter
+    formatter.cr      # Crinkle::Formatter class with nested Options, HtmlContext, Printer
+  crinkle.cr          # Add require for formatter
 
 spec/
   fixtures_spec.cr    # Snapshot-based specs
@@ -62,16 +62,16 @@ fixtures/
 ## API Sketch
 
 ### Lexer/Parser Extensions (for comments)
-- `Jinja::TokenType::CommentStart` — `{#` delimiter
-- `Jinja::TokenType::CommentEnd` — `#}` delimiter
-- `Jinja::AST::Comment` (class)
+- `Crinkle::TokenType::CommentStart` — `{#` delimiter
+- `Crinkle::TokenType::CommentEnd` — `#}` delimiter
+- `Crinkle::AST::Comment` (class)
   - `text : String` — comment content (without delimiters)
   - `span : Span`
 - Add `Comment` to `AST::Node` union type
 
-### Formatter Components (nested inside `Jinja::Formatter`)
+### Formatter Components (nested inside `Crinkle::Formatter`)
 
-- `Jinja::Formatter::Options` (struct)
+- `Crinkle::Formatter::Options` (struct)
   - `indent_string : String` (default: `"  "`)
   - `max_line_length : Int32` (default: `120`)
   - `html_aware? : Bool` (default: `true`)
@@ -79,16 +79,16 @@ fixtures/
   - `space_around_operators? : Bool` (default: `true`)
   - `normalize_whitespace_control? : Bool` (default: `false`)
 
-- `Jinja::Formatter::HtmlContext` (class, private)
+- `Crinkle::Formatter::HtmlContext` (class, private)
   - `process_text(text : String) : Nil`
   - `indent_level : Int32`
 
-- `Jinja::Formatter::Printer` (class, private)
+- `Crinkle::Formatter::Printer` (class, private)
   - `write(text : String)`, `newline`, `indent`, `dedent`
   - `set_indent(level : Int32)`
   - `to_s : String`
 
-- `Jinja::Formatter` (main class)
+- `Crinkle::Formatter` (main class)
   - `initialize(source : String, options : Options = Options.new)`
   - `format : String`
 
@@ -114,7 +114,7 @@ end
 ```crystal
 def compute_effective_indent : Int32
   base = @options.html_aware? ? @html_context.indent_level : 0
-  base + @jinja_indent
+  base + @crinkle_indent
 end
 ```
 
@@ -125,8 +125,8 @@ end
 - Test categories:
   - Basic expressions (literals, operators, filters)
   - Control structures (if/elif/else, for/else)
-  - Nested Jinja blocks
-  - HTML + Jinja mixed content
+  - Nested Crinkle blocks
+  - HTML + Crinkle mixed content
   - Whitespace control markers
   - Raw blocks and edge cases
   - Templates with parse errors (fault-tolerance)
@@ -171,7 +171,7 @@ Hello, {{ user.name }}
 ## Acceptance Criteria
 - Formatter produces consistent output for all test fixtures.
 - Fault-tolerant: templates with parse errors still format valid regions.
-- HTML-aware mode aligns Jinja blocks with HTML indentation.
+- HTML-aware mode aligns Crinkle blocks with HTML indentation.
 - Options are configurable and respected.
 - Snapshot specs pass for formatter input/output pairs.
 - Idempotent: formatting already-formatted output yields same result.

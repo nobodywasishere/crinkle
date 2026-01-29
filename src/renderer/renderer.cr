@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   class Renderer
     getter diagnostics : Array(Diagnostic)
     alias TagRenderer = Proc(Renderer, AST::CustomTag, String)
@@ -523,7 +523,7 @@ module Jinja
       target = eval_expr(expr.target)
       return target if target.is_a?(Undefined) || target.is_a?(StrictUndefined)
       if target.responds_to?(:crinja_attribute)
-        value = target.crinja_attribute(Jinja.value(expr.name))
+        value = target.crinja_attribute(Crinkle.value(expr.name))
         emit_missing_attribute(expr.name, expr.span) if value.is_a?(Undefined)
         return value
       end
@@ -532,7 +532,7 @@ module Jinja
           return value
         end
       elsif target.is_a?(Hash(Value, Value))
-        key = Jinja.value(expr.name)
+        key = Crinkle.value(expr.name)
         if value = target[key]?
           return value
         end
@@ -562,7 +562,7 @@ module Jinja
           return value
         end
       when Hash(Value, Value)
-        key = Jinja.value(index)
+        key = Crinkle.value(index)
         if value = target[key]?
           return value
         end
@@ -903,7 +903,7 @@ module Jinja
         return
       end
       if base.is_a?(Hash(Value, Value))
-        base[Jinja.value(target.name)] = value
+        base[Crinkle.value(target.name)] = value
         return
       end
 
@@ -942,7 +942,7 @@ module Jinja
       when Hash(String, Value)
         base[index.to_s] = value
       when Hash(Value, Value)
-        base[Jinja.value(index)] = value
+        base[Crinkle.value(index)] = value
       else
         emit_diagnostic(
           DiagnosticType::InvalidOperand,
@@ -1087,7 +1087,7 @@ module Jinja
       when Hash(String, Value)
         right.has_key?(left.to_s)
       when Hash(Value, Value)
-        right.has_key?(Jinja.value(left))
+        right.has_key?(Crinkle.value(left))
       when String
         right.includes?(left.to_s)
       else

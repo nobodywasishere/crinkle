@@ -34,7 +34,7 @@
   - Diagnostics snapshots in `fixtures/<name>.diagnostics.json`
 
 ## API Sketch
-- `Jinja::Renderer`
+- `Crinkle::Renderer`
   - `render(template : AST::Template, context : Hash(String, Value) = Hash(String, Value).new) : String`
   - `diagnostics : Array(Diagnostic)`
   - `register_tag_renderer(tag : String, &block : TagRenderer)`

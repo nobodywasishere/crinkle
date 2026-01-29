@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   class Parser
     private alias BuiltInTagHandler = Proc(Span, Bool, AST::Node?)
 

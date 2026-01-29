@@ -2,7 +2,7 @@
 
 ## Project Overview
 - Repo: `/Users/margret/dev/crinja/crystal-jinja2`
-- Project name: **jinja-cr**; Crystal namespaces use `Jinja` (e.g., `Jinja::Lexer`).
+- Project name: **crinkle**; Crystal namespaces use `Crinkle` (e.g., `Crinkle::Lexer`).
 - File extension for templates: `.j2`.
 - The project includes lexer, parser, renderer, formatter, fixtures/snapshots, and plans (PHASE-0..7 + PLAN.md).
 
@@ -24,7 +24,7 @@
 ### 1. Phase 7: Formatter Implementation (Complete)
 Created a full HTML-aware Jinja2 template formatter in `src/formatter/formatter.cr`:
 
-**Architecture** (all nested inside `Jinja::Formatter` class per user request):
+**Architecture** (all nested inside `Crinkle::Formatter` class per user request):
 - `Formatter::Options` — Configuration struct with settings:
   - `indent_string` (default: "  ")
   - `max_line_length` (default: 120)
@@ -63,7 +63,7 @@ Extended lexer/parser/renderer/formatter to support Jinja2 comments (`{# ... #}`
 
 **Test templates added:**
 - `comment_basic.j2`, `comment_multiline.j2`, `comment_inline.j2`
-- `format_comments_mixed.j2` (comprehensive test with HTML + comments + Jinja)
+- `format_comments_mixed.j2` (comprehensive test with HTML + comments + Crinkle)
 
 ### 3. Parser Fix: `{% else %}` and `{% elif %}` Support
 Fixed parser to properly handle else branches in if/for statements:
@@ -108,7 +108,7 @@ Fixed render diagnostics by adding missing context variables to `spec/renderer_s
   - `src/ast/nodes.cr`
   - `src/renderer/renderer.cr`
   - `src/diagnostics/diagnostic.cr`
-  - `src/jinja.cr` (requires formatter)
+  - `src/crinkle.cr` (requires formatter)
   - `spec/fixtures_spec.cr` (snapshot fixtures)
   - `spec/renderer_spec.cr`
   - Various fixture files
@@ -128,7 +128,7 @@ Fixed render diagnostics by adding missing context variables to `spec/renderer_s
 ### Source Files
 ```
 src/
-  jinja.cr                    # Main module, requires all components
+  crinkle.cr                  # Main module, requires all components
   lexer/
     lexer.cr                  # Tokenizer (supports comments now)
     token.cr                  # Token types including Comment

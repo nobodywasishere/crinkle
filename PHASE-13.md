@@ -1,7 +1,7 @@
 # Phase 13 — Language Server (Detailed Plan)
 
 ## Objectives
-- Provide a minimal, reliable LSP server for Jinja templates with diagnostics on open/change.
+- Provide a minimal, reliable LSP server for Crinkle templates with diagnostics on open/change.
 - Enable core IDE features: hover, go-to-definition, document symbols, and folding ranges.
 - Integrate lexer/parser/linter diagnostics with consistent spans and severity mapping.
 - Build a foundation for incremental parsing, caching, and future features (semantic tokens, completion).
@@ -22,7 +22,7 @@
 - Cross-file macro import resolution beyond direct includes (basic only).
 
 ## Design Overview
-- **Server entrypoint**: `src/lsp/server.cr` with a `Jinja::LSP::Server` class.
+- **Server entrypoint**: `src/lsp/server.cr` with a `Crinkle::LSP::Server` class.
 - **Protocol**: JSON-RPC 2.0 over stdio.
 - **Document model**: in-memory `DocumentStore` keyed by URI.
 - **Analysis pipeline**: lex -> parse -> lint -> index (symbols + definitions).
@@ -73,9 +73,9 @@
   - `uri : String`
   - `version : Int32`
   - `text : String`
-  - `ast : Jinja::AST::Template?`
-  - `diagnostics : Array(Jinja::Diagnostic)`
-  - `symbols : Jinja::LSP::SymbolIndex`
+  - `ast : Crinkle::AST::Template?`
+  - `diagnostics : Array(Crinkle::Diagnostic)`
+  - `symbols : Crinkle::LSP::SymbolIndex`
 - `SymbolIndex`
   - `definitions : Hash(String, Array(Location))`
   - `blocks : Hash(String, Location)`
@@ -83,10 +83,10 @@
   - `variables : Hash(String, Array(Location))`
 
 ## Diagnostics Mapping
-- Map `Jinja::Diagnostic` to `LSP::Diagnostic`:
+- Map `Crinkle::Diagnostic` to `LSP::Diagnostic`:
   - Severity: error/warning/info
   - Range: convert span (line/col) to LSP range (0-based)
-  - Source: `jinja-cr`
+  - Source: `crinkle`
   - Code: diagnostic ID (`Parser/UnknownTag` etc.)
 - Support `--strict` logic as a server option (optional): warnings as errors for diagnostics.
 
@@ -160,11 +160,11 @@
    - Fixtures for documents with macros/blocks/variables.
 
 7. **Docs**
-   - README: usage example for `jinja-lsp` via stdio.
+- README: usage example for `crinkle lsp` via stdio.
    - Document supported capabilities and limitations.
 
 ## Progress Update (January 29, 2026)
-- Implemented `jinja lsp` CLI entrypoint and LSP server skeleton.
+- Implemented `crinkle lsp` CLI entrypoint and LSP server skeleton.
 - JSON-RPC parsing via `LSProtocol.parse_message` with typed request/notification handling.
 - Document store + analyzer pipeline (lexer + parser + symbol index).
 - Diagnostics publishing on open/change/close.

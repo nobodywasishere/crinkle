@@ -1,7 +1,7 @@
 require "./types"
 require "./text_scanner"
 
-module Jinja
+module Crinkle
   module LSP
     class Resolver
       def initialize(@document : Document) : Nil
@@ -35,7 +35,7 @@ module Jinja
         symbols_from_text(@document.text)
       end
 
-      def folding_spans : Array(Jinja::Span)
+      def folding_spans : Array(Crinkle::Span)
         symbols = @document.symbols
         if symbols && !symbols.foldable_spans.empty?
           return symbols.foldable_spans
@@ -43,7 +43,7 @@ module Jinja
         foldable_spans_from_text(@document.text)
       end
 
-      private def position_in_span?(position : LSProtocol::Position, span : Jinja::Span) : Bool
+      private def position_in_span?(position : LSProtocol::Position, span : Crinkle::Span) : Bool
         line = position.line.to_i + 1
         column = position.character.to_i + 1
         start_pos = span.start_pos
@@ -71,18 +71,18 @@ module Jinja
                    next
                  end
           next if tag.argument.empty?
-          span = Jinja::Span.new(
-            Jinja::Position.new(0, tag.arg_line, tag.arg_column),
-            Jinja::Position.new(0, tag.arg_line, tag.arg_column + tag.argument.size),
+          span = Crinkle::Span.new(
+            Crinkle::Position.new(0, tag.arg_line, tag.arg_column),
+            Crinkle::Position.new(0, tag.arg_line, tag.arg_column + tag.argument.size),
           )
           symbols << SymbolDefinition.new(tag.argument, kind, span)
         end
         symbols
       end
 
-      private def foldable_spans_from_text(text : String) : Array(Jinja::Span)
+      private def foldable_spans_from_text(text : String) : Array(Crinkle::Span)
         tags = @scanner.block_tags(text)
-        spans = Array(Jinja::Span).new
+        spans = Array(Crinkle::Span).new
         stack = Array(Tuple(String, Int32)).new
         tags.each do |tag|
           if tag.is_end?
@@ -91,9 +91,9 @@ module Jinja
               start_line = start[1]
               end_line = tag.line
               if end_line > start_line
-                spans << Jinja::Span.new(
-                  Jinja::Position.new(0, start_line, 1),
-                  Jinja::Position.new(0, end_line, 1),
+                spans << Crinkle::Span.new(
+                  Crinkle::Position.new(0, start_line, 1),
+                  Crinkle::Position.new(0, end_line, 1),
                 )
               end
             end

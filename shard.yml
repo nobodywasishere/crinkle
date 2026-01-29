@@ -1,4 +1,4 @@
-name: jinja-cr
+name: crinkle
 version: 0.1.0
 
 authors:
@@ -8,7 +8,7 @@ authors:
 license: MIT
 
 targets:
-  jinja:
+  crinkle:
     main: src/cli/cli.cr
 
 dependencies:

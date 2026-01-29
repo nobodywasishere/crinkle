@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   module Linter
     module Rules
       class MultipleExtends < Rule

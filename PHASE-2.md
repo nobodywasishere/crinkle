@@ -33,7 +33,7 @@
   - `Group(expr: Expr)`
 
 ## Parser Behavior
-- Consume tokens from `Jinja::Lexer` and build AST nodes.
+- Consume tokens from `Crinkle::Lexer` and build AST nodes.
 - Preserve spans for nodes (start/end offsets + line/column).
 - Skip `Whitespace` tokens inside expressions/blocks.
 - Validate block tags (`if`, `for`, `endif`, `endfor`).
@@ -67,7 +67,7 @@
 - Snapshot-based parser specs pass.
 
 ## Notes for Custom Tags (Future)
-- Add a parser extension registry (e.g., `Jinja::Parser::Extension`) keyed by tag name.
+- Add a parser extension registry (e.g., `Crinkle::Parser::Extension`) keyed by tag name.
 - Allow extensions to hook into `parse_block` with a `parse` method that consumes tokens and returns an AST node.
 - Provide a fallback `UnknownTag` diagnostic when no extension matches.
 - Allow extensions to declare which end tags they consume (for recovery and nesting).

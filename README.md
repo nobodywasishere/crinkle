@@ -1,4 +1,4 @@
-# jinja-cr
+# crinkle
 
 A Jinja2-compatible lexer, parser, linter, and language server written in Crystal.
 
@@ -16,33 +16,33 @@ A Jinja2-compatible lexer, parser, linter, and language server written in Crysta
 - `src/` — core implementation
 - `spec/` — Crystal specs
 - `fixtures/` — `.j2` templates and JSON snapshots
-  - Naming convention: `Jinja::Lexer`, `Jinja::Parser`, `Jinja::AST`, `Jinja::Diagnostics`
+  - Naming convention: `Crinkle::Lexer`, `Crinkle::Parser`, `Crinkle::AST`, `Crinkle::Diagnostics`
 
 ## CLI
-- `jinja lex [path] [--stdin] [--format json|text] [--pretty]`
-- `jinja parse [path] [--stdin] [--format json|text] [--pretty]`
-- `jinja render [path] [--stdin] [--format html|text]`
-- `jinja format [path] [--stdin] [--output path]`
-- `jinja lint [path] [--stdin] [--format json|text] [--pretty]`
+- `crinkle lex [path] [--stdin] [--format json|text] [--pretty]`
+- `crinkle parse [path] [--stdin] [--format json|text] [--pretty]`
+- `crinkle render [path] [--stdin] [--format html|text]`
+- `crinkle format [path] [--stdin] [--output path]`
+- `crinkle lint [path] [--stdin] [--format json|text] [--pretty]`
 
 ## Custom Extensions
-Register custom tags, filters, tests, and functions through `Jinja::Environment`.
+Register custom tags, filters, tests, and functions through `Crinkle::Environment`.
 
 ```crystal
-env = Jinja::Environment.new
+env = Crinkle::Environment.new
 
 env.register_tag("note", ["endnote"]) do |parser, start_span|
   parser.skip_whitespace
-  args = Array(Jinja::AST::Expr).new
-  args << parser.parse_expression([Jinja::TokenType::BlockEnd])
+  args = Array(Crinkle::AST::Expr).new
+  args << parser.parse_expression([Crinkle::TokenType::BlockEnd])
   end_span = parser.expect_block_end("Expected '%}' to close note tag.")
   body, body_end = parser.parse_until_any_end_tag(["endnote"], allow_end_name: true)
   body_end ||= end_span
 
-  Jinja::AST::CustomTag.new(
+  Crinkle::AST::CustomTag.new(
     "note",
     args,
-    Array(Jinja::AST::KeywordArg).new,
+    Array(Crinkle::AST::KeywordArg).new,
     body,
     parser.span_between(start_span, body_end)
   )
@@ -56,7 +56,7 @@ end
 Pass the environment to the parser:
 
 ```crystal
-parser = Jinja::Parser.new(tokens, env)
+parser = Crinkle::Parser.new(tokens, env)
 ```
 
 Notes:
@@ -71,38 +71,38 @@ Notes:
 
 The renderer exposes a Crinja-inspired serialization pipeline so templates work with wrapped values consistently while still allowing you to surface missing data or escaped content explicitly.
 
-### `Jinja.value(value)`
+### `Crinkle.value(value)`
 
-- Converts any supported Crystal value into the `Jinja::Value` union that the renderer understands. Supported inputs:
+- Converts any supported Crystal value into the `Crinkle::Value` union that the renderer understands. Supported inputs:
   - `Hash`, `NamedTuple` → rich dictionaries (`Hash(Value, Value)` or `Hash(String, Value)`)
   - `Array`, `Tuple`, `Range`, `Iterator` → flatten to `Array(Value)`
-  - `Char`, `String`, numbers, booleans, `Time`, `Nil`, `SafeString`, `Undefined`, `StrictUndefined`, and implementors of `Jinja::Object`.
-- `Jinja.dictionary` / `Jinja.variables` turn hash-like objects into dictionaries while re-wrapping every key/value via `Jinja.value`.
-- Passing an unsupported type raises `type error: can't wrap ... in Jinja::Value`, so serializers stay strict about what data enters the renderer.
+  - `Char`, `String`, numbers, booleans, `Time`, `Nil`, `SafeString`, `Undefined`, `StrictUndefined`, and implementors of `Crinkle::Object`.
+- `Crinkle.dictionary` / `Crinkle.variables` turn hash-like objects into dictionaries while re-wrapping every key/value via `Crinkle.value`.
+- Passing an unsupported type raises `type error: can't wrap ... in Crinkle::Value`, so serializers stay strict about what data enters the renderer.
 
 ### Undefined / StrictUndefined / SafeString
 
 - **`Undefined`** represents missing attributes/variables. It renders as an empty string (`Finalizer.stringify` prints `none` for naked nils) but keeps the missing name for diagnostics so you can report `Unknown variable "foo"`.
 - **`StrictUndefined`** raises whenever you try to stringify, compare, or inspect it—useful if you want Crinja-style strictness without silently falling back to empties.
-- To toggle `StrictUndefined` globally, future environment flags like `Environment.new(strict_undefined: true)` will treat any missing value as an immediate exception. You can also inject `Jinja::StrictUndefined.new("name")` yourself to mimic that behavior today.
+- To toggle `StrictUndefined` globally, future environment flags like `Environment.new(strict_undefined: true)` will treat any missing value as an immediate exception. You can also inject `Crinkle::StrictUndefined.new("name")` yourself to mimic that behavior today.
 - **`SafeString`** wraps pre-escaped HTML content. The `Finalizer` treats `SafeString` specially (quote escaping is skipped unless nested inside arrays/hashes), so loops and filters that re-emit safe strings keep their literal markup.
 
-### `Jinja::Object::Auto`
+### `Crinkle::Object::Auto`
 
-- Annotate a Crystal class with `@[Jinja::Attribute]` or `@[Jinja::Attributes(expose: ...)]`, include `Jinja::Object::Auto`, and the macro auto-generates `crinja_attribute` logic so templates can call methods directly.
+- Annotate a Crystal class with `@[Crinkle::Attribute]` or `@[Crinkle::Attributes(expose: ...)]`, include `Crinkle::Object::Auto`, and the macro auto-generates `crinja_attribute` logic so templates can call methods directly.
 - Methods ending with `?` automatically expose `is_*` lookups (e.g., `admin?` → `is_admin`). Missing attributes fall back to `Undefined`, so you can call them without extra guard clauses.
-- Every exposed method result is re-wrapped via `Jinja.value`, meaning nested hashes, arrays, or even other `Object::Auto` instances remain serializable.
+- Every exposed method result is re-wrapped via `Crinkle.value`, meaning nested hashes, arrays, or even other `Object::Auto` instances remain serializable.
 
 ### JSON / YAML helpers
 
-- `JSON::Any` and `YAML::Any` now include `Jinja::Object` and implement `crinja_attribute`, so you can treat parsed JSON/YAML as dictionaries inside templates. Indexed access respects ints and SafeStrings.
+- `JSON::Any` and `YAML::Any` now include `Crinkle::Object` and implement `crinja_attribute`, so you can treat parsed JSON/YAML as dictionaries inside templates. Indexed access respects ints and SafeStrings.
 - Invalid attribute/item lookups on JSON/YAML objects still return `Undefined`, preserving diagnostics without crashing the renderer.
 
 ### Diagnostics & loaders
 
 - Missing attributes now emit diagnostics even though the rendered output stays empty (`fixtures/object_json_missing_attribute.*` shows `Unknown attribute 'missing'`).
 - Reading beyond an array’s bounds produces an `Invalid operand` diagnostic (`fixtures/object_json_out_of_bounds.*`), so you can surface those errors in tooling without failing rendering.
-- Since contexts are plain hashes of `Jinja::Value`, you can hydrate templates with serialized objects regardless of loader: use `Loader::FileSystemLoader` or `Loader::ChoiceLoader` to read templates from disk, set `context = {"payload" => Jinja.value(my_hash)}`, and pass that context into the renderer. Baked assets via `Loader::BakedFileLoader` follow the same rules—just build your payload once and store it alongside the baked templates.
+- Since contexts are plain hashes of `Crinkle::Value`, you can hydrate templates with serialized objects regardless of loader: use `Loader::FileSystemLoader` or `Loader::ChoiceLoader` to read templates from disk, set `context = {"payload" => Crinkle.value(my_hash)}`, and pass that context into the renderer. Baked assets via `Loader::BakedFileLoader` follow the same rules—just build your payload once and store it alongside the baked templates.
 
 ### JSON/YAML error propagation
 
@@ -125,7 +125,7 @@ Reading past the end of the array logs `Invalid operand: Index 5 out of bounds.`
 
 - Missing keys: templates see `Undefined`, render empty output, and diagnostics can highlight the missing name.
 - Out-of-bounds array indices return `Undefined`, not `nil`, so you can still detect the absence of data.
-- Unsupported types (e.g., custom structs you forget to wrap) raise immediately from `Jinja.value`, preventing hard-to-trace `nil` propagation.
+- Unsupported types (e.g., custom structs you forget to wrap) raise immediately from `Crinkle.value`, preventing hard-to-trace `nil` propagation.
 - `StrictUndefined` prevents your template from silently rendering when a value is missing; every access raises so the caller sees the error.
 - SafeStrings inside arrays/hashes still quote correctly when the container is stringified, avoiding accidental double-escaping.
 
@@ -137,32 +137,32 @@ Reading past the end of the array logs `Invalid operand: Index 5 out of bounds.`
 
 ```crystal
 template = env.parse("User: {{ user.name }}, Status: {{ user.active }}")
-context = {"user" => Jinja.value({"name" => "Ada", "active" => true})}
+context = {"user" => Crinkle.value({"name" => "Ada", "active" => true})}
 renderer.render(template, context)
 ```
 
 ```crystal
 class Badge
-  include Jinja::Object::Auto
+  include Crinkle::Object::Auto
 
-  @[Jinja::Attribute]
+  @[Crinkle::Attribute]
   def label
     "beta"
   end
 
-  @[Jinja::Attribute]
+  @[Crinkle::Attribute]
   def highlighted?
     false
   end
 end
 
-context = {"badge" => Jinja.value(Badge.new)}
+context = {"badge" => Crinkle.value(Badge.new)}
 ```
 
 ```crystal
 safe_list = [
-  Jinja::SafeString.new("<b>safe</b>"),
+  Crinkle::SafeString.new("<b>safe</b>"),
   "<i>plain</i>"
-] of Jinja::Value
+] of Crinkle::Value
 context["safe_list"] = safe_list
 ```

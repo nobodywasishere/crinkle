@@ -1,6 +1,6 @@
 require "./types"
 
-module Jinja
+module Crinkle
   module LSP
     class TextScanner
       def reference_from_text(text : String, position : LSProtocol::Position) : SymbolReference?
@@ -22,9 +22,9 @@ module Jinja
         return if start_index == end_index
 
         name = line[start_index...end_index]
-        span = Jinja::Span.new(
-          Jinja::Position.new(0, line_index + 1, start_index + 1),
-          Jinja::Position.new(0, line_index + 1, end_index + 1),
+        span = Crinkle::Span.new(
+          Crinkle::Position.new(0, line_index + 1, start_index + 1),
+          Crinkle::Position.new(0, line_index + 1, end_index + 1),
         )
         SymbolReference.new(name, span)
       end

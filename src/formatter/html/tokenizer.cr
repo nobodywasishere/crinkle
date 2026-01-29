@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   module HTML
     enum TokenKind
       StartTag
@@ -33,7 +33,7 @@ module Jinja
 
         while i < size
           if text.byte_at(i) == '{'.ord
-            if hole = parse_jinja_hole(text, i)
+            if hole = parse_crinkle_hole(text, i)
               hole_start, hole_end = hole
               if hole_start > buffer_start
                 tokens << Token.new(
@@ -163,7 +163,7 @@ module Jinja
         tokens
       end
 
-      private def parse_jinja_hole(text : String, start : Int32) : {Int32, Int32}?
+      private def parse_crinkle_hole(text : String, start : Int32) : {Int32, Int32}?
         return if start + 1 >= text.bytesize
         kind = text.byte_at(start + 1)
         close = case kind

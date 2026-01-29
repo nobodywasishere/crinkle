@@ -1,4 +1,4 @@
-module Jinja
+module Crinkle
   module Linter
     struct Issue
       getter id : String

@@ -17,5 +17,5 @@ require "./formatter/formatter"
 require "./linter/linter"
 require "./linter/rules"
 
-module Jinja
+module Crinkle
 end

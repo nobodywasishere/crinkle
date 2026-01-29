@@ -1,20 +1,20 @@
 # Phase 10 — HTML-Aware Formatter Engine (Detailed Plan)
 
 ## Objectives
-- Replace regex heuristics in the formatter with a fault-tolerant HTML parser that can coexist with Jinja nodes.
-- Simplify `Jinja::Formatter` by extracting HTML parsing + indentation into dedicated, testable components.
-- Preserve HTML validity and user intent while keeping Jinja formatting rules intact.
+- Replace regex heuristics in the formatter with a fault-tolerant HTML parser that can coexist with Crinkle nodes.
+- Simplify `Crinkle::Formatter` by extracting HTML parsing + indentation into dedicated, testable components.
+- Preserve HTML validity and user intent while keeping Crinkle formatting rules intact.
 
 ## Why This Phase
-- The current formatter mixes HTML heuristics with Jinja formatting logic, causing edge-case regressions.
-- A tolerant HTML parser enables consistent indentation even when templates are partially invalid or contain Jinja holes.
+- The current formatter mixes HTML heuristics with Crinkle formatting logic, causing edge-case regressions.
+- A tolerant HTML parser enables consistent indentation even when templates are partially invalid or contain Crinkle holes.
 - Simpler formatter code reduces accidental formatting drift in unrelated fixtures.
 
 ## High-Level Approach
 - Introduce an HTML tokenizer + parser that tolerates malformed markup.
-- Treat Jinja tags/expressions as opaque “holes” embedded in HTML text.
+- Treat Crinkle tags/expressions as opaque “holes” embedded in HTML text.
 - Use the HTML stack to compute indentation and formatting boundaries.
-- Keep Jinja formatting logic separate and deterministic.
+- Keep Crinkle formatting logic separate and deterministic.
 
 ## Architecture
 
@@ -35,9 +35,9 @@
    - Computes indentation for each logical line segment based on stack depth.
    - Treats “holes” as inline nodes that do not affect HTML stack.
 
-4. **Jinja::Formatter (simplified)**
+4. **Crinkle::Formatter (simplified)**
    - Responsible only for:
-     - Jinja AST formatting (expressions + statements).
+     - Crinkle AST formatting (expressions + statements).
      - Delegating HTML indentation to HTML::IndentEngine when enabled.
      - Rendering text nodes without HTML-specific logic.
 
@@ -60,18 +60,18 @@
 1. **Create tokenizer** under `src/formatter/html/` (or `src/html/`).
 2. **Implement tolerant parser** that produces stack events and indentation info.
 3. **Integrate indent engine** in formatter:
-   - Formatter emits lines (text + Jinja fragments).
+   - Formatter emits lines (text + Crinkle fragments).
    - HTML indent engine post-processes lines to apply indentation.
 4. **Remove heuristic code** from formatter (HtmlContext, regex scans).
 5. **Update fixtures** focusing on:
-   - Mixed HTML + Jinja with broken HTML.
+   - Mixed HTML + Crinkle with broken HTML.
    - Multiline attributes.
-   - Preformatted tags with embedded Jinja.
+   - Preformatted tags with embedded Crinkle.
    - Inline tags and nested structures.
 
 ## Checklist (Current)
 - [x] HTML tokenizer/parser/indent engine implemented (fault-tolerant, stack-based).
-- [x] Jinja holes handled as opaque HTML tokens.
+- [x] Crinkle holes handled as opaque HTML tokens.
 - [x] Formatter delegates HTML indentation to the engine (no regex HtmlContext).
 - [x] Multiline attribute indentation and preformatted shifting handled by HTML engine.
 - [x] HTML diagnostics emitted for unexpected/mismatched/unclosed tags.
@@ -84,20 +84,20 @@
 
 ## Tests / Fixtures
 - New fixtures in `fixtures/<name>.<ext>.j2` for:
-  - Broken HTML with Jinja blocks.
-  - Nested tags with Jinja `if/for` boundaries.
+  - Broken HTML with Crinkle blocks.
+  - Nested tags with Crinkle `if/for` boundaries.
   - Multiline attributes on void and non-void tags.
-  - Preformatted content containing Jinja tags.
+  - Preformatted content containing Crinkle tags.
 - Snapshot tests ensure stable output.
 
 ## Acceptance Criteria
 - Formatter no longer uses regex-based HTML parsing.
 - Indentation is consistent for all HTML structures (including malformed cases).
 - Preformatted tag contents are preserved verbatim.
-- Jinja formatting unaffected by HTML engine changes.
+- Crinkle formatting unaffected by HTML engine changes.
 - Formatter code is significantly smaller and clearer.
 
 ## Open Questions
 - Should the HTML engine be reused by the linter (e.g., HTML structure lints)?
 - Should we expose HTML parse diagnostics or keep them internal?
-- How to handle HTML attributes with embedded Jinja (treat as text or parse holes)?
+- How to handle HTML attributes with embedded Crinkle (treat as text or parse holes)?

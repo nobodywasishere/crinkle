@@ -9,12 +9,12 @@
       "message": "Unknown variable 'show_features'.",
       "span": {
         "start": {
-          "offset": 171,
+          "offset": 173,
           "line": 9,
           "column": 7
         },
         "end": {
-          "offset": 184,
+          "offset": 186,
           "line": 9,
           "column": 20
         }
@@ -26,12 +26,12 @@
       "message": "Unknown variable 'requirements'.",
       "span": {
         "start": {
-          "offset": 466,
+          "offset": 468,
           "line": 26,
           "column": 7
         },
         "end": {
-          "offset": 478,
+          "offset": 480,
           "line": 26,
           "column": 19
         }
@@ -43,12 +43,12 @@
       "message": "Unknown variable 'repo_url'.",
       "span": {
         "start": {
-          "offset": 720,
+          "offset": 722,
           "line": 38,
           "column": 14
         },
         "end": {
-          "offset": 728,
+          "offset": 730,
           "line": 38,
           "column": 22
         }
@@ -60,12 +60,12 @@
       "message": "Unknown variable 'install_command'.",
       "span": {
         "start": {
-          "offset": 804,
+          "offset": 806,
           "line": 41,
           "column": 4
         },
         "end": {
-          "offset": 819,
+          "offset": 821,
           "line": 41,
           "column": 19
         }
@@ -77,12 +77,12 @@
       "message": "Unknown variable 'run_command'.",
       "span": {
         "start": {
-          "offset": 845,
+          "offset": 847,
           "line": 44,
           "column": 4
         },
         "end": {
-          "offset": 856,
+          "offset": 858,
           "line": 44,
           "column": 15
         }
@@ -94,12 +94,12 @@
       "message": "Unknown variable 'config'.",
       "span": {
         "start": {
-          "offset": 989,
+          "offset": 991,
           "line": 52,
           "column": 22
         },
         "end": {
-          "offset": 995,
+          "offset": 997,
           "line": 52,
           "column": 28
         }
@@ -111,12 +111,12 @@
       "message": "Expected iterable in for loop.",
       "span": {
         "start": {
-          "offset": 989,
+          "offset": 991,
           "line": 52,
           "column": 22
         },
         "end": {
-          "offset": 995,
+          "offset": 997,
           "line": 52,
           "column": 28
         }
@@ -128,12 +128,12 @@
       "message": "Unknown variable 'examples'.",
       "span": {
         "start": {
-          "offset": 1175,
+          "offset": 1177,
           "line": 69,
           "column": 7
         },
         "end": {
-          "offset": 1183,
+          "offset": 1185,
           "line": 69,
           "column": 15
         }
@@ -145,12 +145,12 @@
       "message": "Unknown variable 'functions'.",
       "span": {
         "start": {
-          "offset": 1465,
+          "offset": 1467,
           "line": 92,
           "column": 16
         },
         "end": {
-          "offset": 1474,
+          "offset": 1476,
           "line": 92,
           "column": 25
         }
@@ -162,12 +162,12 @@
       "message": "Expected iterable in for loop.",
       "span": {
         "start": {
-          "offset": 1465,
+          "offset": 1467,
           "line": 92,
           "column": 16
         },
         "end": {
-          "offset": 1474,
+          "offset": 1476,
           "line": 92,
           "column": 25
         }
@@ -179,12 +179,12 @@
       "message": "Unknown variable 'issues'.",
       "span": {
         "start": {
-          "offset": 1723,
+          "offset": 1725,
           "line": 103,
           "column": 17
         },
         "end": {
-          "offset": 1729,
+          "offset": 1731,
           "line": 103,
           "column": 23
         }
@@ -196,12 +196,12 @@
       "message": "Expected iterable in for loop.",
       "span": {
         "start": {
-          "offset": 1723,
+          "offset": 1725,
           "line": 103,
           "column": 17
         },
         "end": {
-          "offset": 1729,
+          "offset": 1731,
           "line": 103,
           "column": 23
         }
@@ -213,12 +213,12 @@
       "message": "Unknown variable 'missing_variable'.",
       "span": {
         "start": {
-          "offset": 1981,
+          "offset": 1983,
           "line": 118,
           "column": 30
         },
         "end": {
-          "offset": 1997,
+          "offset": 1999,
           "line": 118,
           "column": 46
         }
@@ -230,12 +230,12 @@
       "message": "Unknown filter 'unknown_filter'.",
       "span": {
         "start": {
-          "offset": 2055,
+          "offset": 2057,
           "line": 122,
           "column": 34
         },
         "end": {
-          "offset": 2076,
+          "offset": 2078,
           "line": 122,
           "column": 55
         }
@@ -247,12 +247,12 @@
       "message": "Unknown function 'invalid_function'.",
       "span": {
         "start": {
-          "offset": 2135,
+          "offset": 2137,
           "line": 126,
           "column": 28
         },
         "end": {
-          "offset": 2151,
+          "offset": 2153,
           "line": 126,
           "column": 44
         }
@@ -264,12 +264,12 @@
       "message": "Unknown variable 'config'.",
       "span": {
         "start": {
-          "offset": 2207,
+          "offset": 2209,
           "line": 130,
           "column": 27
         },
         "end": {
-          "offset": 2213,
+          "offset": 2215,
           "line": 130,
           "column": 33
         }
@@ -281,12 +281,12 @@
       "message": "Unknown attribute 'nonexistent'.",
       "span": {
         "start": {
-          "offset": 2207,
+          "offset": 2209,
           "line": 130,
           "column": 27
         },
         "end": {
-          "offset": 2225,
+          "offset": 2227,
           "line": 130,
           "column": 45
         }
@@ -298,12 +298,12 @@
       "message": "Unknown attribute 'deeply'.",
       "span": {
         "start": {
-          "offset": 2207,
+          "offset": 2209,
           "line": 130,
           "column": 27
         },
         "end": {
-          "offset": 2232,
+          "offset": 2234,
           "line": 130,
           "column": 52
         }
@@ -315,12 +315,12 @@
       "message": "Unknown attribute 'nested'.",
       "span": {
         "start": {
-          "offset": 2207,
+          "offset": 2209,
           "line": 130,
           "column": 27
         },
         "end": {
-          "offset": 2239,
+          "offset": 2241,
           "line": 130,
           "column": 59
         }
@@ -332,12 +332,12 @@
       "message": "Unknown variable 'faq'.",
       "span": {
         "start": {
-          "offset": 2265,
+          "offset": 2267,
           "line": 134,
           "column": 14
         },
         "end": {
-          "offset": 2268,
+          "offset": 2270,
           "line": 134,
           "column": 17
         }
@@ -349,12 +349,12 @@
       "message": "Expected iterable in for loop.",
       "span": {
         "start": {
-          "offset": 2265,
+          "offset": 2267,
           "line": 134,
           "column": 14
         },
         "end": {
-          "offset": 2268,
+          "offset": 2270,
           "line": 134,
           "column": 17
         }
@@ -366,12 +366,12 @@
       "message": "Unknown variable 'contributing'.",
       "span": {
         "start": {
-          "offset": 2531,
+          "offset": 2533,
           "line": 149,
           "column": 7
         },
         "end": {
-          "offset": 2543,
+          "offset": 2545,
           "line": 149,
           "column": 19
         }
@@ -383,12 +383,12 @@
       "message": "Unknown variable 'license'.",
       "span": {
         "start": {
-          "offset": 2740,
+          "offset": 2742,
           "line": 165,
           "column": 7
         },
         "end": {
-          "offset": 2747,
+          "offset": 2749,
           "line": 165,
           "column": 14
         }
@@ -400,12 +400,12 @@
       "message": "Unknown variable 'authors'.",
       "span": {
         "start": {
-          "offset": 2888,
+          "offset": 2890,
           "line": 173,
           "column": 35
         },
         "end": {
-          "offset": 2895,
+          "offset": 2897,
           "line": 173,
           "column": 42
         }
@@ -417,12 +417,12 @@
       "message": "Expected iterable in for loop.",
       "span": {
         "start": {
-          "offset": 2888,
+          "offset": 2890,
           "line": 173,
           "column": 35
         },
         "end": {
-          "offset": 2895,
+          "offset": 2897,
           "line": 173,
           "column": 42
         }
@@ -434,12 +434,12 @@
       "message": "Unknown variable 'last_updated'.",
       "span": {
         "start": {
-          "offset": 2983,
+          "offset": 2985,
           "line": 177,
           "column": 19
         },
         "end": {
-          "offset": 2995,
+          "offset": 2997,
           "line": 177,
           "column": 31
         }

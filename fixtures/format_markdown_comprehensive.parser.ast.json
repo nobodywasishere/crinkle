@@ -31,7 +31,7 @@
     },
     {
       "type": "Text",
-      "value": " project! This document demonstrates how Jinja and Markdown work together.\n\n### Features\n\n"
+      "value": " project! This document demonstrates how Crinkle and Markdown work together.\n\n### Features\n\n"
     },
     {
       "type": "If",

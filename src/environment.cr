@@ -1,6 +1,6 @@
 require "./runtime/value"
 
-module Jinja
+module Crinkle
   alias FilterProc = Proc(Value, Array(Value), Hash(String, Value), Value)
   alias TestProc = Proc(Value, Array(Value), Hash(String, Value), Bool)
   alias FunctionProc = Proc(Array(Value), Hash(String, Value), Value)

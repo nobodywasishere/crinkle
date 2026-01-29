@@ -1,4 +1,4 @@
-# jinja-cr — Plan
+# crinkle — Plan
 
 ## Goals
 Build a cohesive developer experience for Jinja2 templates in Crystal:
@@ -19,7 +19,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Use JSON for AST snapshots and store expected outputs in parallel fixture folders.
 - Add a minimal CLI to run lexer/parser on a fixture.
 - Document how evaluation/execution layers on after parsing.
-- Adopt `Jinja::` module naming (e.g., `Jinja::Lexer`, `Jinja::Parser`).
+- Adopt `Crinkle::` module naming (e.g., `Crinkle::Lexer`, `Crinkle::Parser`).
 
 #### Phase 0 Checklist
 - [x] Scope and compatibility decisions documented
@@ -136,7 +136,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Comment preservation: extend lexer/parser with `{# #}` support, ignored by renderer.
 - Fault-tolerant: continue formatting when AST contains errors.
 - Build formatter over AST + token spans (preserve trivia where possible).
-- HTML-aware mode: align Jinja blocks with HTML indentation.
+- HTML-aware mode: align Crinkle blocks with HTML indentation.
 - Configurable options (indent width, line length, whitespace control).
 - Add fixtures with before/after formatting samples (reuse `fixtures/<name>.<ext>.j2`).
 
@@ -200,17 +200,17 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - [ ] CLI usage documented
 
 ### Phase 10 — HTML-Aware Formatter Engine
-**Outcome:** Replace regex-based HTML heuristics with a fault-tolerant HTML parser that coexists with Jinja nodes.
-- Build a tolerant HTML tokenizer/parser that treats Jinja nodes as opaque “holes”.
+**Outcome:** Replace regex-based HTML heuristics with a fault-tolerant HTML parser that coexists with Crinkle nodes.
+- Build a tolerant HTML tokenizer/parser that treats Crinkle nodes as opaque “holes”.
 - Produce a lightweight HTML tree/stack to drive indentation and formatting.
 - Recover from malformed HTML (unclosed tags, mismatches) without failing formatting.
 - Preserve raw/textarea/script/style content with minimal normalization.
-- Integrate with formatter to indent Jinja blocks in HTML context accurately.
-- Add fixtures that mix HTML + Jinja with tricky nesting and multiline attributes.
+- Integrate with formatter to indent Crinkle blocks in HTML context accurately.
+- Add fixtures that mix HTML + Crinkle with tricky nesting and multiline attributes.
 
 #### Phase 10 Checklist
 - [ ] HTML tokenizer/parser (fault-tolerant)
-- [ ] Jinja hole nodes (opaque placeholders)
+- [ ] Crinkle hole nodes (opaque placeholders)
 - [ ] Indent engine driven by HTML stack
 - [ ] Recovery strategy for malformed HTML
 - [ ] Formatter integration + fixtures
@@ -232,8 +232,8 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 
 ### Phase 12 — Crinja Object Serialization Compatibility
 **Outcome:** Match Crinja’s object serialization surface (value conversion + Object::Auto) without pulling in unrelated Crinja APIs.
-- Implemented `Jinja.value` conversions, `Undefined`/`StrictUndefined`, SafeString escaping, and `Finalizer.stringify`.
-- Added the `Jinja::Object::Auto` macro plus JSON/YAML helpers covering object/property casting.
+- Implemented `Crinkle.value` conversions, `Undefined`/`StrictUndefined`, SafeString escaping, and `Finalizer.stringify`.
+- Added the `Crinkle::Object::Auto` macro plus JSON/YAML helpers covering object/property casting.
 - Added the `object_*` fixtures (value casting, JSON/YAML accesses, SafeString loops, missing attributes) and refreshed all snapshots.
 
 #### Phase 12 Checklist

@@ -1,6 +1,6 @@
 require "./value"
 
-module Jinja
+module Crinkle
   annotation Attribute
   end
 
@@ -9,20 +9,20 @@ module Jinja
 
   module Object
     module Auto
-      include ::Jinja::Object
+      include ::Crinkle::Object
 
-      def crinja_attribute(attr : ::Jinja::Value) : ::Jinja::Value
+      def crinja_attribute(attr : ::Crinkle::Value) : ::Crinkle::Value
         {% begin %}
           {% exposed = [] of _ %}
           value = case attr.to_s
           {% for type in [@type] + @type.ancestors %}
-            {% type_annotation = type.annotation(::Jinja::Attributes) %}
+            {% type_annotation = type.annotation(::Crinkle::Attributes) %}
             {% expose_all = type_annotation && !type_annotation[:expose] %}
             {% if type_exposed = type_annotation && type_annotation[:expose] %}
               {% exposed = exposed + type_exposed.map &.id %}
             {% end %}
             {% for method in type.methods %}
-              {% ann = method.annotation(::Jinja::Attribute) %}
+              {% ann = method.annotation(::Crinkle::Attribute) %}
               {% expose_this_method = (expose_all || ann || exposed.includes? method.name) && (!ann || !ann[:ignore]) %}
               {% if expose_this_method %}
                 {% if method.name != "initialize" %}
@@ -36,22 +36,22 @@ module Jinja
                       {% end %}
                       self.{{ method.name.id }}
                     {% elsif ann %}
-                      {% raise "Method #{method.name} annotated as @[Jinja::Attribute] cannot be called without arguments" %}
+                      {% raise "Method #{method.name} annotated as @[Crinkle::Attribute] cannot be called without arguments" %}
                     {% end %}
                   {% elsif ann %}
-                    {% raise "Method #{method.name} annotated as @[Jinja::Attribute] requires block" %}
+                    {% raise "Method #{method.name} annotated as @[Crinkle::Attribute] requires block" %}
                   {% end %}
                 {% elsif ann %}
-                  {% raise "Method #{method.name} annotated as @[Jinja::Attribute] has invalid name" %}
+                  {% raise "Method #{method.name} annotated as @[Crinkle::Attribute] has invalid name" %}
                 {% end %}
               {% end %}
             {% end %}
           {% end %}
           else
-            ::Jinja::Undefined.new(attr.to_s)
+            ::Crinkle::Undefined.new(attr.to_s)
           end
 
-          ::Jinja.value(value)
+          ::Crinkle.value(value)
         {% end %}
       end
     end

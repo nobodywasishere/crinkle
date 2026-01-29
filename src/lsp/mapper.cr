@@ -1,40 +1,40 @@
 require "./types"
 
-module Jinja
+module Crinkle
   module LSP
     module Mapper
-      def self.to_lsp_diagnostics(diags : Array(Jinja::Diagnostic)) : Array(LSProtocol::Diagnostic)
+      def self.to_lsp_diagnostics(diags : Array(Crinkle::Diagnostic)) : Array(LSProtocol::Diagnostic)
         diags.map do |diag|
           LSProtocol::Diagnostic.new(
             diag.message,
             to_lsp_range(diag.span),
             diag.id,
             severity: to_lsp_severity(diag.severity),
-            source: "jinja-cr",
+            source: "crinkle",
           )
         end
       end
 
-      def self.to_lsp_severity(severity : Jinja::Severity) : LSProtocol::DiagnosticSeverity
+      def self.to_lsp_severity(severity : Crinkle::Severity) : LSProtocol::DiagnosticSeverity
         case severity
-        when Jinja::Severity::Error
+        when Crinkle::Severity::Error
           LSProtocol::DiagnosticSeverity::Error
-        when Jinja::Severity::Warning
+        when Crinkle::Severity::Warning
           LSProtocol::DiagnosticSeverity::Warning
-        when Jinja::Severity::Info
+        when Crinkle::Severity::Info
           LSProtocol::DiagnosticSeverity::Information
         else
           LSProtocol::DiagnosticSeverity::Information
         end
       end
 
-      def self.to_lsp_range(span : Jinja::Span) : LSProtocol::Range
+      def self.to_lsp_range(span : Crinkle::Span) : LSProtocol::Range
         lsp_start = to_lsp_position(span.start_pos)
         lsp_end = to_lsp_position(span.end_pos)
         LSProtocol::Range.new(lsp_end, lsp_start)
       end
 
-      def self.to_lsp_position(position : Jinja::Position) : LSProtocol::Position
+      def self.to_lsp_position(position : Crinkle::Position) : LSProtocol::Position
         line = position.line - 1
         column = position.column - 1
         LSProtocol::Position.new(
@@ -43,7 +43,7 @@ module Jinja
         )
       end
 
-      def self.foldable_range(span : Jinja::Span) : LSProtocol::FoldingRange?
+      def self.foldable_range(span : Crinkle::Span) : LSProtocol::FoldingRange?
         start_line = span.start_pos.line - 1
         end_line = span.end_pos.line - 1
         return if end_line <= start_line

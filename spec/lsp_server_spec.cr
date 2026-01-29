@@ -27,7 +27,7 @@ def read_all_frames(io : IO) : Array(JSON::Any)
   frames
 end
 
-describe Jinja::LSP::Server do
+describe Crinkle::LSP::Server do
   it "responds to initialize with textDocumentSync capabilities" do
     params = LSProtocol::InitializeParams.new(
       LSProtocol::ClientCapabilities.new,
@@ -40,7 +40,7 @@ describe Jinja::LSP::Server do
     output = IO::Memory.new
     errors = IO::Memory.new
 
-    server = Jinja::LSP::Server.new
+    server = Crinkle::LSP::Server.new
     server.run(input, output, errors)
 
     output.rewind
@@ -58,7 +58,7 @@ describe Jinja::LSP::Server do
     )
     request = LSProtocol::InitializeRequest.new(1, params)
     uri = URI.parse("file:///tmp/example.j2")
-    text_document = LSProtocol::TextDocumentItem.new("jinja", "Hello", uri, 1)
+    text_document = LSProtocol::TextDocumentItem.new("crinkle", "Hello", uri, 1)
     open_params = LSProtocol::DidOpenTextDocumentParams.new(text_document)
     open_notification = LSProtocol::DidOpenTextDocumentNotification.new(open_params)
 
@@ -66,7 +66,7 @@ describe Jinja::LSP::Server do
     output = IO::Memory.new
     errors = IO::Memory.new
 
-    server = Jinja::LSP::Server.new
+    server = Crinkle::LSP::Server.new
     server.run(input, output, errors)
 
     output.rewind
@@ -88,7 +88,7 @@ describe Jinja::LSP::Server do
     request = LSProtocol::InitializeRequest.new(1, params)
     uri = URI.parse("file:///tmp/example.j2")
     template = "{% set foo = 1 %}\n{{ foo }}\n{% block content %}x{% endblock %}\n{% macro greet(name) %}{{ name }}{% endmacro %}\n"
-    text_document = LSProtocol::TextDocumentItem.new("jinja", template, uri, 1)
+    text_document = LSProtocol::TextDocumentItem.new("crinkle", template, uri, 1)
     open_params = LSProtocol::DidOpenTextDocumentParams.new(text_document)
     open_notification = LSProtocol::DidOpenTextDocumentNotification.new(open_params)
 
@@ -122,7 +122,7 @@ describe Jinja::LSP::Server do
     output = IO::Memory.new
     errors = IO::Memory.new
 
-    server = Jinja::LSP::Server.new
+    server = Crinkle::LSP::Server.new
     server.run(input, output, errors)
 
     output.rewind
