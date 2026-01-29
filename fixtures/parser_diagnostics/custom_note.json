@@ -1,13 +1,13 @@
 [
   {
-    "id": "E_UNKNOWN_VARIABLE",
+    "id": "E_UNKNOWN_TAG",
     "severity": "error",
-    "message": "Unknown variable 'value'.",
+    "message": "Unknown tag 'note'.",
     "span": {
       "start": {
-        "offset": 3,
+        "offset": 7,
         "line": 1,
-        "column": 4
+        "column": 8
       },
       "end": {
         "offset": 8,
@@ -17,19 +17,19 @@
     }
   },
   {
-    "id": "E_UNKNOWN_TEST",
+    "id": "E_UNKNOWN_TAG",
     "severity": "error",
-    "message": "Unknown test 'defined'.",
+    "message": "Unknown tag 'endnote'.",
     "span": {
       "start": {
-        "offset": 3,
+        "offset": 29,
         "line": 1,
-        "column": 4
+        "column": 30
       },
       "end": {
-        "offset": 19,
+        "offset": 30,
         "line": 1,
-        "column": 20
+        "column": 31
       }
     }
   }

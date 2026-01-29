@@ -2,17 +2,17 @@
   {
     "id": "E_UNKNOWN_VARIABLE",
     "severity": "error",
-    "message": "Unknown variable 'user'.",
+    "message": "Unknown variable 'name'.",
     "span": {
       "start": {
-        "offset": 6,
-        "line": 1,
-        "column": 7
-      },
-      "end": {
         "offset": 10,
         "line": 1,
         "column": 11
+      },
+      "end": {
+        "offset": 14,
+        "line": 1,
+        "column": 15
       }
     }
   }

@@ -20,6 +20,7 @@ module Jinja
     UnsupportedNode
     TemplateNotFound
     UnknownMacro
+    TemplateCycle
   end
 
   enum Severity
@@ -76,6 +77,7 @@ module Jinja
       in DiagnosticType::UnsupportedNode        then "E_UNSUPPORTED_NODE"
       in DiagnosticType::TemplateNotFound       then "E_TEMPLATE_NOT_FOUND"
       in DiagnosticType::UnknownMacro           then "E_UNKNOWN_MACRO"
+      in DiagnosticType::TemplateCycle          then "E_TEMPLATE_CYCLE"
       end
     end
   end

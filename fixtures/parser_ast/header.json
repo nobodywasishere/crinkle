@@ -3,7 +3,18 @@
   "body": [
     {
       "type": "Text",
-      "value": "Header\n"
+      "value": "Header "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "name"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
     }
   ]
 }

@@ -1,0 +1,54 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "For",
+      "target": {
+        "type": "TupleLiteral",
+        "items": [
+          {
+            "type": "Name",
+            "value": "a"
+          },
+          {
+            "type": "Name",
+            "value": "b"
+          }
+        ]
+      },
+      "iter": {
+        "type": "Name",
+        "value": "pairs"
+      },
+      "body": [
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "a"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "-"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "b"
+          }
+        },
+        {
+          "type": "Text",
+          "value": ";"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

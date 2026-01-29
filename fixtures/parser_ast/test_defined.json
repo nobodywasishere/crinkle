@@ -1,0 +1,59 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "missing"
+        },
+        "name": "defined",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": " "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "missing"
+        },
+        "name": "undefined",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": " "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "name"
+        },
+        "name": "defined",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

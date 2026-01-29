@@ -29,6 +29,11 @@ module Jinja
                  DictLiteral |
                  TupleLiteral
 
+    alias Target = Name |
+                   GetAttr |
+                   GetItem |
+                   TupleLiteral
+
     class Template
       getter body : Array(Node)
       getter span : Span
@@ -64,31 +69,31 @@ module Jinja
     end
 
     class For
-      getter target : Name
+      getter target : Target
       getter iter : Expr
       getter body : Array(Node)
       getter else_body : Array(Node)
       getter span : Span
 
-      def initialize(@target : Name, @iter : Expr, @body : Array(Node), @else_body : Array(Node), @span : Span) : Nil
+      def initialize(@target : Target, @iter : Expr, @body : Array(Node), @else_body : Array(Node), @span : Span) : Nil
       end
     end
 
     class Set
-      getter target : Name
+      getter target : Target
       getter value : Expr
       getter span : Span
 
-      def initialize(@target : Name, @value : Expr, @span : Span) : Nil
+      def initialize(@target : Target, @value : Expr, @span : Span) : Nil
       end
     end
 
     class SetBlock
-      getter target : Name
+      getter target : Target
       getter body : Array(Node)
       getter span : Span
 
-      def initialize(@target : Name, @body : Array(Node), @span : Span) : Nil
+      def initialize(@target : Target, @body : Array(Node), @span : Span) : Nil
       end
     end
 

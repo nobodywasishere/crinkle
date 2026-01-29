@@ -1,0 +1,47 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "TupleLiteral",
+        "items": [
+          {
+            "type": "Name",
+            "value": "a"
+          },
+          {
+            "type": "Name",
+            "value": "b"
+          }
+        ]
+      },
+      "value": {
+        "type": "Name",
+        "value": "items"
+      }
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "a"
+      }
+    },
+    {
+      "type": "Text",
+      "value": " "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "b"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

@@ -132,14 +132,7 @@ module Jinja
     private def parse_for(start_span : Span) : AST::For
       skip_whitespace
 
-      target = if current.type == TokenType::Identifier
-                 name = AST::Name.new(current.lexeme, current.span)
-                 advance
-                 name
-               else
-                 emit_expected_token("Expected loop variable name after 'for'.")
-                 AST::Name.new("", current.span)
-               end
+      target = parse_assignment_target("Expected loop variable name after 'for'.")
 
       skip_whitespace
 
@@ -168,7 +161,7 @@ module Jinja
 
     private def parse_set(start_span : Span) : AST::Node
       skip_whitespace
-      target = parse_name_target("Expected variable name after 'set'.")
+      target = parse_assignment_target("Expected variable name after 'set'.")
       skip_whitespace
 
       if operator?("=")
@@ -493,15 +486,78 @@ module Jinja
       {nodes, nil, nil}
     end
 
-    private def parse_name_target(message : String) : AST::Name
-      if current.type == TokenType::Identifier
-        name = AST::Name.new(current.lexeme, current.span)
+    private def parse_assignment_target(message : String) : AST::Target
+      targets = Array(AST::Expr).new
+      loop do
+        targets << parse_target_atom(message)
+        skip_whitespace
+        break unless punct?(",")
         advance
-        name
-      else
-        emit_expected_token(message)
-        AST::Name.new("", current.span)
+        skip_whitespace
       end
+
+      if targets.size == 1
+        target = targets.first
+        return target.as(AST::Target) if target.is_a?(AST::Target)
+        emit_expected_token(message)
+        return AST::Name.new("", current.span)
+      end
+
+      items = targets.select(AST::Target)
+      if items.size != targets.size
+        emit_expected_token(message)
+      end
+      start_span = targets.first.span
+      end_span = targets.last.span
+      expr_items = items.map { |item| item.as(AST::Expr) }
+      AST::TupleLiteral.new(expr_items, span_between(start_span, end_span))
+    end
+
+    private def parse_target_atom(message : String) : AST::Expr
+      unless current.type == TokenType::Identifier
+        emit_expected_token(message)
+        return AST::Name.new("", current.span)
+      end
+
+      target = AST::Name.new(current.lexeme, current.span)
+      advance
+
+      loop do
+        skip_whitespace
+        if punct?(".")
+          start_span = target.span
+          advance
+          if current.type == TokenType::Identifier
+            name = current.lexeme
+            end_span = current.span
+            advance
+            target = AST::GetAttr.new(target, name, span_between(start_span, end_span))
+          else
+            emit_expected_token("Expected attribute name after '.'.")
+          end
+          next
+        end
+
+        if punct?("[")
+          start_span = target.span
+          advance
+          index = parse_expression([TokenType::Punct], ["]"])
+          skip_whitespace
+          end_span = index.span
+          if punct?("]")
+            end_span = current.span
+            advance
+          else
+            emit_expected_token("Expected ']' to close index.")
+          end
+          target = AST::GetItem.new(target, index, span_between(start_span, end_span))
+          next
+        end
+
+        break
+      end
+
+      target
     end
 
     private def parse_name(message : String) : String

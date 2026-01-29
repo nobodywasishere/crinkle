@@ -1,6 +1,7 @@
 module Jinja
   class Renderer
     getter diagnostics : Array(Diagnostic)
+    alias TagRenderer = Proc(Renderer, AST::CustomTag, String)
 
     def initialize(@environment : Environment = Environment.new) : Nil
       @diagnostics = Array(Diagnostic).new
@@ -9,6 +10,10 @@ module Jinja
       @macro_namespaces = Hash(String, Hash(String, AST::Macro)).new
       @caller_stack = Array(String).new
       @block_overrides = Hash(String, Array(AST::Node)).new
+      @template_cache = Hash(String, AST::Template).new
+      @template_stack = Array(String).new
+      @super_stack = Array(Array(AST::Node)).new
+      @tag_renderers = Hash(String, TagRenderer).new
     end
 
     def render(
@@ -21,6 +26,8 @@ module Jinja
       @macro_namespaces.clear
       @caller_stack.clear
       @block_overrides.clear
+      @template_stack.clear
+      @super_stack.clear
       @scopes << context.dup
 
       register_macros(template.body)
@@ -34,6 +41,18 @@ module Jinja
       end
 
       render_nodes(template.body)
+    end
+
+    def register_tag_renderer(name : String, &handler : TagRenderer) : Nil
+      @tag_renderers[name] = handler
+    end
+
+    def render_fragment(nodes : Array(AST::Node)) : String
+      render_nodes(nodes)
+    end
+
+    def evaluate(expr : AST::Expr) : Value
+      eval_expr(expr)
     end
 
     private def render_nodes(nodes : Array(AST::Node)) : String
@@ -62,17 +81,13 @@ module Jinja
       when AST::For
         render_for(node)
       when AST::Set
-        assign(node.target.value, eval_expr(node.value))
+        assign_target(node.target, eval_expr(node.value))
         ""
       when AST::SetBlock
-        assign(node.target.value, render_nodes(node.body))
+        assign_target(node.target, render_nodes(node.body))
         ""
       when AST::Block
-        if override = @block_overrides[node.name]?
-          render_nodes(override)
-        else
-          render_nodes(node.body)
-        end
+        render_block(node)
       when AST::Extends
         ""
       when AST::Include
@@ -89,12 +104,16 @@ module Jinja
       when AST::CallBlock
         render_call_block(node)
       when AST::CustomTag
-        emit_diagnostic(
-          DiagnosticType::UnknownTagRenderer,
-          "No renderer registered for custom tag '#{node.name}'.",
-          node.span
-        )
-        render_nodes(node.body)
+        if handler = @tag_renderers[node.name]?
+          handler.call(self, node)
+        else
+          emit_diagnostic(
+            DiagnosticType::UnknownTagRenderer,
+            "No renderer registered for custom tag '#{node.name}'.",
+            node.span
+          )
+          render_nodes(node.body)
+        end
       when AST::Template
         render_nodes(node.body)
       else
@@ -123,13 +142,42 @@ module Jinja
       return render_nodes(node.else_body) if items.empty?
 
       String.build do |io|
-        items.each do |item|
+        length = items.size
+        items.each_with_index do |item, index|
           push_scope
-          assign(node.target.value, item)
+          assign_loop_vars(index, length)
+          assign_for_target(node.target, item)
           io << render_nodes(node.body)
           pop_scope
         end
       end
+    end
+
+    private def render_block(node : AST::Block) : String
+      if override = @block_overrides[node.name]?
+        @super_stack << node.body
+        output = render_nodes(override)
+        @super_stack.pop
+        return output
+      end
+
+      render_nodes(node.body)
+    end
+
+    private def assign_loop_vars(index : Int32, length : Int32) : Nil
+      loop_info = Hash(String, Value).new
+      loop_info["index"] = (index + 1).to_i64
+      loop_info["index0"] = index.to_i64
+      loop_info["revindex"] = (length - index).to_i64
+      loop_info["revindex0"] = (length - index - 1).to_i64
+      loop_info["first"] = index == 0
+      loop_info["last"] = index == length - 1
+      loop_info["length"] = length.to_i64
+      assign("loop", loop_info)
+    end
+
+    private def assign_for_target(target : AST::Target, value : Value) : Nil
+      assign_target(target, value)
     end
 
     private def render_include(node : AST::Include) : String
@@ -189,11 +237,13 @@ module Jinja
         return value_to_s(result) + caller_body
       end
 
-      emit_diagnostic(
-        DiagnosticType::UnknownFunction,
-        "Unknown function for call block.",
-        node.callee.span
-      )
+      if @environment.strict_functions?
+        emit_diagnostic(
+          DiagnosticType::UnknownFunction,
+          "Unknown function for call block.",
+          node.callee.span
+        )
+      end
       caller_body
     end
 
@@ -202,7 +252,7 @@ module Jinja
       when AST::Literal
         expr.value
       when AST::Name
-        lookup(expr)
+        lookup(expr, @environment.strict_undefined?)
       when AST::Group
         eval_expr(expr.expr)
       when AST::Unary
@@ -292,6 +342,18 @@ module Jinja
         return render_macro(macro_def, args, kwargs, nil)
       end
 
+      if callee.is_a?(AST::Name) && callee.value == "super"
+        if @super_stack.empty?
+          emit_diagnostic(
+            DiagnosticType::UnknownFunction,
+            "super() is only valid inside a block override.",
+            callee.span
+          )
+          return ""
+        end
+        return render_nodes(@super_stack.last)
+      end
+
       if callee.is_a?(AST::Name) && callee.value == "caller" && !@caller_stack.empty?
         return @caller_stack.last
       end
@@ -300,11 +362,13 @@ module Jinja
         return fn.call(args, kwargs)
       end
 
-      emit_diagnostic(
-        DiagnosticType::UnknownFunction,
-        "Unknown function '#{callee_name(callee)}'.",
-        callee.span
-      )
+      if @environment.strict_functions?
+        emit_diagnostic(
+          DiagnosticType::UnknownFunction,
+          "Unknown function '#{callee_name(callee)}'.",
+          callee.span
+        )
+      end
       nil
     end
 
@@ -314,26 +378,42 @@ module Jinja
       if filter = @environment.filters[expr.name]?
         return filter.call(value, args, kwargs)
       end
-      emit_diagnostic(
-        DiagnosticType::UnknownFilter,
-        "Unknown filter '#{expr.name}'.",
-        expr.span
-      )
+      if @environment.strict_filters?
+        emit_diagnostic(
+          DiagnosticType::UnknownFilter,
+          "Unknown filter '#{expr.name}'.",
+          expr.span
+        )
+      end
       value
     end
 
     private def eval_test(expr : AST::Test) : Value
-      value = eval_expr(expr.expr)
       args, kwargs = eval_args(expr.args, expr.kwargs)
+      if expr.name == "defined" || expr.name == "undefined"
+        defined = defined_expr?(expr.expr)
+        result = expr.name == "defined" ? defined : !defined
+        return expr.negated? ? !result : result
+      end
+
+      if expr.name == "none"
+        value = eval_expr(expr.expr)
+        result = value.nil?
+        return expr.negated? ? !result : result
+      end
+
+      value = eval_expr(expr.expr)
       if test = @environment.tests[expr.name]?
         result = test.call(value, args, kwargs)
         return expr.negated? ? !result : result
       end
-      emit_diagnostic(
-        DiagnosticType::UnknownTest,
-        "Unknown test '#{expr.name}'.",
-        expr.span
-      )
+      if @environment.strict_tests?
+        emit_diagnostic(
+          DiagnosticType::UnknownTest,
+          "Unknown test '#{expr.name}'.",
+          expr.span
+        )
+      end
       expr.negated? ? true : false
     end
 
@@ -443,6 +523,20 @@ module Jinja
       span : Span,
       ignore_missing : Bool = false,
     ) : AST::Template?
+      if @template_cache.has_key?(name)
+        return @template_cache[name]
+      end
+
+      if @template_stack.includes?(name)
+        cycle = (@template_stack + [name]).join(" -> ")
+        emit_diagnostic(
+          DiagnosticType::TemplateCycle,
+          "Template cycle detected: #{cycle}.",
+          span
+        )
+        return
+      end
+
       loader = @environment.template_loader
       unless loader
         return if ignore_missing
@@ -454,18 +548,25 @@ module Jinja
         return
       end
 
+      @template_stack << name
       source = loader.call(name)
-      unless source
-        return if ignore_missing
-        emit_diagnostic(
-          DiagnosticType::TemplateNotFound,
-          "Template '#{name}' not found.",
-          span
-        )
-        return
+      if source
+        template = parse_template(source)
+        @template_cache[name] = template
+        @template_stack.pop
+        return template
       end
 
-      parse_template(source)
+      @template_stack.pop
+      return if ignore_missing
+
+      suffix = @template_stack.empty? ? "" : " (stack: #{@template_stack.join(" -> ")})"
+      emit_diagnostic(
+        DiagnosticType::TemplateNotFound,
+        "Template '#{name}' not found.#{suffix}",
+        span
+      )
+      nil
     end
 
     private def parse_template(source : String) : AST::Template
@@ -484,10 +585,17 @@ module Jinja
       kwargs : Hash(String, Value),
       caller : String?,
     ) : String
+      defaults = Hash(String, Value).new
+      macro_def.params.each do |param|
+        if default_value = param.default_value
+          defaults[param.name] = eval_expr(default_value)
+        end
+      end
+
       push_scope
       @caller_stack << caller if caller
 
-      bind_macro_params(macro_def, args, kwargs)
+      bind_macro_params(macro_def, args, kwargs, defaults)
       output = render_nodes(macro_def.body)
 
       @caller_stack.pop if caller
@@ -499,6 +607,7 @@ module Jinja
       macro_def : AST::Macro,
       args : Array(Value),
       kwargs : Hash(String, Value),
+      defaults : Hash(String, Value),
     ) : Nil
       macro_def.params.each_with_index do |param, index|
         if index < args.size
@@ -511,8 +620,8 @@ module Jinja
           next
         end
 
-        if default_value = param.default_value
-          assign(param.name, eval_expr(default_value))
+        if defaults.has_key?(param.name)
+          assign(param.name, defaults[param.name])
         else
           assign(param.name, nil)
         end
@@ -577,22 +686,124 @@ module Jinja
       {eval_args, eval_kwargs}
     end
 
-    private def lookup(expr : AST::Name) : Value
+    private def lookup(expr : AST::Name, emit_diagnostic : Bool) : Value
       @scopes.reverse_each do |scope|
         if scope.has_key?(expr.value)
           return scope[expr.value]
         end
       end
-      emit_diagnostic(
-        DiagnosticType::UnknownVariable,
-        "Unknown variable '#{expr.value}'.",
-        expr.span
-      )
+      if emit_diagnostic
+        emit_diagnostic(
+          DiagnosticType::UnknownVariable,
+          "Unknown variable '#{expr.value}'.",
+          expr.span
+        )
+      end
       nil
+    end
+
+    private def defined_expr?(expr : AST::Expr) : Bool
+      case expr
+      when AST::Name
+        @scopes.any?(&.has_key?(expr.value))
+      else
+        !eval_expr(expr).nil?
+      end
     end
 
     private def assign(name : String, value : Value) : Nil
       @scopes.last[name] = value
+    end
+
+    private def assign_target(target : AST::Target, value : Value) : Nil
+      case target
+      when AST::Name
+        assign(target.value, value)
+      when AST::TupleLiteral
+        assign_tuple_target(target, value)
+      when AST::GetAttr
+        assign_attr_target(target, value)
+      when AST::GetItem
+        assign_item_target(target, value)
+      end
+    end
+
+    private def assign_tuple_target(target : AST::TupleLiteral, value : Value) : Nil
+      values = case value
+               when Array(Value)
+                 value
+               when Hash(String, Value)
+                 items = Array(Value).new
+                 value.each_value { |item| items << item }
+                 items
+               end
+
+      unless values
+        emit_diagnostic(
+          DiagnosticType::InvalidOperand,
+          "Cannot destructure value.",
+          target.span
+        )
+        target.items.each do |item|
+          next unless item.is_a?(AST::Target)
+          assign_target(item, nil)
+        end
+        return
+      end
+
+      target.items.each_with_index do |item, index|
+        next unless item.is_a?(AST::Target)
+        assign_target(item, values[index]?)
+      end
+    end
+
+    private def assign_attr_target(target : AST::GetAttr, value : Value) : Nil
+      base = eval_expr(target.target)
+      if base.is_a?(Hash(String, Value))
+        base[target.name] = value
+        return
+      end
+
+      emit_diagnostic(
+        DiagnosticType::InvalidOperand,
+        "Cannot set attribute on non-mapping value.",
+        target.span
+      )
+    end
+
+    private def assign_item_target(target : AST::GetItem, value : Value) : Nil
+      base = eval_expr(target.target)
+      index = eval_expr(target.index)
+      case base
+      when Array(Value)
+        unless index.is_a?(Int64)
+          emit_diagnostic(
+            DiagnosticType::InvalidOperand,
+            "Index must be an integer.",
+            target.span
+          )
+          return
+        end
+        if index >= 0 && index < base.size
+          base[index] = value
+        elsif index == base.size
+          base << value
+        else
+          emit_diagnostic(
+            DiagnosticType::InvalidOperand,
+            "Index out of bounds.",
+            target.span
+          )
+        end
+      when Hash(String, Value)
+        base[index.to_s] = value
+      else
+        emit_diagnostic(
+          DiagnosticType::InvalidOperand,
+          "Cannot set item on non-indexable value.",
+          target.span
+        )
+      end
     end
 
     private def push_scope : Nil

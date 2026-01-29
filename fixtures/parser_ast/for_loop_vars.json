@@ -1,0 +1,49 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "item"
+      },
+      "iter": {
+        "type": "Name",
+        "value": "items"
+      },
+      "body": [
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "loop"
+            },
+            "name": "index"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "/"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "GetAttr",
+            "target": {
+              "type": "Name",
+              "value": "loop"
+            },
+            "name": "length"
+          }
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Macro",
+      "name": "wrap",
+      "params": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "("
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Call",
+            "callee": {
+              "type": "Name",
+              "value": "caller"
+            },
+            "args": [],
+            "kwargs": []
+          }
+        },
+        {
+          "type": "Text",
+          "value": ")"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "CallBlock",
+      "callee": {
+        "type": "Name",
+        "value": "wrap"
+      },
+      "args": [],
+      "kwargs": [],
+      "body": [
+        {
+          "type": "Text",
+          "value": "Body"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "user"
+        },
+        "name": "name"
+      },
+      "value": {
+        "type": "Literal",
+        "value": "Grace"
+      }
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "user"
+        },
+        "name": "name"
+      }
+    },
+    {
+      "type": "Text",
+      "value": " "
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "GetItem",
+        "target": {
+          "type": "Name",
+          "value": "user"
+        },
+        "index": {
+          "type": "Literal",
+          "value": "title"
+        }
+      },
+      "value": {
+        "type": "Literal",
+        "value": "Dr"
+      }
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "user"
+        },
+        "name": "title"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
