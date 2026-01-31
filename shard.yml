@@ -10,7 +10,3 @@ license: MIT
 targets:
   crinkle:
     main: src/cli/cli.cr
-
-dependencies:
-  lsprotocol:
-    github: nobodywasishere/lsprotocol-crystal

@@ -1,16 +1,16 @@
 # crinkle
 
-A Jinja2-compatible lexer, parser, linter, and language server written in Crystal.
+A Jinja2-compatible lexer, parser, and linter written in Crystal.
 
 ## Status
 - Lexer and parser implemented with fixtures and snapshot specs
 - Custom tag extensions wired (see `PHASE-5.md`)
-- Renderer, linter, LSP follow the roadmap in `PLAN.md`
+- Renderer, linter follow the roadmap in `PLAN.md`
 
 ## Goals
 - Faithful Jinja2 v3.1.6 parsing (parse + diagnostics first)
 - Homegrown lexer and parser
-- Linter and LSP for template authoring
+- Linter for template authoring
 
 ## Structure
 - `src/` — core implementation
