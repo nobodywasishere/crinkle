@@ -219,29 +219,30 @@ end
 
 ## Acceptance Criteria
 
-- [ ] `src/std/` directory created with organized modules
-- [ ] Existing builtins moved to appropriate modules
-- [ ] Each module has `self.register(env)` method
-- [ ] Environment supports `load_std` parameter (defaults to true)
+- [x] `src/std/` directory created with organized modules
+- [x] Existing builtins moved to appropriate modules
+- [x] Each module has `self.register(env)` method
+- [x] Environment supports `load_std` parameter (defaults to true)
 - [x] Fixtures reorganized into logical subdirectories
-- [x] All specs pass with new structure (185 tests)
-- [ ] Documentation updated
-- [ ] Backwards compatible (default loads all builtins)
+- [x] All specs pass with new structure (195 tests)
+- [x] Documentation updated (README with selective loading and custom extensions)
+- [x] Backwards compatible (default loads all builtins)
 
 ## Checklist
 
 ### Standard Library
-- [ ] Create `src/std/` directory structure
-- [ ] Create `src/std/filters/strings.cr` with string filters
-- [ ] Create `src/std/filters/lists.cr` with list filters
-- [ ] Create `src/std/filters/numbers.cr` with number filters
-- [ ] Create `src/std/filters/html.cr` with HTML filters
-- [ ] Create `src/std/filters/serialize.cr` with serialization filters
-- [ ] Create `src/std/tests/types.cr` with type tests
-- [ ] Create `src/std/tests/comparison.cr` with comparison tests
-- [ ] Create `src/std/functions/` with builtin functions
-- [ ] Create `src/std.cr` with `load_all` method
-- [ ] Update `Environment` to support `load_std` parameter
+- [x] Create `src/std/` directory structure
+- [x] Create `src/std/filters/strings.cr` with string filters (11 filters)
+- [x] Create `src/std/filters/lists.cr` with list filters (15 filters including batch, slice, map, select, reject, etc.)
+- [x] Create `src/std/filters/numbers.cr` with number filters (7 filters)
+- [x] Create `src/std/filters/html.cr` with HTML filters (6 filters)
+- [x] Create `src/std/filters/serialize.cr` with serialization filters (7 filters including dictsort, items)
+- [x] Create `src/std/tests/types.cr` with type tests (17 tests)
+- [x] Create `src/std/tests/comparison.cr` with comparison tests (10 tests)
+- [x] Create `src/std/tests/strings.cr` with string tests (4 tests)
+- [x] Create `src/std/functions/` with builtin functions (range, dict, namespace, lipsum, cycler, joiner)
+- [x] Create `src/std.cr` with `load_all` method
+- [x] Update `Environment` to support `load_std` parameter
 
 ### Fixture Reorganization
 - [x] Create `fixtures/lexer/` and migrate lexer-focused fixtures (9 fixtures)
@@ -249,17 +250,17 @@ end
 - [x] Create `fixtures/formatter/` and migrate formatter-focused fixtures (51 fixtures)
 - [x] Create `fixtures/linter/` and migrate linter-focused fixtures (11 fixtures)
 - [x] Create `fixtures/renderer/` and migrate renderer-focused fixtures (22 fixtures)
-- [x] Create `fixtures/std_filters/` for filter tests (1 fixture)
-- [x] Create `fixtures/std_tests/` for test tests (1 fixture)
-- [x] Create `fixtures/std_functions/` for function tests (empty)
+- [x] Create `fixtures/std_filters/` for filter tests (6 fixtures: strings, lists, numbers, html, serialize, original)
+- [x] Create `fixtures/std_tests/` for test tests (4 fixtures: types, comparison, strings, original)
+- [x] Create `fixtures/std_functions/` for function tests (2 fixtures: range, dict)
 - [x] Create `fixtures/integration/` for end-to-end tests (6 fixtures)
 - [x] Update spec helpers to find fixtures in new locations
-- [x] Ensure all existing specs pass with new structure (185 tests passing)
+- [x] Ensure all specs pass with new structure (195 tests passing)
 
 ### Documentation
-- [ ] Update README with selective loading examples
-- [ ] Update AGENTS.md with fixture organization
-- [ ] Add examples of custom filter/test registration
+- [x] Update README with selective loading examples
+- [ ] Update AGENTS.md with fixture organization (deferred - not critical)
+- [x] Add examples of custom filter/test registration
 
 ## Implementation Details
 
@@ -309,9 +310,61 @@ end
 
 **Commit:** `10813f9` - "Reorganize fixtures into logical subdirectories"
 
-### Standard Library (Not Yet Implemented)
+### Standard Library (Partially Implemented)
 
-The `src/std/` structure and selective loading remain to be implemented. Current builtins are still registered directly in test helpers and `Environment`.
+**Changes Made:**
+
+1. **Directory Structure Created:**
+   - `src/std/` - Main standard library directory
+   - `src/std/filters/` - Filter modules (strings, lists, numbers, html, serialize)
+   - `src/std/tests/` - Test modules (types, comparison, strings)
+   - `src/std/functions/` - Function modules (range, dict, debug)
+   - `src/std.cr` - Main loader with `load_all` method
+
+2. **Environment Updates ([src/environment.cr](src/environment.cr)):**
+   - Added `load_std` parameter (defaults to `true` for backwards compatibility)
+   - Removed inline builtin registrations
+   - Now calls `Std.load_all(self)` if `load_std` is true
+   - Maintains full backwards compatibility
+
+3. **Implemented Filters:**
+   - **Strings:** upper, lower, capitalize, trim, truncate, replace, title, wordcount, reverse, center, indent
+   - **Lists:** first, last, join, length, sort, unique, batch, slice, sum, map, select, reject, selectattr, rejectattr, default
+   - **Numbers:** int, float, abs, round, min, max, pow
+   - **HTML:** escape, e (alias), safe, striptags, urlize, urlencode
+   - **Serialize:** tojson, pprint, list, string, attr, dictsort, items
+
+4. **Implemented Tests:**
+   - **Types:** defined, undefined, none, boolean, false, true, number, integer, float, string, sequence, iterable, mapping, callable, odd, even, divisibleby
+   - **Comparison:** eq, equalto, ne, lt, le, gt, ge, greaterthan, lessthan, in
+   - **Strings:** lower, upper, startswith, endswith
+
+5. **Implemented Functions:**
+   - **Range:** range(n), range(start, stop), range(start, stop, step)
+   - **Dict:** dict(...), namespace(...)
+   - **Debug:** lipsum(...), cycler(...), joiner(...)
+
+6. **Test Fixtures Created:**
+   - [fixtures/std_filters/strings.html.j2](fixtures/std_filters/strings.html.j2) - String filter tests
+   - [fixtures/std_filters/lists.html.j2](fixtures/std_filters/lists.html.j2) - List filter tests
+   - [fixtures/std_filters/numbers.html.j2](fixtures/std_filters/numbers.html.j2) - Number filter tests
+   - [fixtures/std_filters/html.html.j2](fixtures/std_filters/html.html.j2) - HTML filter tests
+   - [fixtures/std_filters/serialize.html.j2](fixtures/std_filters/serialize.html.j2) - Serialization filter tests
+   - [fixtures/std_tests/types.html.j2](fixtures/std_tests/types.html.j2) - Type test tests
+   - [fixtures/std_tests/comparison.html.j2](fixtures/std_tests/comparison.html.j2) - Comparison test tests
+   - [fixtures/std_tests/strings.html.j2](fixtures/std_tests/strings.html.j2) - String test tests
+   - [fixtures/std_functions/range.html.j2](fixtures/std_functions/range.html.j2) - Range function tests
+   - [fixtures/std_functions/dict.html.j2](fixtures/std_functions/dict.html.j2) - Dict function tests
+
+**Benefits Achieved:**
+- ✅ Clean separation between core engine and standard library
+- ✅ Selective loading capability (can disable all builtins with `load_std: false`)
+- ✅ Modular filter/test/function organization
+- ✅ All advanced filters now implemented (batch, slice, map, select, reject, selectattr, rejectattr, dictsort, items)
+- ✅ Comprehensive test coverage with 195 tests passing (10 new std library fixtures)
+- ✅ Full backwards compatibility maintained
+
+**Commit:** TBD - "Implement complete standard library with all filters, tests, and functions"
 
 ## Out of Scope
 

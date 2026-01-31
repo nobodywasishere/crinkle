@@ -1,0 +1,159 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "42"
+        },
+        "name": "int",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "3.14"
+        },
+        "name": "float",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Unary",
+        "op": "-",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "Literal",
+            "value": 5
+          },
+          "name": "abs",
+          "args": [],
+          "kwargs": []
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": 3.7
+        },
+        "name": "round",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "ListLiteral",
+          "items": [
+            {
+              "type": "Literal",
+              "value": 1
+            },
+            {
+              "type": "Literal",
+              "value": 5
+            },
+            {
+              "type": "Literal",
+              "value": 3
+            }
+          ]
+        },
+        "name": "min",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "ListLiteral",
+          "items": [
+            {
+              "type": "Literal",
+              "value": 1
+            },
+            {
+              "type": "Literal",
+              "value": 5
+            },
+            {
+              "type": "Literal",
+              "value": 3
+            }
+          ]
+        },
+        "name": "max",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": 2
+        },
+        "name": "pow",
+        "args": [
+          {
+            "type": "Literal",
+            "value": 3
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

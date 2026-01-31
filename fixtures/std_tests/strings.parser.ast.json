@@ -1,0 +1,115 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "lower_name"
+        },
+        "name": "lower",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "lower"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": "UPPER"
+        },
+        "name": "upper",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "upper"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": "hello"
+        },
+        "name": "startswith",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": "hel"
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "startswith"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": "world"
+        },
+        "name": "endswith",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": "rld"
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "endswith"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

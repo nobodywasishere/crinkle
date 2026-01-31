@@ -1,0 +1,11 @@
+defined
+undefined
+true
+false
+number
+integer
+string
+sequence
+odd
+even
+divisible

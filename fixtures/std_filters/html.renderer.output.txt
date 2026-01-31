@@ -1,0 +1,4 @@
+&lt;script&gt;alert('xss')&lt;/script&gt;
+<b>bold</b>
+text
+test%40example.com

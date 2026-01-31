@@ -51,10 +51,10 @@ private def run_fixture(info : FixtureInfo, env : Crinkle::Environment, context 
 end
 
 MAIN_FIXTURES = fixture_templates(recursive: true, exclude: ["extensions"])
-EXT_FIXTURES = fixture_templates("fixtures/extensions")
-ENV_MAIN = build_render_environment
-ENV_EXT = build_extensions_environment
-CTX = render_context
+EXT_FIXTURES  = fixture_templates("fixtures/extensions")
+ENV_MAIN      = build_render_environment
+ENV_EXT       = build_extensions_environment
+CTX           = render_context
 
 describe "fixtures" do
   MAIN_FIXTURES.each do |info|

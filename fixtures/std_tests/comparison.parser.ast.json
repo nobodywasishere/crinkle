@@ -1,0 +1,228 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 5
+        },
+        "name": "eq",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": 5
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "eq"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 5
+        },
+        "name": "ne",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": 3
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "ne"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 3
+        },
+        "name": "lt",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": 5
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "lt"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 5
+        },
+        "name": "gt",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": 3
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "gt"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 5
+        },
+        "name": "le",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": 5
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "le"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 5
+        },
+        "name": "ge",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": 5
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "ge"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 2
+        },
+        "name": "in",
+        "negated": false,
+        "args": [
+          {
+            "type": "ListLiteral",
+            "items": [
+              {
+                "type": "Literal",
+                "value": 1
+              },
+              {
+                "type": "Literal",
+                "value": 2
+              },
+              {
+                "type": "Literal",
+                "value": 3
+              }
+            ]
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "in"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

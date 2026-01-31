@@ -1,0 +1,122 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "i"
+      },
+      "iter": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "range"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": 3
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "i"
+          }
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "i"
+      },
+      "iter": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "range"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": 1
+          },
+          {
+            "type": "Literal",
+            "value": 4
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "i"
+          }
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "i"
+      },
+      "iter": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "range"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": 0
+          },
+          {
+            "type": "Literal",
+            "value": 10
+          },
+          {
+            "type": "Literal",
+            "value": 2
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "i"
+          }
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

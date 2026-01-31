@@ -1,0 +1,105 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "d"
+      },
+      "value": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "dict"
+        },
+        "args": [],
+        "kwargs": [
+          {
+            "name": "a",
+            "value": {
+              "type": "Literal",
+              "value": 1
+            }
+          },
+          {
+            "name": "b",
+            "value": {
+              "type": "Literal",
+              "value": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "d"
+        },
+        "name": "a"
+      }
+    },
+    {
+      "type": "Text",
+      "value": ","
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "d"
+        },
+        "name": "b"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "ns"
+      },
+      "value": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "namespace"
+        },
+        "args": [],
+        "kwargs": [
+          {
+            "name": "counter",
+            "value": {
+              "type": "Literal",
+              "value": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "GetAttr",
+        "target": {
+          "type": "Name",
+          "value": "ns"
+        },
+        "name": "counter"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

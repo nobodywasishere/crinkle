@@ -1,0 +1,10 @@
+{{ items | first }}
+{{ items | last }}
+{{ items | join(",") }}
+{{ items | length }}
+{{ [3, 1, 2] | sort | join(",") }}
+{{ [1, 2, 1, 3, 2] | unique | join(",") }}
+{{ [1, 2, 3] | sum }}
+{{ "" | default("fallback") }}
+{{ [1, 2, 3, 4] | batch(2) | length }}
+{{ [1, 2, 3, 4, 5] | slice(2) | length }}

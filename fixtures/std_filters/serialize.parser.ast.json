@@ -1,0 +1,113 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "ListLiteral",
+          "items": [
+            {
+              "type": "Literal",
+              "value": 1
+            },
+            {
+              "type": "Literal",
+              "value": 2
+            },
+            {
+              "type": "Literal",
+              "value": 3
+            }
+          ]
+        },
+        "name": "tojson",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "DictLiteral",
+          "pairs": [
+            {
+              "key": {
+                "type": "Literal",
+                "value": "a"
+              },
+              "value": {
+                "type": "Literal",
+                "value": 1
+              }
+            },
+            {
+              "key": {
+                "type": "Literal",
+                "value": "b"
+              },
+              "value": {
+                "type": "Literal",
+                "value": 2
+              }
+            }
+          ]
+        },
+        "name": "pprint",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "Literal",
+            "value": "hello"
+          },
+          "name": "list",
+          "args": [],
+          "kwargs": []
+        },
+        "name": "length",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": 42
+        },
+        "name": "string",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

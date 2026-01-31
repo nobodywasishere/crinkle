@@ -1,0 +1,4 @@
+{{ "<script>alert('xss')</script>" | escape }}
+{{ "<b>bold</b>" | safe }}
+{{ "<p>text</p>" | striptags }}
+{{ "test@example.com" | urlencode }}

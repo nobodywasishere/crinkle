@@ -1,0 +1,285 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "name"
+        },
+        "name": "defined",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "defined"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "missing"
+        },
+        "name": "undefined",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "undefined"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "flag_true"
+        },
+        "name": "true",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "true"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "flag_false"
+        },
+        "name": "false",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "false"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "count"
+        },
+        "name": "number",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "number"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "count"
+        },
+        "name": "integer",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "integer"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "name"
+        },
+        "name": "string",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "string"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "items"
+        },
+        "name": "sequence",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "sequence"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 3
+        },
+        "name": "odd",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "odd"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 4
+        },
+        "name": "even",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "even"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 10
+        },
+        "name": "divisibleby",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": 5
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "divisible"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

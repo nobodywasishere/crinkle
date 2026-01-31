@@ -1,5 +1,3 @@
-require "./runtime/value"
-
 module Crinkle
   alias FilterProc = Proc(Value, Array(Value), Hash(String, Value), Value)
   alias TestProc = Proc(Value, Array(Value), Hash(String, Value), Bool)
@@ -41,86 +39,15 @@ module Crinkle
       @strict_filters : Bool = true,
       @strict_tests : Bool = true,
       @strict_functions : Bool = true,
+      load_std : Bool = true,
     ) : Nil
       @tag_extensions = Hash(String, TagExtension).new
       @filters = Hash(String, FilterProc).new
       @tests = Hash(String, TestProc).new
       @functions = Hash(String, FunctionProc).new
       @template_loader = nil
-      register_builtin_filters_tests
-    end
 
-    private def register_builtin_filters_tests : Nil
-      unless @filters.has_key?("upper")
-        @filters["upper"] = ->(value : Value, _args : Array(Value), _kwargs : Hash(String, Value)) : Value do
-          value.to_s.upcase
-        end
-      end
-
-      unless @filters.has_key?("lower")
-        @filters["lower"] = ->(value : Value, _args : Array(Value), _kwargs : Hash(String, Value)) : Value do
-          value.to_s.downcase
-        end
-      end
-
-      unless @filters.has_key?("length")
-        @filters["length"] = ->(value : Value, _args : Array(Value), _kwargs : Hash(String, Value)) : Value do
-          case value
-          when String
-            value.size.to_i64
-          when Array(Value)
-            value.size.to_i64
-          when Hash(String, Value)
-            value.size.to_i64
-          else
-            0_i64
-          end
-        end
-      end
-
-      unless @filters.has_key?("default")
-        @filters["default"] = ->(value : Value, args : Array(Value), _kwargs : Hash(String, Value)) : Value do
-          fallback = args.first? || ""
-          empty = case value
-                  when Nil
-                    true
-                  when String
-                    value.empty?
-                  when Array(Value)
-                    value.empty?
-                  when Hash(String, Value)
-                    value.empty?
-                  else
-                    false
-                  end
-          empty ? fallback : value
-        end
-      end
-
-      unless @filters.has_key?("escape")
-        @filters["escape"] = ->(value : Value, _args : Array(Value), _kwargs : Hash(String, Value)) : Value do
-          value.to_s
-            .gsub("&", "&amp;")
-            .gsub("<", "&lt;")
-            .gsub(">", "&gt;")
-            .gsub("\"", "&quot;")
-            .gsub("'", "&#39;")
-        end
-      end
-
-      unless @tests.has_key?("lower")
-        @tests["lower"] = ->(value : Value, _args : Array(Value), _kwargs : Hash(String, Value)) : Bool do
-          str = value.to_s
-          !str.empty? && str == str.downcase
-        end
-      end
-
-      unless @tests.has_key?("upper")
-        @tests["upper"] = ->(value : Value, _args : Array(Value), _kwargs : Hash(String, Value)) : Bool do
-          str = value.to_s
-          !str.empty? && str == str.upcase
-        end
-      end
+      Std.load_all(self) if load_std
     end
 
     def register_tag(

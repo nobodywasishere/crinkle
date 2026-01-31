@@ -1,0 +1,314 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "items"
+        },
+        "name": "first",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "items"
+        },
+        "name": "last",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "items"
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": ","
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "items"
+        },
+        "name": "length",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "ListLiteral",
+            "items": [
+              {
+                "type": "Literal",
+                "value": 3
+              },
+              {
+                "type": "Literal",
+                "value": 1
+              },
+              {
+                "type": "Literal",
+                "value": 2
+              }
+            ]
+          },
+          "name": "sort",
+          "args": [],
+          "kwargs": []
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": ","
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "ListLiteral",
+            "items": [
+              {
+                "type": "Literal",
+                "value": 1
+              },
+              {
+                "type": "Literal",
+                "value": 2
+              },
+              {
+                "type": "Literal",
+                "value": 1
+              },
+              {
+                "type": "Literal",
+                "value": 3
+              },
+              {
+                "type": "Literal",
+                "value": 2
+              }
+            ]
+          },
+          "name": "unique",
+          "args": [],
+          "kwargs": []
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": ","
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "ListLiteral",
+          "items": [
+            {
+              "type": "Literal",
+              "value": 1
+            },
+            {
+              "type": "Literal",
+              "value": 2
+            },
+            {
+              "type": "Literal",
+              "value": 3
+            }
+          ]
+        },
+        "name": "sum",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": ""
+        },
+        "name": "default",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "fallback"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "ListLiteral",
+            "items": [
+              {
+                "type": "Literal",
+                "value": 1
+              },
+              {
+                "type": "Literal",
+                "value": 2
+              },
+              {
+                "type": "Literal",
+                "value": 3
+              },
+              {
+                "type": "Literal",
+                "value": 4
+              }
+            ]
+          },
+          "name": "batch",
+          "args": [
+            {
+              "type": "Literal",
+              "value": 2
+            }
+          ],
+          "kwargs": []
+        },
+        "name": "length",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "ListLiteral",
+            "items": [
+              {
+                "type": "Literal",
+                "value": 1
+              },
+              {
+                "type": "Literal",
+                "value": 2
+              },
+              {
+                "type": "Literal",
+                "value": 3
+              },
+              {
+                "type": "Literal",
+                "value": 4
+              },
+              {
+                "type": "Literal",
+                "value": 5
+              }
+            ]
+          },
+          "name": "slice",
+          "args": [
+            {
+              "type": "Literal",
+              "value": 2
+            }
+          ],
+          "kwargs": []
+        },
+        "name": "length",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
