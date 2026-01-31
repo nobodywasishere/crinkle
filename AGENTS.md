@@ -238,9 +238,7 @@ Track spans carefully through the parser.
 
 ### Commits
 - Use descriptive commit messages
-- Include `Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>`
 - Commit related changes together
-- Don't use `git add -A` (stage files explicitly)
 
 ### Git User Configuration
 
