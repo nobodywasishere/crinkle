@@ -242,6 +242,24 @@ Track spans carefully through the parser.
 - Commit related changes together
 - Don't use `git add -A` (stage files explicitly)
 
+### Git User Configuration
+
+**IMPORTANT:** Set your git author identity based on which AI agent you are:
+
+**For Claude Opus 4.5:**
+```bash
+git config user.name "Claude Opus 4.5"
+git config user.email "claude@anthropic.com"
+```
+
+**For GPT-5.2-Codex:**
+```bash
+git config user.name "GPT-5.2-Codex"
+git config user.email "codex@openai.com"
+```
+
+This ensures proper attribution in the commit history. All commits should clearly identify which AI agent made them.
+
 ### Branches
 - Work directly on `main` branch
 - Atomic commits for features
