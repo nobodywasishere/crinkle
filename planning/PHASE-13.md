@@ -81,11 +81,11 @@ env = Crinkle::Environment.new
 env = Crinkle::Environment.new(load_std: false)
 
 # Load selectively
-env.load_std(:filters, :strings)  # Only string filters
-env.load_std(:tests, :types)      # Only type tests
+env.load_std_filters(Crinkle::Std::Filters::Category::Strings)
+env.load_std_tests(Crinkle::Std::Tests::Category::Types)
 
-# Load everything explicitly
-env.load_std(:all)
+# Load all of a specific type
+env.load_std_filters(Crinkle::Std::Filters::Category::All)
 ```
 
 ### `src/std/loader.cr`
@@ -93,23 +93,54 @@ env.load_std(:all)
 ```crystal
 module Crinkle
   module Std
+    module Filters
+      enum Category
+        All
+        Strings
+        Lists
+        Numbers
+        Html
+        Serialize
+      end
+    end
+
+    module Tests
+      enum Category
+        All
+        Types
+        Comparison
+        Strings
+      end
+    end
+
+    module Functions
+      enum Category
+        All
+        Range
+        Dict
+        Debug
+      end
+    end
+
     module Loader
       def self.load_all(env : Environment)
-        load_filters(env, :all)
-        load_tests(env, :all)
-        load_functions(env, :all)
+        load_filters(env, Filters::Category::All)
+        load_tests(env, Tests::Category::All)
+        load_functions(env, Functions::Category::All)
       end
 
-      def self.load_filters(env : Environment, category : Symbol)
+      def self.load_filters(env : Environment, category : Filters::Category)
         case category
-        when :all
-          Strings.register(env)
-          Lists.register(env)
-          Numbers.register(env)
-          Html.register(env)
-          Serialize.register(env)
-        when :strings
-          Strings.register(env)
+        when Filters::Category::All
+          Filters::Strings.register(env)
+          Filters::Lists.register(env)
+          Filters::Numbers.register(env)
+          Filters::Html.register(env)
+          Filters::Serialize.register(env)
+        when Filters::Category::Strings
+          Filters::Strings.register(env)
+        when Filters::Category::Lists
+          Filters::Lists.register(env)
         # ... etc
         end
       end
@@ -158,7 +189,7 @@ end
 ```crystal
 def initialize(
   @override_builtins : Bool = false,
-  @load_std : Bool | Symbol = true,  # NEW: control std loading
+  @load_std : Bool = true,  # NEW: control std loading
   # ... other params
 )
   # ...
@@ -166,12 +197,19 @@ def initialize(
 end
 
 private def register_builtins
-  case @load_std
-  when true
-    Std::Loader.load_all(self)
-  when Symbol
-    Std::Loader.load(self, @load_std)
-  end
+  Std::Loader.load_all(self)
+end
+
+def load_std_filters(category : Std::Filters::Category)
+  Std::Loader.load_filters(self, category)
+end
+
+def load_std_tests(category : Std::Tests::Category)
+  Std::Loader.load_tests(self, category)
+end
+
+def load_std_functions(category : Std::Functions::Category)
+  Std::Loader.load_functions(self, category)
 end
 ```
 
@@ -203,7 +241,7 @@ env = Crinkle::Environment.new  # Loads all builtins
 
 # New code can be selective
 env = Crinkle::Environment.new(load_std: false)
-env.load_std(:filters, :strings)
+env.load_std_filters(Crinkle::Std::Filters::Category::Strings)
 ```
 
 ### Fixture Migration
