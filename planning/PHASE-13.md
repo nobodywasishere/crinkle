@@ -77,76 +77,33 @@ Each subfolder follows existing naming convention:
 # Default: load all builtins (backwards compatible)
 env = Crinkle::Environment.new
 
-# Load nothing
+# Load nothing, add selectively
 env = Crinkle::Environment.new(load_std: false)
-
-# Load selectively
-env.load_std_filters(Crinkle::Std::Filters::Category::Strings)
-env.load_std_tests(Crinkle::Std::Tests::Category::Types)
-
-# Load all of a specific type
-env.load_std_filters(Crinkle::Std::Filters::Category::All)
+Crinkle::Std::Filters::Strings.register(env)
+Crinkle::Std::Tests::Types.register(env)
 ```
 
 ### `src/std/loader.cr`
 
 ```crystal
-module Crinkle
-  module Std
-    module Filters
-      enum Category
-        All
-        Strings
-        Lists
-        Numbers
-        Html
-        Serialize
-      end
-    end
+module Crinkle::Std
+  def self.load_all(env : Environment)
+    # Filters
+    Filters::Strings.register(env)
+    Filters::Lists.register(env)
+    Filters::Numbers.register(env)
+    Filters::Html.register(env)
+    Filters::Serialize.register(env)
 
-    module Tests
-      enum Category
-        All
-        Types
-        Comparison
-        Strings
-      end
-    end
+    # Tests
+    Tests::Types.register(env)
+    Tests::Comparison.register(env)
+    Tests::Strings.register(env)
 
-    module Functions
-      enum Category
-        All
-        Range
-        Dict
-        Debug
-      end
-    end
-
-    module Loader
-      def self.load_all(env : Environment)
-        load_filters(env, Filters::Category::All)
-        load_tests(env, Tests::Category::All)
-        load_functions(env, Functions::Category::All)
-      end
-
-      def self.load_filters(env : Environment, category : Filters::Category)
-        case category
-        when Filters::Category::All
-          Filters::Strings.register(env)
-          Filters::Lists.register(env)
-          Filters::Numbers.register(env)
-          Filters::Html.register(env)
-          Filters::Serialize.register(env)
-        when Filters::Category::Strings
-          Filters::Strings.register(env)
-        when Filters::Category::Lists
-          Filters::Lists.register(env)
-        # ... etc
-        end
-      end
-
-      # Similar for tests and functions
-    end
+    # Functions
+    Functions::Range.register(env)
+    Functions::Dict.register(env)
+    Functions::Debug.register(env)
   end
 end
 ```
@@ -183,33 +140,17 @@ end
 ### 1. Create `src/std/` Structure
 - Create directory structure
 - Move existing builtin implementations to appropriate modules
-- Implement loader with selective loading
+- Each module exposes `self.register(env)` method
 
 ### 2. Update `Environment`
 ```crystal
 def initialize(
   @override_builtins : Bool = false,
-  @load_std : Bool = true,  # NEW: control std loading
+  load_std : Bool = true,
   # ... other params
 )
   # ...
-  register_builtins if @load_std
-end
-
-private def register_builtins
-  Std::Loader.load_all(self)
-end
-
-def load_std_filters(category : Std::Filters::Category)
-  Std::Loader.load_filters(self, category)
-end
-
-def load_std_tests(category : Std::Tests::Category)
-  Std::Loader.load_tests(self, category)
-end
-
-def load_std_functions(category : Std::Functions::Category)
-  Std::Loader.load_functions(self, category)
+  Std.load_all(self) if load_std
 end
 ```
 
@@ -241,7 +182,7 @@ env = Crinkle::Environment.new  # Loads all builtins
 
 # New code can be selective
 env = Crinkle::Environment.new(load_std: false)
-env.load_std_filters(Crinkle::Std::Filters::Category::Strings)
+Crinkle::Std::Filters::Strings.register(env)
 ```
 
 ### Fixture Migration
@@ -277,8 +218,8 @@ end
 
 - [ ] `src/std/` directory created with organized modules
 - [ ] Existing builtins moved to appropriate modules
-- [ ] Loader supports selective loading
-- [ ] Environment supports `load_std` parameter
+- [ ] Each module has `self.register(env)` method
+- [ ] Environment supports `load_std` parameter (defaults to true)
 - [ ] Fixtures reorganized into logical subdirectories
 - [ ] All specs pass with new structure
 - [ ] Documentation updated
@@ -296,8 +237,8 @@ end
 - [ ] Create `src/std/tests/types.cr` with type tests
 - [ ] Create `src/std/tests/comparison.cr` with comparison tests
 - [ ] Create `src/std/functions/` with builtin functions
-- [ ] Create `src/std/loader.cr` with selective loading API
-- [ ] Update `Environment` to support `load_std` option
+- [ ] Create `src/std.cr` with `load_all` method
+- [ ] Update `Environment` to support `load_std` parameter
 
 ### Fixture Reorganization
 - [ ] Create `fixtures/lexer/` and migrate lexer-focused fixtures
