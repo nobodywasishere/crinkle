@@ -4,252 +4,149 @@
 Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Fault-tolerant lexer + parser
 - AST + diagnostics
+- Renderer / execution
 - Linter
+- Production-ready API (drop-in Crinja replacement)
 - Language Server (LSP)
 
 ## Phased Plan
 
-### Phase 0 — Baseline + Specs
+### Phase 0 — Baseline + Specs ✅
 **Outcome:** Clear scope, repo structure, and fixtures.
-- Define scope of Jinja2 features (blocks, filters, tests, macros, includes, whitespace control, etc.).
-- Capture compatibility targets (which Jinja2 version or subset).
-- Decide error-handling model (recoverable diagnostics vs. hard failures).
-- Set up basic project layout (src/, spec/, fixtures/).
-- Collect/author fixtures: small templates (`<name>.<ext>.j2`) + expected AST/diagnostics.
-- Use JSON for AST snapshots and store expected outputs in parallel fixture folders.
-- Add a minimal CLI to run lexer/parser on a fixture.
-- Document how evaluation/execution layers on after parsing.
-- Adopt `Crinkle::` module naming (e.g., `Crinkle::Lexer`, `Crinkle::Parser`).
+→ [PHASE-0.md](PHASE-0.md)
 
-#### Phase 0 Checklist
-- [x] Scope and compatibility decisions documented
-- [x] Repo skeleton created
-- [x] Fixtures added (`.j2` templates + JSON snapshots)
-- [x] Diagnostics/AST snapshot format documented
-- [x] Minimal CLI scaffold added
-- [x] Eval/exec layering documented
-
-### Phase 1 — Minimal Lexer
+### Phase 1 — Minimal Lexer ✅
 **Outcome:** Token stream with precise spans.
-- Design token types: text, variable start/end, block start/end, identifiers, literals, operators, punctuation, whitespace control.
-- Implement a streaming lexer over UTF-8 chars with line/column tracking.
-- Support Jinja2 delimiters and raw text.
-- Emit diagnostics for malformed delimiters or unexpected EOF.
-- Add lexer tests against fixtures (`<name>.<ext>.j2`).
-- Prefer fault-tolerant recovery (keep lexing after errors).
-- Add lexer token/diagnostic JSON snapshots for fixtures.
-- Snapshot specs write updated JSON and fail on diffs to surface changes.
+→ [PHASE-1.md](PHASE-1.md)
 
-#### Phase 1 Checklist
-- [x] Token model + spans implemented
-- [x] UTF-8 char-stream lexer implemented
-- [x] Fault-tolerant recovery in lexer
-- [x] Diagnostics emitted for unterminated constructs
-- [x] Lexer specs added
-- [x] CLI prints tokens/diagnostics
-
-### Phase 2 — Minimal Parser + AST
+### Phase 2 — Minimal Parser + AST ✅
 **Outcome:** Parse a limited but useful subset.
-- Define AST nodes: Template, Text, Output, Name, Literal, Call, Filter, If, For, Block.
-- Parse:
-  - `{{ ... }}` output expressions
-  - `{% if %}...{% endif %}`
-  - `{% for %}...{% endfor %}`
-- Build error recovery (sync at block end / delimiter).
-- Emit diagnostics with spans for syntax errors.
-- Parser tests with golden AST + diagnostics (stored as `fixtures/<name>.parser.ast.json` + `fixtures/<name>.diagnostics.json`).
-- Use self-updating snapshot specs for AST/diagnostics.
+→ [PHASE-2.md](PHASE-2.md)
 
-#### Phase 2 Checklist
-- [x] AST types + serializer added
-- [x] Parser implemented for `if`/`for` and basic expressions
-- [x] Parser diagnostics + recovery
-- [x] Snapshot fixtures + specs (self-updating)
-- [x] CLI supports AST output
-
-#### Notes: Custom Tags (Planned)
-- Add a parser extension registry keyed by tag name.
-- Extensions provide a `parse` hook that consumes tokens and returns AST nodes.
-- Extensions declare their end tags to aid recovery and nesting.
-- Unknown tags emit diagnostics when no extension matches.
-- Consider an `Environment` object that registers extensions before parsing.
-
-### Phase 3 — Expression Grammar
+### Phase 3 — Expression Grammar ✅
 **Outcome:** Full expression parsing (no evaluation).
-- Implement precedence/associativity (or Pratt parser).
-- Support filters (`|`), tests (`is`), calls, indexing, attribute access.
-- Support literals: strings, numbers, booleans, null, lists, dicts.
-- Add whitespace/line-statement variations (if in scope).
-- Expand fixtures + tests.
-- Recovery: unexpected tokens now resync to the next expression-start token to avoid
-  cascading `}}`/`%}` errors (ex: `{{ 1 + * 2 }}` recovers to `1 + 2` with a single diagnostic).
-
-#### Phase 3 Checklist
-- [x] Expression parser extended with precedence + postfix operators
-- [x] New AST nodes for calls/filters/tests/attr/index/literals
-- [x] Parser/lexer snapshots updated for new fixtures
+→ [PHASE-3.md](PHASE-3.md)
 
 ### Phase 4 — Jinja2 Control Structures + Macros
-**Outcome:** Broader language coverage.
-- Add parsing for:
-  - `{% set %}` / `{% set ... %}{% endset %}`
-  - `{% macro %}` / `{% call %}`
-  - `{% import %}`, `{% include %}`, `{% extends %}`, `{% block %}`, `{% super %}`
-  - `{% raw %}` / `{% endraw %}`
-- Track nesting and scoping in AST.
-- Improve recovery for mismatched tags.
-- Note: end tags may include a trailing name (e.g., `endblock name`); parser accepts
-  it now and leaves mismatch checks for the linter. Raw blocks collect token lexemes
-  until `endraw` and emit a single `Raw` node.
-- Added edge-case fixtures for missing end tags, malformed import/include flags, unknown
-  tags, and raw blocks that contain tag-like text.
+**Outcome:** Broader language coverage (`set`, `macro`, `import`, `include`, `extends`, `block`, `raw`).
+→ [PHASE-4.md](PHASE-4.md)
 
 ### Phase 5 — Custom Tags / Extensions
 **Outcome:** Parser extensibility for non-core tags.
-- Introduce a tag-extension registry (name -> handler).
-- Extension handlers can consume tokens and return AST nodes.
-- Extensions declare end tags to support recovery/nesting.
-- If a handler returns `nil` and declares end tags, parser recovers to the next end tag
-  and emits a fallback `AST::CustomTag` node.
-- Unknown tags emit diagnostics when no extension matches.
-- Add fixtures for extension tag parsing and error recovery.
-- Add registries for custom filters, tests, and global functions with a consistent API
-  (wiring for renderer; evaluation happens in Phase 6).
+→ [PHASE-5.md](PHASE-5.md)
 
 ### Phase 6 — Renderer / Execution
-**Outcome:** Render templates from AST (no linting yet).
-- Define runtime context (variables, filters, tests, globals).
-- Implement evaluation for expressions and control flow.
-- Render output with whitespace control (trim delimiters) and raw blocks.
-- Integrate include/extends/import/macro/call behavior.
-- Add rendering fixtures with expected output.
-  - Templates live in `fixtures/<name>.<ext>.j2`.
-  - Outputs live in `fixtures/<name>.renderer.output.txt`.
-  - Diagnostics live in `fixtures/<name>.diagnostics.json`.
-- Renderer emits diagnostics for runtime issues and defaults unknown custom tags to
-  rendering their bodies.
-- Renderer uses an environment-provided template loader for include/import/extends.
- - Renderer respects `trim_left` / `trim_right` on AST nodes when composing output.
+**Outcome:** Render templates from AST.
+→ [PHASE-6.md](PHASE-6.md)
 
-### Phase 7 — Formatter (Optional, HTML-aware)
+### Phase 7 — Formatter ✅
 **Outcome:** Format templates with HTML-structural awareness.
-- Comment preservation: extend lexer/parser with `{# #}` support, ignored by renderer.
-- Fault-tolerant: continue formatting when AST contains errors.
-- Build formatter over AST + token spans (preserve trivia where possible).
-- HTML-aware mode: align Crinkle blocks with HTML indentation.
-- Configurable options (indent width, line length, whitespace control).
-- Add fixtures with before/after formatting samples (reuse `fixtures/<name>.<ext>.j2`).
-
-#### Phase 7 Checklist
-- [x] Lexer: CommentStart/CommentEnd token types
-- [x] Parser: AST::Comment node type
-- [x] Renderer: ignore Comment nodes
-- [x] Preserve whitespace control delimiters (`-`) in AST + formatter output
-- [x] Formatter::Options struct implemented
-- [x] Formatter::Printer class implemented
-- [x] Formatter::HtmlContext class implemented
-- [x] Formatter class with AST traversal
-- [x] Expression formatting complete
-- [x] Statement formatting complete
-- [x] Comment formatting with indentation
-- [x] Fault-tolerance for parse errors
-- [x] HTML-aware indentation working
-- [x] Formatter fixtures created
-- [x] Formatter specs passing
+→ [PHASE-7.md](PHASE-7.md)
 
 ### Phase 8 — Linter
-**Outcome:** Useful diagnostics beyond syntax.
-- Build ameba-style rule framework with rule IDs, severity, quick fixes.
-- Starter rules:
-  - Unknown variables (if symbol table available)
-  - Unused variables / imports
-  - Unclosed or mismatched blocks
-  - Deprecated syntax
-  - Suspicious whitespace control
-- Add tests for lints and fixes.
-
-#### Phase 8 Checklist
-- [x] Linter rule framework + severity plumbing
-- [x] Diagnostic ID format: `Category/RuleName` (e.g., `Parser/UnknownTag`)
-- [x] Map lexer/parser/formatter/renderer diagnostics into categories (no refactor of existing IDs)
-- [ ] Linter output style aligned with ameba conventions
-- [x] Initial lint rules implemented + snapshots
+**Outcome:** Useful diagnostics beyond syntax (ameba-style rules).
+→ [PHASE-8.md](PHASE-8.md)
 
 ### Phase 9 — CLI (Unified Tooling)
-**Outcome:** A cohesive command-line interface for core workflows.
-- Provide a single CLI entrypoint with subcommands: `lex`, `parse`, `render`, `format`, `lint`.
-- Sane defaults: read from stdin, write to stdout, exit non-zero on errors.
-- Consistent flags across subcommands:
-  - `path` positional + `--stdin`
-  - `--format` for output (json/text/html)
-  - `--pretty` for JSON
-  - `--no-color` to disable colorized diagnostics
-  - `--strict` to treat warnings as errors
-- Support snapshot output for debugging (`--snapshots-dir`).
-- Exit codes aligned with common CLI conventions.
-- Document CLI usage in README.
-
-#### Phase 9 Checklist
-- [ ] CLI command structure defined
-- [ ] `lex` outputs tokens + diagnostics
-- [ ] `parse` outputs AST + diagnostics
-- [ ] `render` outputs rendered HTML + diagnostics
-- [ ] `format` outputs formatted template
-- [ ] `lint` outputs lint diagnostics
-- [ ] Consistent flags across commands
-- [ ] CLI usage documented
+**Outcome:** Cohesive CLI with subcommands: `lex`, `parse`, `render`, `format`, `lint`.
+→ [PHASE-9.md](PHASE-9.md)
 
 ### Phase 10 — HTML-Aware Formatter Engine
-**Outcome:** Replace regex-based HTML heuristics with a fault-tolerant HTML parser that coexists with Crinkle nodes.
-- Build a tolerant HTML tokenizer/parser that treats Crinkle nodes as opaque “holes”.
-- Produce a lightweight HTML tree/stack to drive indentation and formatting.
-- Recover from malformed HTML (unclosed tags, mismatches) without failing formatting.
-- Preserve raw/textarea/script/style content with minimal normalization.
-- Integrate with formatter to indent Crinkle blocks in HTML context accurately.
-- Add fixtures that mix HTML + Crinkle with tricky nesting and multiline attributes.
+**Outcome:** Replace regex-based HTML heuristics with fault-tolerant HTML parser.
+→ [PHASE-10.md](PHASE-10.md)
 
-#### Phase 10 Checklist
-- [ ] HTML tokenizer/parser (fault-tolerant)
-- [ ] Crinkle hole nodes (opaque placeholders)
-- [ ] Indent engine driven by HTML stack
-- [ ] Recovery strategy for malformed HTML
-- [ ] Formatter integration + fixtures
+### Phase 11 — Unified Fixture & Diagnostics Layout
+**Outcome:** Each template owns a single bundle of snapshot files.
+→ [PHASE-11.md](PHASE-11.md)
 
-### Phase 11 — Unified fixture & diagnostics layout
-**Outcome:** Each template owns a single bundle of snapshot files, making tokens/AST/output/diagnostics predictable for every pass.
-- Define the naming scheme `fixtures/<name>.<pass>.<type>.<ext>` plus matching structure under `fixtures/extensions`.
-- Replace the scattered helpers with a fixture manager that reads/writes the lexer token JSON, parser AST JSON, formatter output/text, renderer output/text, and a combined diagnostics JSON per template.
-- Update all specs (lexer, parser, formatter, renderer, extensions) to exercise the shared helper and rely on the new filenames.
-- Migrate existing fixtures into the new layout, regenerate snapshots, and ensure diagnostics for every pass land inside `name.diagnostics.json`.
-- Document the workflow so future fixtures adhere to the naming rules.
+### Phase 12 — Crinja Object Serialization Compatibility ✅
+**Outcome:** Match Crinja's object serialization surface.
+→ [PHASE-12.md](PHASE-12.md)
 
-#### Phase 11 Checklist
-- [ ] Naming/structure documented
-- [ ] Unified fixture helper implemented
-- [ ] Specs updated to use new helper
-- [ ] Fixtures migrated and snapshots regenerated
-- [ ] Extensions directory aligned with the same convention
+### Phase 13 — Standard Library & Fixture Reorganization
+**Outcome:** Clean separation of builtins and organized test fixtures.
+**Priority:** HIGH
+→ [PHASE-13.md](PHASE-13.md)
 
-### Phase 12 — Crinja Object Serialization Compatibility
-**Outcome:** Match Crinja’s object serialization surface (value conversion + Object::Auto) without pulling in unrelated Crinja APIs.
-- Implemented `Crinkle.value` conversions, `Undefined`/`StrictUndefined`, SafeString escaping, and `Finalizer.stringify`.
-- Added the `Crinkle::Object::Auto` macro plus JSON/YAML helpers covering object/property casting.
-- Added the `object_*` fixtures (value casting, JSON/YAML accesses, SafeString loops, missing attributes) and refreshed all snapshots.
+### Phase 14 — Callable Objects (crinja_call)
+**Outcome:** Objects can expose callable methods for template invocation.
+**Priority:** CRITICAL - Blocks Migration
+→ [PHASE-14.md](PHASE-14.md)
 
-#### Phase 12 Checklist
-- [x] Value conversion compatibility implemented.
-- [x] Undefined/StrictUndefined + SafeString + Finalizer implemented.
-- [x] Object::Auto compatibility implemented.
-- [x] JSON/YAML integrations implemented.
-- [x] Fixtures/specs cover Crinja serialization scenarios.
+### Phase 15 — Required Builtin Filters
+**Outcome:** Complete set of 18 filters needed for production templates.
+**Priority:** HIGH
+→ [PHASE-15.md](PHASE-15.md)
 
-### Phase 13 — Language Server (LSP)
-**Outcome:** IDE features for templates.
-- Minimal LSP server (initialize, textDocument/didOpen, didChange, didClose).
-- Diagnostics pipeline using lexer/parser/linter.
-- Hover + go-to-definition for variables/macros/blocks.
-- Document symbols, folding ranges, semantic tokens (optional).
-- Performance: incremental parsing and caching.
+### Phase 16 — Required Builtin Tests
+**Outcome:** Complete set of tests (`none`, `defined`, `undefined`, `sequence`).
+**Priority:** HIGH
+→ [PHASE-16.md](PHASE-16.md)
+
+### Phase 17 — Environment Access in Filters/Functions
+**Outcome:** Custom filters and functions can access the rendering context.
+**Priority:** HIGH
+→ [PHASE-17.md](PHASE-17.md)
+
+### Phase 18 — Template Loading API
+**Outcome:** High-level API for loading and rendering templates with caching.
+**Priority:** HIGH
+→ [PHASE-18.md](PHASE-18.md)
+
+### Phase 19 — Context Inheritance
+**Outcome:** Support for global/per-request context patterns.
+**Priority:** MEDIUM
+→ [PHASE-19.md](PHASE-19.md)
+
+### Phase 20 — LSP Foundation
+**Outcome:** Basic LSP server with document synchronization.
+**Priority:** LOW
+→ [PHASE-20.md](PHASE-20.md)
+
+### Phase 21 — LSP Diagnostics
+**Outcome:** Real-time error reporting in the editor.
+**Priority:** LOW
+→ [PHASE-21.md](PHASE-21.md)
+
+### Phase 22 — LSP Semantic Bridge
+**Outcome:** Connect runtime semantic information to the LSP.
+**Priority:** LOW - Research/Experimentation
+→ [PHASE-22.md](PHASE-22.md)
+
+### Phase 23 — LSP Hover & Navigation
+**Outcome:** Contextual information and code navigation.
+**Priority:** LOW
+→ [PHASE-23.md](PHASE-23.md)
+
+### Phase 24 — LSP Document Features
+**Outcome:** Document outline, code folding, semantic tokens.
+**Priority:** LOW
+→ [PHASE-24.md](PHASE-24.md)
+
+### Phase 25 — LSP Performance & Polish
+**Outcome:** Production-ready LSP server with good performance.
+**Priority:** LOW
+→ [PHASE-25.md](PHASE-25.md)
+
+## Production Readiness Summary
+
+Critical path for drop-in Crinja replacement:
+
+| Phase | Feature | Priority |
+|-------|---------|----------|
+| 13 | Std Library & Fixture Reorg | HIGH |
+| 14 | Callable Objects | CRITICAL |
+| 15 | 18 Builtin Filters | HIGH |
+| 16 | 4 Builtin Tests | HIGH |
+| 17 | Environment Access | HIGH |
+| 18 | Template Loading API | HIGH |
+| 19 | Context Inheritance | MEDIUM |
+
+## Verification
+
+```bash
+crystal spec
+```
 
 ## Definition of Done (per phase)
 - Tests passing for all added fixtures.
@@ -261,10 +158,10 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 - Exact Jinja2 feature scope and version compatibility?
   - Jinja2 v3.1.6
 - Should we parse only, or also evaluate/execute templates?
-  - There should be functionality for evaluating / executing templates, but this should be a separate pass from parsing them
+  - Separate pass for evaluation/execution
 - Should we aim for full Jinja2 whitespace/line statement options?
   - Yes
 - Do we need integration with existing Crystal Jinja2 libraries (e.g., crinja)?
-  - This is meant as a replacement for crinja, so no
+  - This is a replacement for crinja, so no
 - Preferred test framework and formatting for AST snapshots?
-  - Use the built-in spec testing framework to Crystal lang
+  - Use built-in Crystal spec framework
