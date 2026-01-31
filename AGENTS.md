@@ -242,21 +242,19 @@ Track spans carefully through the parser.
 
 ### Git User Configuration
 
-**IMPORTANT:** Set your git author identity based on which AI agent you are:
+**IMPORTANT:** Use the `--author` flag when committing to identify which AI agent made the change:
 
 **For Claude Opus 4.5:**
 ```bash
-git config user.name "Claude Opus 4.5"
-git config user.email "claude@anthropic.com"
+git commit --author="Claude Opus 4.5 <claude@anthropic.com>" -m "message"
 ```
 
 **For GPT-5.2-Codex:**
 ```bash
-git config user.name "GPT-5.2-Codex"
-git config user.email "codex@openai.com"
+git commit --author="GPT-5.2-Codex <codex@openai.com>" -m "message"
 ```
 
-This ensures proper attribution in the commit history. All commits should clearly identify which AI agent made them.
+This ensures proper attribution in the commit history without overriding the default git configuration.
 
 ### Branches
 - Work directly on `main` branch
