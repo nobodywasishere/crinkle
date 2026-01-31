@@ -115,8 +115,11 @@ def fixture_info(path : String) : FixtureInfo
   FixtureInfo.new(name, template_ext, path, base_dir)
 end
 
-def fixture_templates(base_dir : String = "fixtures") : Array(FixtureInfo)
-  Dir.glob(File.join(base_dir, "*.j2")).sort.compact_map do |path|
+def fixture_templates(base_dir : String = "fixtures", recursive : Bool = false, exclude : Array(String) = Array(String).new) : Array(FixtureInfo)
+  pattern = recursive ? File.join(base_dir, "**", "*.j2") : File.join(base_dir, "*.j2")
+  Dir.glob(pattern).sort.compact_map do |path|
+    # Skip excluded directories
+    next if exclude.any? { |ex| path.includes?("/#{ex}/") }
     filename = File.basename(path)
     parts = filename.split(".")
     next unless parts.size == 3 && parts.last == "j2"
@@ -284,8 +287,9 @@ def build_render_environment : Crinkle::Environment
   end
 
   env.set_loader do |name|
-    path = File.join("fixtures", name)
-    File.read(path) if File.exists?(path)
+    # Search for templates recursively in fixtures/
+    found = Dir.glob(File.join("fixtures", "**", name)).first?
+    found ? File.read(found) : nil
   end
 
   env
@@ -343,8 +347,14 @@ def build_extensions_environment : Crinkle::Environment
   end
 
   env.set_loader do |name|
+    # Search for templates in fixtures/extensions/ and recursively in fixtures/
     path = File.join("fixtures", "extensions", name)
-    File.read(path) if File.exists?(path)
+    if File.exists?(path)
+      File.read(path)
+    else
+      found = Dir.glob(File.join("fixtures", "**", name)).first?
+      found ? File.read(found) : nil
+    end
   end
 
   env
