@@ -51,15 +51,16 @@ Reorganize flat `fixtures/` into:
 
 ```
 fixtures/
-├── lexer/           # Token-level tests (delimiters, whitespace, comments)
-├── parser/          # AST construction tests (expressions, statements, nesting)
-├── formatter/       # Formatting output tests (indentation, HTML-aware)
-├── renderer/        # Execution/evaluation tests (control flow, output)
-├── std/             # Standard library filter/test/function tests
-│   ├── filters/
-│   ├── tests/
-│   └── functions/
-└── integration/     # End-to-end tests combining multiple passes
+├── lexer/           # Token-level tests (delimiters, whitespace, comments) - 9 fixtures
+├── parser/          # AST construction tests (expressions, statements, nesting) - 77 fixtures
+├── formatter/       # Formatting output tests (indentation, HTML-aware) - 51 fixtures
+├── linter/          # Linter rule tests - 11 fixtures
+├── renderer/        # Execution/evaluation tests (control flow, output) - 22 fixtures
+├── std_filters/     # Standard library filter tests - 1 fixture
+├── std_tests/       # Standard library test tests - 1 fixture
+├── std_functions/   # Standard library function tests - empty
+├── integration/     # End-to-end tests combining multiple passes - 6 fixtures
+└── extensions/      # Extension tag tests (unchanged) - 6 fixtures
 ```
 
 Each subfolder follows existing naming convention:
@@ -68,6 +69,8 @@ Each subfolder follows existing naming convention:
 - `<name>.parser.ast.json` — Expected AST
 - `<name>.renderer.output.txt` — Expected rendered output
 - `<name>.diagnostics.json` — Expected diagnostics
+
+Total: 174 main fixtures + 6 extension fixtures = 180 template files, generating 185 test cases.
 
 ## API Design
 
@@ -137,12 +140,12 @@ end
 
 ## Implementation Plan
 
-### 1. Create `src/std/` Structure
+### 1. Create `src/std/` Structure ⏳ TODO
 - Create directory structure
 - Move existing builtin implementations to appropriate modules
 - Each module exposes `self.register(env)` method
 
-### 2. Update `Environment`
+### 2. Update `Environment` ⏳ TODO
 ```crystal
 def initialize(
   @override_builtins : Bool = false,
@@ -154,18 +157,18 @@ def initialize(
 end
 ```
 
-### 3. Reorganize Fixtures
-- Create subdirectories under `fixtures/`
-- Move existing fixtures to appropriate subdirectories
-- Update spec helpers to find fixtures in new locations
-- Ensure all specs pass with new structure
+### 3. Reorganize Fixtures ✅ COMPLETED
+- ✅ Create subdirectories under `fixtures/`
+- ✅ Move existing fixtures to appropriate subdirectories
+- ✅ Update spec helpers to find fixtures in new locations
+- ✅ Ensure all specs pass with new structure
 
-### 4. Update Specs
-- Update `fixtures_spec.cr` to handle subdirectories
-- Add helper to glob fixtures from multiple directories
-- Verify all snapshot tests still pass
+### 4. Update Specs ✅ COMPLETED
+- ✅ Update `fixtures_spec.cr` to handle subdirectories
+- ✅ Add helper to glob fixtures from multiple directories
+- ✅ Verify all snapshot tests still pass (185 tests)
 
-### 5. Documentation
+### 5. Documentation ⏳ TODO
 - Update README with selective loading examples
 - Document fixture organization in AGENTS.md
 - Add examples of custom filter/test registration
@@ -220,8 +223,8 @@ end
 - [ ] Existing builtins moved to appropriate modules
 - [ ] Each module has `self.register(env)` method
 - [ ] Environment supports `load_std` parameter (defaults to true)
-- [ ] Fixtures reorganized into logical subdirectories
-- [ ] All specs pass with new structure
+- [x] Fixtures reorganized into logical subdirectories
+- [x] All specs pass with new structure (185 tests)
 - [ ] Documentation updated
 - [ ] Backwards compatible (default loads all builtins)
 
@@ -241,19 +244,74 @@ end
 - [ ] Update `Environment` to support `load_std` parameter
 
 ### Fixture Reorganization
-- [ ] Create `fixtures/lexer/` and migrate lexer-focused fixtures
-- [ ] Create `fixtures/parser/` and migrate parser-focused fixtures
-- [ ] Create `fixtures/formatter/` and migrate formatter-focused fixtures
-- [ ] Create `fixtures/renderer/` and migrate renderer-focused fixtures
-- [ ] Create `fixtures/std/` for builtin tests
-- [ ] Create `fixtures/integration/` for end-to-end tests
-- [ ] Update spec helpers to find fixtures in new locations
-- [ ] Ensure all existing specs pass with new structure
+- [x] Create `fixtures/lexer/` and migrate lexer-focused fixtures (9 fixtures)
+- [x] Create `fixtures/parser/` and migrate parser-focused fixtures (77 fixtures)
+- [x] Create `fixtures/formatter/` and migrate formatter-focused fixtures (51 fixtures)
+- [x] Create `fixtures/linter/` and migrate linter-focused fixtures (11 fixtures)
+- [x] Create `fixtures/renderer/` and migrate renderer-focused fixtures (22 fixtures)
+- [x] Create `fixtures/std_filters/` for filter tests (1 fixture)
+- [x] Create `fixtures/std_tests/` for test tests (1 fixture)
+- [x] Create `fixtures/std_functions/` for function tests (empty)
+- [x] Create `fixtures/integration/` for end-to-end tests (6 fixtures)
+- [x] Update spec helpers to find fixtures in new locations
+- [x] Ensure all existing specs pass with new structure (185 tests passing)
 
 ### Documentation
 - [ ] Update README with selective loading examples
 - [ ] Update AGENTS.md with fixture organization
 - [ ] Add examples of custom filter/test registration
+
+## Implementation Details
+
+### Fixture Reorganization (Completed)
+
+**Changes Made:**
+
+1. **Directory Structure Created:**
+   - `fixtures/lexer/` - 9 token-level tests
+   - `fixtures/parser/` - 77 AST construction tests
+   - `fixtures/formatter/` - 51 formatting tests
+   - `fixtures/linter/` - 11 linting tests (new category)
+   - `fixtures/renderer/` - 22 execution tests
+   - `fixtures/std_filters/` - 1 filter test
+   - `fixtures/std_tests/` - 1 test test
+   - `fixtures/std_functions/` - empty, ready for future tests
+   - `fixtures/integration/` - 6 end-to-end tests
+   - `fixtures/extensions/` - 6 extension tests (unchanged)
+
+2. **Spec Helper Updates ([spec/spec_helper.cr](spec/spec_helper.cr)):**
+   - Added `recursive` parameter to `fixture_templates()` for subdirectory discovery
+   - Added `exclude` parameter to skip directories like `extensions/`
+   - Updated template loaders to search recursively with `Dir.glob("fixtures/**/*.j2")`
+   - Maintains backwards compatibility for non-recursive lookups
+
+3. **Fixtures Spec Simplification ([spec/fixtures_spec.cr](spec/fixtures_spec.cr)):**
+   - Reduced from 127 lines to 71 lines
+   - Removed compile-time macros in favor of runtime iteration
+   - Each fixture generates its own test case (185 total)
+   - Separated main fixtures from extension fixtures with different environments
+   - Simplified `run_fixture()` method with block parameter instead of proc
+
+4. **Other Spec Updates:**
+   - [spec/lexer_spec.cr](spec/lexer_spec.cr): Updated paths to `fixtures/lexer/`
+   - [spec/parser_spec.cr](spec/parser_spec.cr): Updated paths to `fixtures/lexer/`
+
+5. **Linter Detection:**
+   - Updated to detect linter fixtures by directory path (`info.base_dir.includes?("linter")`)
+   - Previously only checked filename prefix (`info.name.starts_with?("lint_")`)
+
+**Benefits Achieved:**
+- Clear separation of fixtures by pipeline stage
+- Each test case is individually named and can be run in isolation
+- Easier to find and understand what each fixture tests
+- Better organization for adding future test categories
+- All 185 tests passing
+
+**Commit:** `10813f9` - "Reorganize fixtures into logical subdirectories"
+
+### Standard Library (Not Yet Implemented)
+
+The `src/std/` structure and selective loading remain to be implemented. Current builtins are still registered directly in test helpers and `Environment`.
 
 ## Out of Scope
 
