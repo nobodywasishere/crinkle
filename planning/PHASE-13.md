@@ -140,12 +140,12 @@ end
 
 ## Implementation Plan
 
-### 1. Create `src/std/` Structure ⏳ TODO
+### 1. Create `src/std/` Structure (TODO)
 - Create directory structure
 - Move existing builtin implementations to appropriate modules
 - Each module exposes `self.register(env)` method
 
-### 2. Update `Environment` ⏳ TODO
+### 2. Update `Environment` (TODO)
 ```crystal
 def initialize(
   @override_builtins : Bool = false,
@@ -157,18 +157,18 @@ def initialize(
 end
 ```
 
-### 3. Reorganize Fixtures ✅ COMPLETED
-- ✅ Create subdirectories under `fixtures/`
-- ✅ Move existing fixtures to appropriate subdirectories
-- ✅ Update spec helpers to find fixtures in new locations
-- ✅ Ensure all specs pass with new structure
+### 3. Reorganize Fixtures (COMPLETED)
+- Create subdirectories under `fixtures/`
+- Move existing fixtures to appropriate subdirectories
+- Update spec helpers to find fixtures in new locations
+- Ensure all specs pass with new structure
 
-### 4. Update Specs ✅ COMPLETED
-- ✅ Update `fixtures_spec.cr` to handle subdirectories
-- ✅ Add helper to glob fixtures from multiple directories
-- ✅ Verify all snapshot tests still pass (185 tests)
+### 4. Update Specs (COMPLETED)
+- Update `fixtures_spec.cr` to handle subdirectories
+- Add helper to glob fixtures from multiple directories
+- Verify all snapshot tests still pass (185 tests)
 
-### 5. Documentation ⏳ TODO
+### 5. Documentation (TODO)
 - Update README with selective loading examples
 - Document fixture organization in AGENTS.md
 - Add examples of custom filter/test registration

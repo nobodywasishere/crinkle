@@ -72,11 +72,16 @@ crinkle/
 │   ├── *_spec.cr               # Unit tests
 │   └── fixtures_spec.cr        # Snapshot tests
 ├── fixtures/                   # Test templates and snapshots
-│   ├── *.j2                    # Template sources
-│   ├── *.lexer.tokens.json     # Expected tokens
-│   ├── *.parser.ast.json       # Expected AST
-│   ├── *.renderer.output.txt   # Expected output
-│   └── *.diagnostics.json      # Expected diagnostics
+│   ├── lexer/                  # Token-level tests (9 fixtures)
+│   ├── parser/                 # AST construction tests (77 fixtures)
+│   ├── formatter/              # Formatting tests (51 fixtures)
+│   ├── linter/                 # Linting rule tests (11 fixtures)
+│   ├── renderer/               # Execution tests (22 fixtures)
+│   ├── std_filters/            # Filter tests (1 fixture)
+│   ├── std_tests/              # Test tests (1 fixture)
+│   ├── std_functions/          # Function tests (empty)
+│   ├── integration/            # End-to-end tests (6 fixtures)
+│   └── extensions/             # Extension tag tests (6 fixtures)
 └── planning/                   # Phase plans and roadmap
     ├── PLAN.md                 # Master plan
     └── PHASE-*.md              # Detailed phase docs
@@ -144,7 +149,7 @@ When snapshots differ, specs fail showing the diff. Update by regenerating.
    end
    ```
 
-2. Add test fixture: `fixtures/filter_myfilter.html.j2`
+2. Add test fixture: `fixtures/std_filters/filter_myfilter.html.j2`
 
 3. Run specs to generate snapshots
 
@@ -175,12 +180,30 @@ crystal spec spec/lexer_spec.cr
 ### Regenerate Snapshots
 Delete outdated snapshots and re-run specs. New snapshots are written automatically.
 
+### Fixture Organization
+
+Fixtures are organized by pipeline stage:
+- **lexer/** - Token-level tests (delimiters, whitespace, comments)
+- **parser/** - AST construction tests (expressions, statements, control flow)
+- **formatter/** - Formatting output tests (indentation, HTML-aware)
+- **linter/** - Linting rule tests (duplicate blocks, formatting issues)
+- **renderer/** - Execution tests (evaluation, output generation)
+- **std_filters/** - Standard library filter tests
+- **std_tests/** - Standard library test tests
+- **std_functions/** - Standard library function tests
+- **integration/** - End-to-end tests combining multiple passes
+- **extensions/** - Extension tag tests (custom tags like `{% note %}`)
+
 ### Fixture Naming Convention
-- `name.ext.j2` - Template source
+Within each directory, fixtures follow this naming pattern:
+- `name.ext.j2` - Template source (ext is html, md, etc.)
 - `name.lexer.tokens.json` - Lexer output
 - `name.parser.ast.json` - Parser output
+- `name.formatter.output.ext.j2` - Formatter output
 - `name.renderer.output.txt` - Renderer output
-- `name.diagnostics.json` - Combined diagnostics
+- `name.diagnostics.json` - Combined diagnostics from all passes
+
+Example: `fixtures/parser/if_else_if.html.j2` with corresponding snapshot files.
 
 ## Code Style
 
