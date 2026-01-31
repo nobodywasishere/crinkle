@@ -272,6 +272,10 @@ crystal spec          # Run tests
 crystal build src/cli/cli.cr -o crinkle  # Build CLI
 ```
 
+### Note on Development
+
+This project was vibe coded using **GPT-5.2-Codex** and **Claude Opus 4.5**.
+
 ## Roadmap
 
 See [planning/PLAN.md](planning/PLAN.md) for the development roadmap.
