@@ -444,6 +444,25 @@ module Crinkle
         return render_macro(macro_def, args, kwargs, nil)
       end
 
+      # Check if this is a method call on an object (e.g., ctx.localize("key"))
+      if callee.is_a?(AST::GetAttr)
+        target = eval_expr(callee.target)
+        unless target.is_a?(Undefined) || target.is_a?(StrictUndefined)
+          if target.responds_to?(:jinja_call)
+            if callable = target.jinja_call(callee.name)
+              arguments = Arguments.new(env: @environment, varargs: args, kwargs: kwargs, target: target)
+              case callable
+              when Callable
+                return callable.call(arguments)
+              when CallableProc
+                return callable.call(arguments)
+              end
+            end
+          end
+        end
+        # If no callable found, fall through to normal attribute access + error handling
+      end
+
       if callee.is_a?(AST::Name) && callee.value == "super"
         if @super_stack.empty?
           emit_diagnostic(

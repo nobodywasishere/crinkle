@@ -1,0 +1,55 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Name",
+            "value": "ctx"
+          },
+          "name": "localize"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": "settings.title"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Name",
+            "value": "ctx"
+          },
+          "name": "flag"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": "feature_enabled"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

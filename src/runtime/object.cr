@@ -1,4 +1,5 @@
 require "./value"
+require "./callable"
 
 module Crinkle
   annotation Attribute
@@ -8,6 +9,25 @@ module Crinkle
   end
 
   module Object
+    # Returns a callable for the given method name, or nil if the method is not callable.
+    # Objects can override this to expose methods that can be invoked from templates.
+    #
+    # Example:
+    # ```
+    # def jinja_call(name : String) : CallableProc?
+    #   case name
+    #   when "localize"
+    #     ->(args : Arguments) {
+    #       key = args.varargs[0]?.try(&.to_s) || ""
+    #       Crinkle.value(translate(key))
+    #     }
+    #   end
+    # end
+    # ```
+    def jinja_call(name : String) : (Callable | CallableProc)?
+      nil # Default: no callable methods
+    end
+
     module Auto
       include ::Crinkle::Object
 

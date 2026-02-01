@@ -6,6 +6,23 @@
     {
       "id": "E_UNKNOWN_FUNCTION",
       "severity": "error",
+      "message": "Unknown function 'get'.",
+      "span": {
+        "start": {
+          "offset": 3,
+          "line": 1,
+          "column": 4
+        },
+        "end": {
+          "offset": 19,
+          "line": 1,
+          "column": 20
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_FUNCTION",
+      "severity": "error",
       "message": "Unknown function 'lower'.",
       "span": {
         "start": {

@@ -3,7 +3,7 @@
 ## Objectives
 - Enable objects to expose callable methods for template invocation.
 - Support method calls with positional and keyword arguments.
-- Maintain compatibility with Crinja's `crinja_call` pattern.
+- Maintain compatibility with Crinja's `jinja_call` pattern.
 
 ## Priority
 **CRITICAL** - Blocks Migration
@@ -21,8 +21,8 @@ This is different from attribute access (`ctx.user`) - these are method invocati
 ## Scope (Phase 14)
 - Create `Callable` module and `CallableInstance` class.
 - Create `Arguments` struct for argument handling.
-- Add `crinja_call` method to `Object` module.
-- Update renderer to check `crinja_call` before attribute access.
+- Add `jinja_call` method to `Object` module.
+- Update renderer to check `jinja_call` before attribute access.
 
 ## File Structure
 ```
@@ -30,7 +30,7 @@ src/
   runtime/
     callable.cr      # Callable module and CallableInstance
     arguments.cr     # Arguments struct
-  runtime/object.cr  # Modified to add crinja_call
+  runtime/object.cr  # Modified to add jinja_call
   renderer/renderer.cr # Modified for callable invocation
   crinkle.cr         # Add requires
 ```
@@ -112,7 +112,7 @@ end
 ### Object Module Extension
 ```crystal
 module Crinkle::Object
-  def crinja_call(name : String) : Callable | CallableProc | Nil
+  def jinja_call(name : String) : Callable | CallableProc | Nil
     nil # Default: no callable methods
   end
 end
@@ -122,7 +122,7 @@ end
 ```crystal
 private def eval_method_call(obj : Value, method_name : String, args : Array(Value), kwargs : Hash(String, Value)) : Value
   if obj.is_a?(Crinkle::Object)
-    if callable = obj.crinja_call(method_name)
+    if callable = obj.jinja_call(method_name)
       arguments = Arguments.new(env: @environment, varargs: args, kwargs: kwargs)
       return callable.call(arguments)
     end
@@ -136,14 +136,14 @@ end
 class MyContext
   include Crinkle::Object
 
-  def crinja_attribute(attr : Crinkle::Value) : Crinkle::Value
+  def jinja_attribute(attr : Crinkle::Value) : Crinkle::Value
     case attr.to_s
     when "name" then Crinkle.value("MyApp")
     else Crinkle::Undefined.new(attr.to_s)
     end
   end
 
-  def crinja_call(name : String) : Crinkle::CallableProc?
+  def jinja_call(name : String) : Crinkle::CallableProc?
     case name
     when "localize"
       ->(args : Crinkle::Arguments) {
@@ -161,21 +161,20 @@ end
 ```
 
 ## Test Fixtures
-- `fixtures/std/callable_basic.html.j2` — Basic method call with argument
-- `fixtures/std/callable_kwargs.html.j2` — Method call with keyword arguments
-- `fixtures/std/callable_on_context.html.j2` — Multiple methods on context object
+- `fixtures/std_callable/callable_basic.html.j2` — Basic method call with argument
+- `fixtures/std_callable/callable_kwargs.html.j2` — Method call with keyword arguments
+- `fixtures/std_callable/callable_on_context.html.j2` — Multiple methods on context object
 
 ## Acceptance Criteria
-- Objects can expose callable methods via `crinja_call`.
+- Objects can expose callable methods via `jinja_call`.
 - Callable methods receive positional and keyword arguments.
-- Renderer checks `crinja_call` before falling back to attribute access.
+- Renderer checks `jinja_call` before falling back to attribute access.
 - Test fixtures pass for callable object scenarios.
 
 ## Checklist
-- [ ] Create `src/runtime/callable.cr` with Callable module and CallableInstance
-- [ ] Create `src/runtime/arguments.cr` with Arguments struct
-- [ ] Add `crinja_call` method to `src/runtime/object.cr`
-- [ ] Update renderer to check `crinja_call` before attribute access
-- [ ] Add `require` statements to `src/crinkle.cr`
-- [ ] Create test fixtures for callable objects
-- [ ] Add specs for callable invocation
+- [x] Create `src/runtime/callable.cr` with Callable module and CallableInstance
+- [x] Create `src/runtime/arguments.cr` with Arguments struct
+- [x] Add `jinja_call` method to `src/runtime/object.cr`
+- [x] Update renderer to check `jinja_call` before attribute access
+- [x] Create test fixtures for callable objects
+- [x] Add specs for callable invocation

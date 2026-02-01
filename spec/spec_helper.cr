@@ -26,6 +26,65 @@ class AutoExample
   end
 end
 
+class TestContext
+  include Crinkle::Object
+
+  def crinja_attribute(attr : Crinkle::Value) : Crinkle::Value
+    case attr.to_s
+    when "name"
+      Crinkle.value("TestApp")
+    else
+      Crinkle::Undefined.new(attr.to_s)
+    end
+  end
+
+  def jinja_call(name : String) : Crinkle::CallableProc?
+    case name
+    when "localize"
+      ->(args : Crinkle::Arguments) : Crinkle::Value {
+        key = args.varargs[0]?.try(&.to_s) || ""
+        Crinkle.value("Localized: #{key}").as(Crinkle::Value)
+      }
+    when "flag"
+      ->(args : Crinkle::Arguments) : Crinkle::Value {
+        flag_name = args.varargs[0]?.try(&.to_s) || ""
+        case flag_name
+        when "feature_enabled"
+          Crinkle.value(true)
+        when "dark_mode"
+          Crinkle.value(true)
+        else
+          Crinkle.value(false)
+        end.as(Crinkle::Value)
+      }
+    when "translate"
+      ->(args : Crinkle::Arguments) : Crinkle::Value {
+        text = args.varargs[0]?.try(&.to_s) || ""
+        locale = args.kwargs["locale"]?.try(&.to_s) || "en"
+        Crinkle.value("[#{locale}] #{text}").as(Crinkle::Value)
+      }
+    when "format"
+      ->(args : Crinkle::Arguments) : Crinkle::Value {
+        template = args.varargs[0]?.try(&.to_s) || ""
+        name = args.kwargs["name"]?.try(&.to_s) || "Guest"
+        result = template.gsub("{name}", name)
+        Crinkle.value(result).as(Crinkle::Value)
+      }
+    when "redirected"
+      ->(args : Crinkle::Arguments) : Crinkle::Value {
+        path = args.varargs[0]?.try(&.to_s) || "/"
+        options = args.varargs[1]?
+        status = if options.is_a?(Hash)
+                   options.as(Hash)["status"]?.try(&.to_s) || "301"
+                 else
+                   "301"
+                 end
+        Crinkle.value("Redirect to #{path} (status: #{status})").as(Crinkle::Value)
+      }
+    end
+  end
+end
+
 def tokens_to_json(tokens : Array(Crinkle::Token)) : JSON::Any
   payload = tokens.map do |token|
     {
@@ -432,6 +491,9 @@ def render_context : Hash(String, Crinkle::Value)
   context["bar"] = "bar_value"
   context["baz"] = "baz_value"
   context["enabled"] = true
+
+  # Callable object context
+  context["ctx"] = TestContext.new
 
   context
 end

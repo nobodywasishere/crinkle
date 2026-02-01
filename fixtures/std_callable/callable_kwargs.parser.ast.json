@@ -1,0 +1,71 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Name",
+            "value": "ctx"
+          },
+          "name": "translate"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": "hello"
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "locale",
+            "value": {
+              "type": "Literal",
+              "value": "es"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Call",
+        "callee": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Name",
+            "value": "ctx"
+          },
+          "name": "format"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": "Welcome {name}"
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "name",
+            "value": {
+              "type": "Literal",
+              "value": "Alice"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
