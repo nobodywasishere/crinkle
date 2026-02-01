@@ -128,6 +128,26 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** LOW
 → [PHASE-25.md](PHASE-25.md)
 
+### Phase 26 — MCP Foundation
+**Outcome:** Basic MCP server with JSON-RPC and stdio transport.
+**Priority:** MEDIUM
+→ [PHASE-26.md](PHASE-26.md)
+
+### Phase 27 — MCP Tools (Template Operations)
+**Outcome:** Expose lex/parse/render/format/lint as MCP tools.
+**Priority:** MEDIUM
+→ [PHASE-27.md](PHASE-27.md)
+
+### Phase 28 — MCP Resources (Template Information)
+**Outcome:** Expose builtins and template metadata as MCP resources.
+**Priority:** MEDIUM
+→ [PHASE-28.md](PHASE-28.md)
+
+### Phase 29 — MCP Prompts (AI Assistance)
+**Outcome:** Pre-built prompts for AI-assisted template development.
+**Priority:** LOW
+→ [PHASE-29.md](PHASE-29.md)
+
 ## Production Readiness Summary
 
 Critical path for drop-in Crinja replacement:
