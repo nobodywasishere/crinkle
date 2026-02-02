@@ -1,8 +1,8 @@
 module Crinkle::Std::Filters
   module Lists
     Crinkle.define_filter :first,
-      params: {value: Any},
-      returns: Any,
+      params: {value: Value},
+      returns: Value,
       doc: "Return first element of sequence" do |value|
       case value
       when Array
@@ -13,8 +13,8 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :last,
-      params: {value: Any},
-      returns: Any,
+      params: {value: Value},
+      returns: Value,
       doc: "Return last element of sequence" do |value|
       case value
       when Array
@@ -39,7 +39,7 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :length,
-      params: {value: Any},
+      params: {value: Value},
       returns: Int64,
       doc: "Return length of sequence" do |value|
       case value
@@ -95,7 +95,7 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :batch,
-      params: {value: Array, linecount: Int64, fill_with: Any},
+      params: {value: Array, linecount: Int64, fill_with: Value},
       defaults: {linecount: 2_i64, fill_with: nil},
       returns: Array,
       doc: "Batch items into fixed-size lists" do |value, linecount, fill_with|
@@ -127,7 +127,7 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :slice,
-      params: {value: Array, slices: Int64, fill_with: Any},
+      params: {value: Array, slices: Int64, fill_with: Value},
       defaults: {slices: 2_i64, fill_with: nil},
       returns: Array,
       doc: "Slice array into fixed number of slices" do |value, slices, fill_with|
@@ -238,7 +238,7 @@ module Crinkle::Std::Filters
         if test
           result = Array(Value).new
           value.each do |item|
-            if test.call(item, Array(Value).new, Hash(String, Value).new, ctx)
+            if test.call(item, Array(Value).new, Hash(String, Value).new, ctx, span)
               result << item
             end
           end
@@ -262,7 +262,7 @@ module Crinkle::Std::Filters
         if test
           result = Array(Value).new
           value.each do |item|
-            unless test.call(item, Array(Value).new, Hash(String, Value).new, ctx)
+            unless test.call(item, Array(Value).new, Hash(String, Value).new, ctx, span)
               result << item
             end
           end
@@ -290,12 +290,12 @@ module Crinkle::Std::Filters
             case item
             when Hash(String, Value)
               attr_value = item[attr]?
-              if test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx)
+              if test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx, span)
                 result << item
               end
             when Hash(Value, Value)
               attr_value = item[attr]?
-              if test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx)
+              if test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx, span)
                 result << item
               end
             end
@@ -324,12 +324,12 @@ module Crinkle::Std::Filters
             case item
             when Hash(String, Value)
               attr_value = item[attr]?
-              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx)
+              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx, span)
                 result << item
               end
             when Hash(Value, Value)
               attr_value = item[attr]?
-              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx)
+              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx, span)
                 result << item
               end
             end
@@ -344,9 +344,9 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :default,
-      params: {value: Any, default_value: Any, boolean: Bool},
+      params: {value: Value, default_value: Value, boolean: Bool},
       defaults: {default_value: "", boolean: false},
-      returns: Any,
+      returns: Value,
       doc: "Return default value if undefined or empty" do |value, default_value, boolean|
       fallback = default_value
       boolean = boolean.as?(Bool) || false
@@ -372,7 +372,7 @@ module Crinkle::Std::Filters
 
     Crinkle.define_filter :random,
       params: {value: Array},
-      returns: Any,
+      returns: Value,
       doc: "Return random element from array" do |value|
       case value
       when Array(Value)

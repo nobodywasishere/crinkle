@@ -1,7 +1,7 @@
 module Crinkle::Std::Filters
   module Serialize
     Crinkle.define_filter :tojson,
-      params: {value: Any, indent: Int64},
+      params: {value: Value, indent: Int64},
       defaults: {indent: nil},
       returns: SafeString,
       doc: "Convert value to JSON string" do |value, indent|
@@ -17,14 +17,14 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :pprint,
-      params: {value: Any},
+      params: {value: Value},
       returns: SafeString,
       doc: "Pretty-print value as JSON" do |value|
       SafeString.new(value_to_json(value).to_pretty_json)
     end
 
     Crinkle.define_filter :list,
-      params: {value: Any},
+      params: {value: Value},
       returns: Array,
       doc: "Convert value to list" do |value|
       case value
@@ -46,15 +46,15 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :string,
-      params: {value: Any},
+      params: {value: Value},
       returns: String,
       doc: "Convert value to string" do |value|
       value.to_s
     end
 
     Crinkle.define_filter :attr,
-      params: {value: Any, name: String},
-      returns: Any,
+      params: {value: Value, name: String},
+      returns: Value,
       doc: "Get attribute from object" do |value, name|
       name = name.to_s
       case value

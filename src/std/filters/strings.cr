@@ -100,8 +100,8 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :reverse,
-      params: {value: Any},
-      returns: Any,
+      params: {value: Value},
+      returns: Value,
       doc: "Reverse a string or list" do |value|
       case value
       when String

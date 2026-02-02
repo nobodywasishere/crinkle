@@ -258,15 +258,17 @@ describe "Crinkle typed macros" do
       test_value = Crinkle.value("Hello World, this is a long text")
       test_args = [Crinkle.value(10)] of Crinkle::Value
       test_kwargs = Hash(String, Crinkle::Value).new
+      zero_pos = Crinkle::Position.new(0, 1, 1)
+      span = Crinkle::Span.new(zero_pos, zero_pos)
 
       # Manual implementation should work
       manual_filter = env.filters["typed_truncate_manual"]
-      manual_result = manual_filter.call(test_value, test_args, test_kwargs, ctx)
+      manual_result = manual_filter.call(test_value, test_args, test_kwargs, ctx, span)
       manual_result.to_s.should eq("Hello Worl...")
 
       # Macro-generated filter should also work
       typed_filter = env.filters["typed_truncate"]
-      typed_result = typed_filter.call(test_value, test_args, test_kwargs, ctx)
+      typed_result = typed_filter.call(test_value, test_args, test_kwargs, ctx, span)
       typed_result.to_s.should eq("Hello Worl...")
     end
   end

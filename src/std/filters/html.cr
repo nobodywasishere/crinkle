@@ -15,7 +15,7 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :escape,
-      params: {value: Any},
+      params: {value: Value},
       returns: String,
       doc: "Escape HTML special characters" do |value|
       # Don't double-escape SafeString
@@ -32,7 +32,7 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :e,
-      params: {value: Any},
+      params: {value: Value},
       returns: String,
       doc: "Alias for escape filter" do |value|
       # Don't double-escape SafeString
@@ -49,7 +49,7 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :safe,
-      params: {value: Any},
+      params: {value: Value},
       returns: SafeString,
       doc: "Mark string as safe (no escaping)" do |value|
       SafeString.new(value.to_s)

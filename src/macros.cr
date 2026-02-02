@@ -15,7 +15,7 @@ module Crinkle
     ))
 
     def self.register_filter_{{ name.id }}(env : ::Crinkle::Environment) : Nil
-      env.register_filter({{ filter_name }}) do |value, args, kwargs, ctx|
+      env.register_filter({{ filter_name }}) do |value, args, kwargs, ctx, span|
         {% if params %}
           {% primitives = ["String", "Int64", "Float64", "Bool"] %}
           %has_error = false
@@ -24,21 +24,21 @@ module Crinkle
             {% if i == 0 %}%raw{key.id} = value{% else %}%raw{key.id} = kwargs[{{ key.id.stringify }}]? || args[{{ i - 1 }}]? || {% if has_default %}::Crinkle.value({{ dv }}){% else %}::Crinkle::Undefined.new({{ key.id.stringify }}){% end %}{% end %}
             %param{key.id} = {% if type.id == "String".id %}{% if nullable %}%raw{key.id}.nil? ? nil : %raw{key.id}.to_s{% else %}%raw{key.id}.to_s{% end %}{% elsif type.id == "Int64".id || type.id == "Float64".id %}begin
               if %raw{key.id}.is_a?(::Crinkle::Undefined)
-                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Filter #{{{ filter_name }}}: '{{ key.id }}' is required"); %has_error = true; {{ type.id }}.zero{% end %}
+                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Filter #{{{ filter_name }}}: '{{ key.id }}' is required", span); %has_error = true; {{ type.id }}.zero{% end %}
               {% if nullable %}elsif %raw{key.id}.nil?
                 nil{% end %}
               elsif (v = %raw{key.id}.as?({{ type.id }}))
                 v
               else
-                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Filter #{{{ filter_name }}}: '{{ key.id }}' expected {{ type.id }}, got #{%raw{key.id}.class}"); %has_error = true; {{ type.id }}.zero
+                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Filter #{{{ filter_name }}}: '{{ key.id }}' expected {{ type.id }}, got #{%raw{key.id}.class}", span); %has_error = true; {{ type.id }}.zero
               end
             end{% elsif type.id == "Bool".id %}begin
               if %raw{key.id}.is_a?(::Crinkle::Undefined)
-                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Filter #{{{ filter_name }}}: '{{ key.id }}' is required"); %has_error = true; false{% end %}
+                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Filter #{{{ filter_name }}}: '{{ key.id }}' is required", span); %has_error = true; false{% end %}
               elsif %raw{key.id}.is_a?(Bool)
                 %raw{key.id}.as(Bool)
               else
-                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Filter #{{{ filter_name }}}: '{{ key.id }}' expected Bool, got #{%raw{key.id}.class}"); %has_error = true; false
+                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Filter #{{{ filter_name }}}: '{{ key.id }}' expected Bool, got #{%raw{key.id}.class}", span); %has_error = true; false
               end
             end{% else %}%raw{key.id}{% end %}
           {% i = i + 1 %}{% end %}
@@ -60,7 +60,7 @@ module Crinkle
     ))
 
     def self.register_test_{{ name.id }}(env : ::Crinkle::Environment) : Nil
-      env.register_test({{ test_name }}) do |value, args, kwargs, ctx|
+      env.register_test({{ test_name }}) do |value, args, kwargs, ctx, span|
         {% primitives = ["String", "Int64", "Float64", "Bool"] %}
         {% if params %}
           %has_error = false
@@ -69,21 +69,21 @@ module Crinkle
             {% if i == 0 %}%raw{key.id} = value{% else %}%raw{key.id} = kwargs[{{ key.id.stringify }}]? || args[{{ i - 1 }}]? || {% if has_default %}::Crinkle.value({{ dv }}){% else %}::Crinkle::Undefined.new({{ key.id.stringify }}){% end %}{% end %}
             %param{key.id} = {% if type.id == "String".id %}{% if nullable %}%raw{key.id}.nil? ? nil : %raw{key.id}.to_s{% else %}%raw{key.id}.to_s{% end %}{% elsif type.id == "Int64".id || type.id == "Float64".id %}begin
               if %raw{key.id}.is_a?(::Crinkle::Undefined)
-                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Test #{{{ test_name }}}: '{{ key.id }}' is required"); %has_error = true; {{ type.id }}.zero{% end %}
+                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Test #{{{ test_name }}}: '{{ key.id }}' is required", span); %has_error = true; {{ type.id }}.zero{% end %}
               {% if nullable %}elsif %raw{key.id}.nil?
                 nil{% end %}
               elsif (v = %raw{key.id}.as?({{ type.id }}))
                 v
               else
-                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Test #{{{ test_name }}}: '{{ key.id }}' expected {{ type.id }}, got #{%raw{key.id}.class}"); %has_error = true; {{ type.id }}.zero
+                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Test #{{{ test_name }}}: '{{ key.id }}' expected {{ type.id }}, got #{%raw{key.id}.class}", span); %has_error = true; {{ type.id }}.zero
               end
             end{% elsif type.id == "Bool".id %}begin
               if %raw{key.id}.is_a?(::Crinkle::Undefined)
-                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Test #{{{ test_name }}}: '{{ key.id }}' is required"); %has_error = true; false{% end %}
+                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Test #{{{ test_name }}}: '{{ key.id }}' is required", span); %has_error = true; false{% end %}
               elsif %raw{key.id}.is_a?(Bool)
                 %raw{key.id}.as(Bool)
               else
-                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Test #{{{ test_name }}}: '{{ key.id }}' expected Bool, got #{%raw{key.id}.class}"); %has_error = true; false
+                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Test #{{{ test_name }}}: '{{ key.id }}' expected Bool, got #{%raw{key.id}.class}", span); %has_error = true; false
               end
             end{% else %}%raw{key.id}{% end %}
           {% i = i + 1 %}{% end %}
@@ -108,7 +108,7 @@ module Crinkle
     ))
 
     def self.register_function_{{ name.id }}(env : ::Crinkle::Environment) : Nil
-      env.register_function({{ func_name }}) do |args, kwargs, ctx|
+      env.register_function({{ func_name }}) do |args, kwargs, ctx, span|
         {% if params %}
           {% primitives = ["String", "Int64", "Float64", "Bool"] %}
           %has_error = false
@@ -117,21 +117,21 @@ module Crinkle
             %raw{key.id} = kwargs[{{ key.id.stringify }}]? || args[{{ i }}]? || {% if has_default %}::Crinkle.value({{ dv }}){% else %}::Crinkle::Undefined.new({{ key.id.stringify }}){% end %}
             %param{key.id} = {% if type.id == "String".id %}{% if nullable %}%raw{key.id}.nil? ? nil : %raw{key.id}.to_s{% else %}%raw{key.id}.to_s{% end %}{% elsif type.id == "Int64".id || type.id == "Float64".id %}begin
               if %raw{key.id}.is_a?(::Crinkle::Undefined)
-                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Function #{{{ func_name }}}: '{{ key.id }}' is required"); %has_error = true; {{ type.id }}.zero{% end %}
+                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Function #{{{ func_name }}}: '{{ key.id }}' is required", span); %has_error = true; {{ type.id }}.zero{% end %}
               {% if nullable %}elsif %raw{key.id}.nil?
                 nil{% end %}
               elsif (v = %raw{key.id}.as?({{ type.id }}))
                 v
               else
-                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Function #{{{ func_name }}}: '{{ key.id }}' expected {{ type.id }}, got #{%raw{key.id}.class}"); %has_error = true; {{ type.id }}.zero
+                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Function #{{{ func_name }}}: '{{ key.id }}' expected {{ type.id }}, got #{%raw{key.id}.class}", span); %has_error = true; {{ type.id }}.zero
               end
             end{% elsif type.id == "Bool".id %}begin
               if %raw{key.id}.is_a?(::Crinkle::Undefined)
-                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Function #{{{ func_name }}}: '{{ key.id }}' is required"); %has_error = true; false{% end %}
+                {% if has_default %}{{ dv }}{% else %}ctx.add_diagnostic(::Crinkle::DiagnosticType::MissingArgument, "Function #{{{ func_name }}}: '{{ key.id }}' is required", span); %has_error = true; false{% end %}
               elsif %raw{key.id}.is_a?(Bool)
                 %raw{key.id}.as(Bool)
               else
-                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Function #{{{ func_name }}}: '{{ key.id }}' expected Bool, got #{%raw{key.id}.class}"); %has_error = true; false
+                ctx.add_diagnostic(::Crinkle::DiagnosticType::TypeMismatch, "Function #{{{ func_name }}}: '{{ key.id }}' expected Bool, got #{%raw{key.id}.class}", span); %has_error = true; false
               end
             end{% else %}%raw{key.id}{% end %}
           {% i = i + 1 %}{% end %}

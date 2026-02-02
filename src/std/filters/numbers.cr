@@ -1,7 +1,7 @@
 module Crinkle::Std::Filters
   module Numbers
     Crinkle.define_filter :int,
-      params: {value: Any, default: Int64, base: Int64},
+      params: {value: Value, default: Int64, base: Int64},
       defaults: {default: 0_i64, base: 10_i64},
       returns: Int64,
       doc: "Convert value to integer" do |value, default, base|
@@ -23,7 +23,7 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :float,
-      params: {value: Any, default: Float64},
+      params: {value: Value, default: Float64},
       defaults: {default: 0.0},
       returns: Float64,
       doc: "Convert value to float" do |value, default|
@@ -84,7 +84,7 @@ module Crinkle::Std::Filters
 
     Crinkle.define_filter :min,
       params: {value: Array},
-      returns: Any,
+      returns: Value,
       doc: "Return minimum value from array" do |value|
       case value
       when Array
@@ -96,7 +96,7 @@ module Crinkle::Std::Filters
 
     Crinkle.define_filter :max,
       params: {value: Array},
-      returns: Any,
+      returns: Value,
       doc: "Return maximum value from array" do |value|
       case value
       when Array

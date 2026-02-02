@@ -1,25 +1,25 @@
 module Crinkle::Std::Tests
   module Comparison
     Crinkle.define_test :eq,
-      params: {value: Any, other: Any},
+      params: {value: Value, other: Value},
       doc: "Check if value equals other" do |value, other|
       value == other
     end
 
     Crinkle.define_test :equalto,
-      params: {value: Any, other: Any},
+      params: {value: Value, other: Value},
       doc: "Check if value equals other (alias for eq)" do |value, other|
       value == other
     end
 
     Crinkle.define_test :ne,
-      params: {value: Any, other: Any},
+      params: {value: Value, other: Value},
       doc: "Check if value does not equal other" do |value, other|
       value != other
     end
 
     Crinkle.define_test :lt,
-      params: {value: Any, other: Any},
+      params: {value: Value, other: Value},
       doc: "Check if value is less than other" do |value, other|
       case value
       when Int64, Float64
@@ -37,7 +37,7 @@ module Crinkle::Std::Tests
     end
 
     Crinkle.define_test :le,
-      params: {value: Any, other: Any},
+      params: {value: Value, other: Value},
       doc: "Check if value is less than or equal to other" do |value, other|
       case value
       when Int64, Float64
@@ -55,7 +55,7 @@ module Crinkle::Std::Tests
     end
 
     Crinkle.define_test :gt,
-      params: {value: Any, other: Any},
+      params: {value: Value, other: Value},
       doc: "Check if value is greater than other" do |value, other|
       case value
       when Int64, Float64
@@ -73,7 +73,7 @@ module Crinkle::Std::Tests
     end
 
     Crinkle.define_test :ge,
-      params: {value: Any, other: Any},
+      params: {value: Value, other: Value},
       doc: "Check if value is greater than or equal to other" do |value, other|
       case value
       when Int64, Float64
@@ -91,7 +91,7 @@ module Crinkle::Std::Tests
     end
 
     Crinkle.define_test :greaterthan,
-      params: {value: Any, other: Any},
+      params: {value: Value, other: Value},
       doc: "Check if value is greater than other (alias for gt)" do |value, other|
       case value
       when Int64, Float64
@@ -109,7 +109,7 @@ module Crinkle::Std::Tests
     end
 
     Crinkle.define_test :lessthan,
-      params: {value: Any, other: Any},
+      params: {value: Value, other: Value},
       doc: "Check if value is less than other (alias for lt)" do |value, other|
       case value
       when Int64, Float64
@@ -128,7 +128,7 @@ module Crinkle::Std::Tests
 
     # Note: Using string name because 'in' is a keyword
     Crinkle.define_test "in",
-      params: {value: Any, container: Any},
+      params: {value: Value, container: Value},
       doc: "Check if value is in container" do |value, container|
       case container
       when Array
