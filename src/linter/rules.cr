@@ -792,6 +792,358 @@ module Crinkle
           end
         end
       end
+
+      # Callable validation rules - require template context schema
+      class CallableNotCallable < Rule
+        def initialize(@schema : Schema::Registry, @template_path : String? = nil) : Nil
+          super("Lint/CallableNotCallable", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          # Get template context schema if available
+          template_context = find_template_context(@template_path)
+          return issues unless template_context
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_not_callable_issues(node.expr, template_context, issues)
+            when AST::If
+              collect_not_callable_issues(node.test, template_context, issues)
+            when AST::For
+              collect_not_callable_issues(node.iter, template_context, issues)
+            when AST::Set
+              collect_not_callable_issues(node.value, template_context, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def find_template_context(path : String?) : Schema::TemplateContextSchema?
+          return unless path
+          @schema.templates[path]?
+        end
+
+        private def collect_not_callable_issues(
+          expr : AST::Expr,
+          template_context : Schema::TemplateContextSchema,
+          issues : Array(Issue),
+        ) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            next unless inner.is_a?(AST::Call)
+
+            # Check if it's a direct call to a variable (not a function or method)
+            callee = inner.callee
+            next unless callee.is_a?(AST::Name)
+
+            # Skip if it's a known function
+            next if @schema.functions.has_key?(callee.value)
+
+            # Check if the variable is in the template context
+            type_name = template_context.context[callee.value]?
+            next unless type_name
+
+            # Check if the type is a callable
+            callable_schema = @schema.callables[type_name]?
+            next unless callable_schema
+
+            # Check if the callable has a default_call
+            unless callable_schema.default_call
+              message = "Object '#{callee.value}' (#{type_name}) is not directly callable."
+              if callable_schema.methods.present?
+                method_names = callable_schema.methods.keys.join(", ")
+                message += " Available methods: #{method_names}."
+              end
+              issues << issue(inner.span, message)
+            end
+          end
+        end
+      end
+
+      class CallableDefaultCall < Rule
+        def initialize(@schema : Schema::Registry, @template_path : String? = nil) : Nil
+          super("Lint/CallableDefaultCall", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          # Get template context schema if available
+          template_context = find_template_context(@template_path)
+          return issues unless template_context
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_default_call_issues(node.expr, template_context, issues)
+            when AST::If
+              collect_default_call_issues(node.test, template_context, issues)
+            when AST::For
+              collect_default_call_issues(node.iter, template_context, issues)
+            when AST::Set
+              collect_default_call_issues(node.value, template_context, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def find_template_context(path : String?) : Schema::TemplateContextSchema?
+          return unless path
+          @schema.templates[path]?
+        end
+
+        private def collect_default_call_issues(
+          expr : AST::Expr,
+          template_context : Schema::TemplateContextSchema,
+          issues : Array(Issue),
+        ) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            next unless inner.is_a?(AST::Call)
+
+            callee = inner.callee
+            next unless callee.is_a?(AST::Name)
+            next if @schema.functions.has_key?(callee.value)
+
+            type_name = template_context.context[callee.value]?
+            next unless type_name
+
+            callable_schema = @schema.callables[type_name]?
+            next unless callable_schema
+
+            default_call = callable_schema.default_call
+            next unless default_call
+
+            # Validate arguments
+            validate_method_args(inner, default_call, callee.value, issues)
+          end
+        end
+
+        private def validate_method_args(
+          node : AST::Call,
+          method_schema : Schema::MethodSchema,
+          name : String,
+          issues : Array(Issue),
+        ) : Nil
+          provided_positional = node.args.size
+          max_positional = method_schema.params.size
+
+          if provided_positional > max_positional
+            issues << issue(
+              node.span,
+              "Default call for '#{name}' takes at most #{max_positional} argument(s), got #{provided_positional}."
+            )
+          end
+
+          # Check required arguments
+          provided_kwargs = node.kwargs.map(&.name).to_set
+
+          method_schema.params.each_with_index do |param, index|
+            next unless param.required?
+            next if provided_kwargs.includes?(param.name)
+            next if index < provided_positional
+
+            issues << issue(
+              node.span,
+              "Default call for '#{name}' requires argument '#{param.name}'."
+            )
+          end
+
+          # Check kwargs
+          known_params = method_schema.params.map(&.name)
+
+          node.kwargs.each do |kwarg|
+            unless known_params.includes?(kwarg.name)
+              message = "Unknown kwarg '#{kwarg.name}' for default call of '#{name}'."
+              if suggestion = DidYouMean.suggest(kwarg.name, known_params)
+                message += " Did you mean '#{suggestion}'?"
+              end
+              issues << issue(kwarg.span, message)
+            end
+          end
+        end
+      end
+
+      class CallableUnknownMethod < Rule
+        def initialize(@schema : Schema::Registry, @template_path : String? = nil) : Nil
+          super("Lint/CallableUnknownMethod", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          # Get template context schema if available
+          template_context = find_template_context(@template_path)
+          return issues unless template_context
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_unknown_method_issues(node.expr, template_context, issues)
+            when AST::If
+              collect_unknown_method_issues(node.test, template_context, issues)
+            when AST::For
+              collect_unknown_method_issues(node.iter, template_context, issues)
+            when AST::Set
+              collect_unknown_method_issues(node.value, template_context, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def find_template_context(path : String?) : Schema::TemplateContextSchema?
+          return unless path
+          @schema.templates[path]?
+        end
+
+        private def collect_unknown_method_issues(
+          expr : AST::Expr,
+          template_context : Schema::TemplateContextSchema,
+          issues : Array(Issue),
+        ) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            next unless inner.is_a?(AST::Call)
+
+            # Check if it's a method call (GetAttr as callee)
+            callee = inner.callee
+            next unless callee.is_a?(AST::GetAttr)
+
+            # Check if the target is a known variable
+            target = callee.target
+            next unless target.is_a?(AST::Name)
+
+            type_name = template_context.context[target.value]?
+            next unless type_name
+
+            callable_schema = @schema.callables[type_name]?
+            next unless callable_schema
+
+            method_name = callee.name
+            unless callable_schema.methods.has_key?(method_name)
+              message = "Unknown method '#{method_name}' for object '#{target.value}' (#{type_name})."
+              known_methods = callable_schema.methods.keys
+              if suggestion = DidYouMean.suggest(method_name, known_methods)
+                message += " Did you mean '#{suggestion}'?"
+              end
+              issues << issue(inner.span, message)
+            end
+          end
+        end
+      end
+
+      class CallableMethodKwarg < Rule
+        def initialize(@schema : Schema::Registry, @template_path : String? = nil) : Nil
+          super("Lint/CallableMethodKwarg", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          # Get template context schema if available
+          template_context = find_template_context(@template_path)
+          return issues unless template_context
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_method_kwarg_issues(node.expr, template_context, issues)
+            when AST::If
+              collect_method_kwarg_issues(node.test, template_context, issues)
+            when AST::For
+              collect_method_kwarg_issues(node.iter, template_context, issues)
+            when AST::Set
+              collect_method_kwarg_issues(node.value, template_context, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def find_template_context(path : String?) : Schema::TemplateContextSchema?
+          return unless path
+          @schema.templates[path]?
+        end
+
+        private def collect_method_kwarg_issues(
+          expr : AST::Expr,
+          template_context : Schema::TemplateContextSchema,
+          issues : Array(Issue),
+        ) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            next unless inner.is_a?(AST::Call)
+
+            # Check if it's a method call (GetAttr as callee)
+            callee = inner.callee
+            next unless callee.is_a?(AST::GetAttr)
+
+            # Check if the target is a known variable
+            target = callee.target
+            next unless target.is_a?(AST::Name)
+
+            type_name = template_context.context[target.value]?
+            next unless type_name
+
+            callable_schema = @schema.callables[type_name]?
+            next unless callable_schema
+
+            method_name = callee.name
+            method_schema = callable_schema.methods[method_name]?
+            next unless method_schema
+
+            # Validate arguments
+            validate_method_call_args(inner, method_schema, target.value, method_name, issues)
+          end
+        end
+
+        private def validate_method_call_args(
+          node : AST::Call,
+          method_schema : Schema::MethodSchema,
+          obj_name : String,
+          method_name : String,
+          issues : Array(Issue),
+        ) : Nil
+          provided_positional = node.args.size
+          max_positional = method_schema.params.size
+
+          if provided_positional > max_positional
+            issues << issue(
+              node.span,
+              "Method '#{obj_name}.#{method_name}' takes at most #{max_positional} argument(s), got #{provided_positional}."
+            )
+          end
+
+          # Check required arguments
+          provided_kwargs = node.kwargs.map(&.name).to_set
+
+          method_schema.params.each_with_index do |param, index|
+            next unless param.required?
+            next if provided_kwargs.includes?(param.name)
+            next if index < provided_positional
+
+            issues << issue(
+              node.span,
+              "Method '#{obj_name}.#{method_name}' requires argument '#{param.name}'."
+            )
+          end
+
+          # Check kwargs
+          known_params = method_schema.params.map(&.name)
+
+          node.kwargs.each do |kwarg|
+            unless known_params.includes?(kwarg.name)
+              message = "Unknown kwarg '#{kwarg.name}' for method '#{obj_name}.#{method_name}'."
+              if suggestion = DidYouMean.suggest(kwarg.name, known_params)
+                message += " Did you mean '#{suggestion}'?"
+              end
+              issues << issue(kwarg.span, message)
+            end
+          end
+        end
+      end
     end
 
     module SourceLines
