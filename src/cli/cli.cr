@@ -354,7 +354,7 @@ module Crinkle
         unless registry.filters.empty?
           STDOUT.puts("Filters (#{registry.filters.size}):")
           registry.filters.each do |filter_name, schema|
-            params_str = schema.params.map { |param| "#{param.name}: #{param.type}#{param.required ? "" : "?"}" }.join(", ")
+            params_str = schema.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
             STDOUT.puts("  #{filter_name}(#{params_str}) -> #{schema.returns}")
             STDOUT.puts("    #{schema.doc}") if schema.doc
           end
@@ -364,7 +364,7 @@ module Crinkle
         unless registry.tests.empty?
           STDOUT.puts("Tests (#{registry.tests.size}):")
           registry.tests.each do |test_name, schema|
-            params_str = schema.params.map { |param| "#{param.name}: #{param.type}#{param.required ? "" : "?"}" }.join(", ")
+            params_str = schema.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
             STDOUT.puts("  #{test_name}(#{params_str})")
             STDOUT.puts("    #{schema.doc}") if schema.doc
           end
@@ -374,7 +374,7 @@ module Crinkle
         unless registry.functions.empty?
           STDOUT.puts("Functions (#{registry.functions.size}):")
           registry.functions.each do |func_name, schema|
-            params_str = schema.params.map { |param| "#{param.name}: #{param.type}#{param.required ? "" : "?"}" }.join(", ")
+            params_str = schema.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
             STDOUT.puts("  #{func_name}(#{params_str}) -> #{schema.returns}")
             STDOUT.puts("    #{schema.doc}") if schema.doc
           end
@@ -386,11 +386,11 @@ module Crinkle
           registry.callables.each do |_name, schema|
             STDOUT.puts("  #{schema.class_name}:")
             if dc = schema.default_call
-              params_str = dc.params.map { |param| "#{param.name}: #{param.type}#{param.required ? "" : "?"}" }.join(", ")
+              params_str = dc.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
               STDOUT.puts("    __call__(#{params_str}) -> #{dc.returns}")
             end
             schema.methods.each do |method_name, method_schema|
-              params_str = method_schema.params.map { |param| "#{param.name}: #{param.type}#{param.required ? "" : "?"}" }.join(", ")
+              params_str = method_schema.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
               STDOUT.puts("    #{method_name}(#{params_str}) -> #{method_schema.returns}")
               STDOUT.puts("      #{method_schema.doc}") if method_schema.doc
             end
