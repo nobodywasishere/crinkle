@@ -1,4 +1,5 @@
 require "../crinkle"
+require "../lsp/lsp"
 require "option_parser"
 require "json"
 
@@ -121,6 +122,8 @@ module Crinkle
         end
         emit_issues_results(results, opts)
         exit exit_code_for_issues(all_issues, opts)
+      when "lsp"
+        exit LSP.run(args)
       when "-h", "--help", "help"
         print_usage
         exit 0
@@ -141,6 +144,7 @@ module Crinkle
           render   Render template and output result + diagnostics
           format   Format template and output formatted source
           lint     Lint template and output diagnostics
+          lsp      Start the Language Server Protocol server
 
         Options:
           --stdin                Read from stdin instead of file path

@@ -103,6 +103,11 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** LOW
 → [PHASE-20.md](PHASE-20.md)
 
+### Phase 20a — VS Code Extension
+**Outcome:** Minimal VS Code extension for testing LSP features.
+**Priority:** LOW (enables testing of subsequent LSP phases)
+→ [PHASE-20a.md](PHASE-20a.md)
+
 ### Phase 21 — LSP Diagnostics
 **Outcome:** Real-time error reporting in the editor.
 **Priority:** LOW

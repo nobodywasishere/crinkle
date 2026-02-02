@@ -19,9 +19,12 @@
 ```
 src/
   lsp/
+    lsp.cr          # Module entry point and CLI run function
     server.cr       # Main LSP server class
     protocol.cr     # JSON-RPC message types and LSP protocol structs
     transport.cr    # stdio transport layer for LSP communication
+    document.cr     # Document and DocumentStore classes
+    logger.cr       # File-based logger for LSP debugging
 ```
 
 ## Features
@@ -133,12 +136,12 @@ end
 - Basic logging for debugging.
 
 ## Checklist
-- [ ] Create `src/lsp/` directory structure
-- [ ] Implement JSON-RPC message parsing and serialization
-- [ ] Implement LSP protocol types (InitializeParams, TextDocumentItem, etc.)
-- [ ] Implement stdio transport (read Content-Length headers, write responses)
-- [ ] Implement `initialize` with basic server capabilities
-- [ ] Implement document lifecycle (didOpen, didChange, didClose)
-- [ ] Create in-memory document store
-- [ ] Add basic logging/tracing for debugging
+- [x] Create `src/lsp/` directory structure
+- [x] Implement JSON-RPC message parsing and serialization
+- [x] Implement LSP protocol types (InitializeParams, TextDocumentItem, etc.)
+- [x] Implement stdio transport (read Content-Length headers, write responses)
+- [x] Implement `initialize` with basic server capabilities
+- [x] Implement document lifecycle (didOpen, didChange, didClose)
+- [x] Create in-memory document store
+- [x] Add basic logging/tracing for debugging
 - [ ] Test with VS Code or other LSP client
