@@ -113,10 +113,25 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** LOW
 → [PHASE-21.md](PHASE-21.md)
 
-### Phase 22 — LSP Semantic Bridge
-**Outcome:** Connect runtime semantic information to the LSP.
-**Priority:** LOW - Research/Experimentation
+### Phase 22 — Typed Registration Macros ✅
+**Outcome:** Macros for defining filters/tests/functions/callables with type metadata; schema extraction.
+**Priority:** MEDIUM
 → [PHASE-22.md](PHASE-22.md)
+
+### Phase 22-std — Standard Library Typed Registration
+**Outcome:** Migrate all std filters/tests/functions to typed macros; populate schema registry.
+**Priority:** MEDIUM
+→ [PHASE-22-std.md](PHASE-22-std.md)
+
+### Phase 22a — Schema-Aware Linting
+**Outcome:** Linter validates template usage against schema (arg counts, kwarg names, types).
+**Priority:** MEDIUM
+→ [PHASE-22a.md](PHASE-22a.md)
+
+### Phase 22b — LSP Semantic Features
+**Outcome:** Schema-based completions/hover + inference engine for property suggestions.
+**Priority:** LOW
+→ [PHASE-22b.md](PHASE-22b.md)
 
 ### Phase 23 — LSP Hover & Navigation
 **Outcome:** Contextual information and code navigation.
