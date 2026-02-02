@@ -2,6 +2,7 @@ require "./protocol"
 require "./logger"
 require "./transport"
 require "./document"
+require "./diagnostics"
 require "./server"
 
 module Crinkle::LSP

@@ -120,11 +120,10 @@ end
 - Error highlighting works in editor.
 
 ## Checklist
-- [ ] Create diagnostic conversion utilities (Crinkle → LSP format)
-- [ ] Implement `publishDiagnostics` notification
-- [ ] Wire up lexer diagnostics on document change
-- [ ] Wire up parser diagnostics on document change
-- [ ] Wire up linter diagnostics on document change
-- [ ] Add debouncing to avoid excessive recomputation
-- [ ] Test error highlighting in editor
-- [ ] Verify diagnostic ranges align with source positions
+- [x] Create diagnostic conversion utilities (Crinkle → LSP format)
+- [x] Implement `publishDiagnostics` notification
+- [x] Wire up linter diagnostics on document change (superset of lexer/parser)
+- [x] Add debouncing to avoid excessive recomputation
+- [x] Test error highlighting in editor
+- [x] Verify diagnostic ranges align with source positions
+- [x] Add `textDocument/formatting` support (bonus)

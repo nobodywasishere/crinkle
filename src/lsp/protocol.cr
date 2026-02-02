@@ -248,8 +248,13 @@ module Crinkle::LSP
 
     @[JSON::Field(key: "textDocumentSync")]
     property text_document_sync : TextDocumentSyncOptions?
+    @[JSON::Field(key: "documentFormattingProvider")]
+    property document_formatting_provider : Bool?
 
-    def initialize(@text_document_sync : TextDocumentSyncOptions? = nil) : Nil
+    def initialize(
+      @text_document_sync : TextDocumentSyncOptions? = nil,
+      @document_formatting_provider : Bool? = nil,
+    ) : Nil
     end
   end
 
@@ -397,6 +402,46 @@ module Crinkle::LSP
     property message : String
 
     def initialize(@type : MessageType, @message : String) : Nil
+    end
+  end
+
+  # Text edit returned by formatting
+  struct TextEdit
+    include JSON::Serializable
+
+    property range : Range
+    @[JSON::Field(key: "newText")]
+    property new_text : String
+
+    def initialize(@range : Range, @new_text : String) : Nil
+    end
+  end
+
+  # Formatting options
+  struct FormattingOptions
+    include JSON::Serializable
+
+    @[JSON::Field(key: "tabSize")]
+    property tab_size : Int32
+    @[JSON::Field(key: "insertSpaces")]
+    property? insert_spaces : Bool
+
+    def initialize(@tab_size : Int32 = 2, @insert_spaces : Bool = true) : Nil
+    end
+  end
+
+  # DocumentFormatting params
+  struct DocumentFormattingParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property options : FormattingOptions
+
+    def initialize(
+      @text_document : TextDocumentIdentifier,
+      @options : FormattingOptions,
+    ) : Nil
     end
   end
 end

@@ -333,24 +333,9 @@ module Crinkle
           formatted = Formatter.new(context.source).format
           return Array(Issue).new if formatted == context.source
 
-          [issue(full_span(context.source), "File is not formatted.")]
-        end
-
-        private def full_span(source : String) : Span
-          return Span.new(Position.new(0, 1, 1), Position.new(0, 1, 1)) if source.empty?
-
-          last_line = 1
-          last_offset = 0
-          last_content = ""
-
-          SourceLines.each_line(source) do |line, line_no, offset|
-            last_line = line_no
-            last_offset = offset
-            last_content = line
-          end
-
-          end_pos = Position.new(last_offset + last_content.bytesize, last_line, last_content.size + 1)
-          Span.new(Position.new(0, 1, 1), end_pos)
+          # Only highlight the first character to avoid overwhelming the editor
+          span = Span.new(Position.new(0, 1, 1), Position.new(1, 1, 2))
+          [issue(span, "File is not formatted.")]
         end
       end
     end

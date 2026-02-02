@@ -108,7 +108,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** LOW (enables testing of subsequent LSP phases)
 → [PHASE-20a.md](PHASE-20a.md)
 
-### Phase 21 — LSP Diagnostics
+### Phase 21 — LSP Diagnostics ✅
 **Outcome:** Real-time error reporting in the editor.
 **Priority:** LOW
 → [PHASE-21.md](PHASE-21.md)

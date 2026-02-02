@@ -1,11 +1,17 @@
 require "json"
 require "../lexer/lexer"
 require "../parser/parser"
+require "../linter/linter"
+require "../linter/rules"
+require "../formatter/formatter"
 
 module Crinkle::LSP
   # LSP server for Jinja2/Crinkle templates.
   class Server
     VERSION = "0.1.0"
+
+    # Debounce delay for diagnostics (milliseconds).
+    DEBOUNCE_MS = 150
 
     @transport : Transport
     @documents : DocumentStore
@@ -14,6 +20,8 @@ module Crinkle::LSP
     @initialized : Bool
     @shutdown_requested : Bool
     @root_uri : String?
+    @analyzer : Analyzer
+    @pending_analysis : Hash(String, Time::Instant)
 
     def initialize(
       @transport : Transport,
@@ -24,6 +32,8 @@ module Crinkle::LSP
       @initialized = false
       @shutdown_requested = false
       @root_uri = nil
+      @analyzer = Analyzer.new
+      @pending_analysis = Hash(String, Time::Instant).new
     end
 
     # Main run loop - read and handle messages until exit.
@@ -82,6 +92,8 @@ module Crinkle::LSP
           handle_initialize(id, params)
         when "shutdown"
           handle_shutdown(id)
+        when "textDocument/formatting"
+          handle_formatting(id, params)
         else
           log(MessageType::Log, "<<< Error: Method not found: #{method}")
           send_error(id, ErrorCodes::MethodNotFound, "Method not found: #{method}")
@@ -139,7 +151,8 @@ module Crinkle::LSP
           open_close: true,
           change: 1, # Full sync
           save: SaveOptions.new(include_text: true)
-        )
+        ),
+        document_formatting_provider: true
       )
 
       result = InitializeResult.new(
@@ -163,6 +176,54 @@ module Crinkle::LSP
       log(MessageType::Info, "Shutdown requested")
       log(MessageType::Log, "<<< Response: shutdown success")
       send_response(id, JSON::Any.new(nil))
+    end
+
+    # textDocument/formatting request handler
+    private def handle_formatting(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        format_params = DocumentFormattingParams.from_json(params.to_json)
+        uri = format_params.text_document.uri
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        # Format the document
+        formatted = Formatter.new(doc.text).format
+
+        # If no changes, return empty array
+        if formatted == doc.text
+          log(MessageType::Log, "<<< Response: formatting (no changes)")
+          send_response(id, JSON.parse("[]"))
+          return
+        end
+
+        # Return a single edit that replaces the entire document
+        last_line = doc.line_count - 1
+        last_line_content = doc.line(last_line) || ""
+        end_pos = Position.new(line: last_line, character: last_line_content.size)
+
+        edit = TextEdit.new(
+          range: Range.new(
+            start: Position.new(line: 0, character: 0),
+            end_pos: end_pos
+          ),
+          new_text: formatted
+        )
+
+        log(MessageType::Log, "<<< Response: formatting (1 edit)")
+        send_response(id, JSON.parse([edit].to_json))
+      rescue ex
+        log(MessageType::Error, "Failed to format: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Format error: #{ex.message}")
+      end
     end
 
     # Exit notification handler
@@ -201,8 +262,8 @@ module Crinkle::LSP
           @documents.update(uri, change.text, version)
           log(MessageType::Info, "Updated: #{uri} (version #{version})")
 
-          # Run diagnostics
-          publish_diagnostics(uri, change.text, version)
+          # Run diagnostics with debouncing
+          publish_diagnostics(uri, change.text, version, debounce: true)
         end
       rescue ex
         log(MessageType::Error, "Failed to handle didChange: #{ex.message}")
@@ -217,35 +278,38 @@ module Crinkle::LSP
         close_params = DidCloseTextDocumentParams.from_json(params.to_json)
         uri = close_params.text_document.uri
         @documents.close(uri)
+        @pending_analysis.delete(uri)
         log(MessageType::Info, "Closed: #{uri}")
 
         # Clear diagnostics for closed document
-        params = PublishDiagnosticsParams.new(uri: uri, diagnostics: Array(Diagnostic).new)
-        send_notification("textDocument/publishDiagnostics", JSON.parse(params.to_json))
+        clear_params = PublishDiagnosticsParams.new(uri: uri, diagnostics: Array(Diagnostic).new)
+        send_notification("textDocument/publishDiagnostics", JSON.parse(clear_params.to_json))
       rescue ex
         log(MessageType::Error, "Failed to handle didClose: #{ex.message}")
       end
     end
 
-    # Run diagnostics on document and publish them
-    private def publish_diagnostics(uri : String, text : String, version : Int32) : Nil
-      # Lex the template
-      lexer = Crinkle::Lexer.new(text)
-      tokens = lexer.lex_all
-      lex_diagnostics = lexer.diagnostics
+    # Schedule diagnostics with debouncing.
+    # This prevents excessive recomputation during rapid typing.
+    private def schedule_diagnostics(uri : String, text : String, version : Int32) : Nil
+      scheduled_at = Time.instant
+      @pending_analysis[uri] = scheduled_at
 
-      # Parse the template
-      parser = Crinkle::Parser.new(tokens)
-      parser.parse
-      parse_diagnostics = parser.diagnostics
+      spawn do
+        sleep(DEBOUNCE_MS.milliseconds)
 
-      # Combine all diagnostics
-      all_diagnostics = lex_diagnostics + parse_diagnostics
-
-      # Convert to LSP diagnostics
-      lsp_diagnostics = all_diagnostics.map do |diag|
-        convert_diagnostic(diag)
+        # Only run if this is still the most recent scheduled analysis
+        if @pending_analysis[uri]? == scheduled_at
+          run_diagnostics(uri, text, version)
+        end
       end
+    end
+
+    # Run diagnostics immediately (bypasses debouncing).
+    # Used for document open events where we want immediate feedback.
+    private def run_diagnostics(uri : String, text : String, version : Int32) : Nil
+      # Use the analyzer to run full pipeline: lex → parse → lint
+      lsp_diagnostics = @analyzer.analyze_to_lsp(text)
 
       # Publish diagnostics
       params = PublishDiagnosticsParams.new(
@@ -260,36 +324,13 @@ module Crinkle::LSP
       log(MessageType::Error, "Failed to publish diagnostics: #{ex.message}")
     end
 
-    # Convert Crinkle diagnostic to LSP diagnostic
-    private def convert_diagnostic(diag : Crinkle::Diagnostic) : Diagnostic
-      # Convert severity
-      severity = case diag.severity
-                 when Crinkle::Severity::Error
-                   DiagnosticSeverity::Error
-                 when Crinkle::Severity::Warning
-                   DiagnosticSeverity::Warning
-                 else
-                   DiagnosticSeverity::Information
-                 end
-
-      # Convert position (Crinkle uses 1-based, LSP uses 0-based)
-      start_pos = Position.new(
-        line: diag.span.start_pos.line - 1,
-        character: diag.span.start_pos.column - 1
-      )
-      end_pos = Position.new(
-        line: diag.span.end_pos.line - 1,
-        character: diag.span.end_pos.column - 1
-      )
-      range = Range.new(start: start_pos, end_pos: end_pos)
-
-      Diagnostic.new(
-        range: range,
-        message: diag.message,
-        severity: severity,
-        code: diag.id,
-        source: "crinkle"
-      )
+    # Run diagnostics on document open (immediate) or change (debounced).
+    private def publish_diagnostics(uri : String, text : String, version : Int32, debounce : Bool = false) : Nil
+      if debounce
+        schedule_diagnostics(uri, text, version)
+      else
+        run_diagnostics(uri, text, version)
+      end
     end
 
     # Helper to parse message ID (can be string or int)
