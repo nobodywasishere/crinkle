@@ -1,3 +1,5 @@
+require "levenshtein"
+
 module Crinkle
   module Linter
     module Rules
@@ -338,6 +340,458 @@ module Crinkle
           [issue(span, "File is not formatted.")]
         end
       end
+
+      # Schema-aware lint rules for filters, tests, and functions
+      class UnknownFilter < Rule
+        def initialize(@schema : Schema::Registry) : Nil
+          super("Lint/UnknownFilter", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_filter_issues(node.expr, issues)
+            when AST::If
+              collect_filter_issues(node.test, issues)
+            when AST::For
+              collect_filter_issues(node.iter, issues)
+            when AST::Set
+              collect_filter_issues(node.value, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def collect_filter_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            next unless inner.is_a?(AST::Filter)
+
+            unless @schema.filters.has_key?(inner.name)
+              issues << issue(inner.span, "Unknown filter '#{inner.name}'.")
+            end
+          end
+        end
+      end
+
+      class UnknownTest < Rule
+        def initialize(@schema : Schema::Registry) : Nil
+          super("Lint/UnknownTest", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::If
+              collect_test_issues(node.test, issues)
+            when AST::For
+              collect_test_issues(node.iter, issues)
+            when AST::Set
+              collect_test_issues(node.value, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def collect_test_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            next unless inner.is_a?(AST::Test)
+
+            unless @schema.tests.has_key?(inner.name)
+              issues << issue(inner.span, "Unknown test '#{inner.name}'.")
+            end
+          end
+        end
+      end
+
+      class UnknownFunction < Rule
+        def initialize(@schema : Schema::Registry) : Nil
+          super("Lint/UnknownFunction", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_function_issues(node.expr, issues)
+            when AST::If
+              collect_function_issues(node.test, issues)
+            when AST::For
+              collect_function_issues(node.iter, issues)
+            when AST::Set
+              collect_function_issues(node.value, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def collect_function_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            next unless inner.is_a?(AST::Call)
+
+            # Check if callee is a simple name (function call)
+            callee = inner.callee
+            next unless callee.is_a?(AST::Name)
+
+            unless @schema.functions.has_key?(callee.value)
+              issues << issue(inner.span, "Unknown function '#{callee.value}'.")
+            end
+          end
+        end
+      end
+
+      class WrongArgumentCount < Rule
+        def initialize(@schema : Schema::Registry) : Nil
+          super("Lint/WrongArgumentCount", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_arg_count_issues(node.expr, issues)
+            when AST::If
+              collect_arg_count_issues(node.test, issues)
+            when AST::For
+              collect_arg_count_issues(node.iter, issues)
+            when AST::Set
+              collect_arg_count_issues(node.value, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def collect_arg_count_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            case inner
+            when AST::Filter
+              check_filter_args(inner, issues)
+            when AST::Test
+              check_test_args(inner, issues)
+            when AST::Call
+              check_function_args(inner, issues)
+            end
+          end
+        end
+
+        private def check_filter_args(node : AST::Filter, issues : Array(Issue)) : Nil
+          schema = @schema.filters[node.name]?
+          return unless schema
+
+          # Count positional args (first param is the value being filtered)
+          provided_positional = node.args.size
+          max_positional = schema.params.size - 1 # Exclude first param (the value)
+
+          if provided_positional > max_positional
+            issues << issue(
+              node.span,
+              "Filter '#{node.name}' takes at most #{max_positional} argument(s), got #{provided_positional}."
+            )
+          end
+        end
+
+        private def check_test_args(node : AST::Test, issues : Array(Issue)) : Nil
+          schema = @schema.tests[node.name]?
+          return unless schema
+
+          # Count positional args (first param is the value being tested)
+          provided_positional = node.args.size
+          max_positional = schema.params.size - 1 # Exclude first param (the value)
+
+          if provided_positional > max_positional
+            issues << issue(
+              node.span,
+              "Test '#{node.name}' takes at most #{max_positional} argument(s), got #{provided_positional}."
+            )
+          end
+        end
+
+        private def check_function_args(node : AST::Call, issues : Array(Issue)) : Nil
+          callee = node.callee
+          return unless callee.is_a?(AST::Name)
+
+          schema = @schema.functions[callee.value]?
+          return unless schema
+
+          provided_positional = node.args.size
+          max_positional = schema.params.size
+
+          if provided_positional > max_positional
+            issues << issue(
+              node.span,
+              "Function '#{callee.value}' takes at most #{max_positional} argument(s), got #{provided_positional}."
+            )
+          end
+        end
+      end
+
+      class UnknownKwarg < Rule
+        def initialize(@schema : Schema::Registry) : Nil
+          super("Lint/UnknownKwarg", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_kwarg_issues(node.expr, issues)
+            when AST::If
+              collect_kwarg_issues(node.test, issues)
+            when AST::For
+              collect_kwarg_issues(node.iter, issues)
+            when AST::Set
+              collect_kwarg_issues(node.value, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def collect_kwarg_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            case inner
+            when AST::Filter
+              check_filter_kwargs(inner, issues)
+            when AST::Test
+              check_test_kwargs(inner, issues)
+            when AST::Call
+              check_function_kwargs(inner, issues)
+            end
+          end
+        end
+
+        private def check_filter_kwargs(node : AST::Filter, issues : Array(Issue)) : Nil
+          schema = @schema.filters[node.name]?
+          return unless schema
+
+          known_params = schema.params.map(&.name)
+
+          node.kwargs.each do |kwarg|
+            unless known_params.includes?(kwarg.name)
+              message = "Unknown kwarg '#{kwarg.name}' for filter '#{node.name}'."
+              if suggestion = DidYouMean.suggest(kwarg.name, known_params)
+                message += " Did you mean '#{suggestion}'?"
+              end
+              issues << issue(kwarg.span, message)
+            end
+          end
+        end
+
+        private def check_test_kwargs(node : AST::Test, issues : Array(Issue)) : Nil
+          schema = @schema.tests[node.name]?
+          return unless schema
+
+          known_params = schema.params.map(&.name)
+
+          node.kwargs.each do |kwarg|
+            unless known_params.includes?(kwarg.name)
+              message = "Unknown kwarg '#{kwarg.name}' for test '#{node.name}'."
+              if suggestion = DidYouMean.suggest(kwarg.name, known_params)
+                message += " Did you mean '#{suggestion}'?"
+              end
+              issues << issue(kwarg.span, message)
+            end
+          end
+        end
+
+        private def check_function_kwargs(node : AST::Call, issues : Array(Issue)) : Nil
+          callee = node.callee
+          return unless callee.is_a?(AST::Name)
+
+          schema = @schema.functions[callee.value]?
+          return unless schema
+
+          known_params = schema.params.map(&.name)
+
+          node.kwargs.each do |kwarg|
+            unless known_params.includes?(kwarg.name)
+              message = "Unknown kwarg '#{kwarg.name}' for function '#{callee.value}'."
+              if suggestion = DidYouMean.suggest(kwarg.name, known_params)
+                message += " Did you mean '#{suggestion}'?"
+              end
+              issues << issue(kwarg.span, message)
+            end
+          end
+        end
+      end
+
+      class MissingRequiredArgument < Rule
+        def initialize(@schema : Schema::Registry) : Nil
+          super("Lint/MissingRequiredArgument", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_missing_arg_issues(node.expr, issues)
+            when AST::If
+              collect_missing_arg_issues(node.test, issues)
+            when AST::For
+              collect_missing_arg_issues(node.iter, issues)
+            when AST::Set
+              collect_missing_arg_issues(node.value, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def collect_missing_arg_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            case inner
+            when AST::Filter
+              check_filter_required(inner, issues)
+            when AST::Test
+              check_test_required(inner, issues)
+            when AST::Call
+              check_function_required(inner, issues)
+            end
+          end
+        end
+
+        private def check_filter_required(node : AST::Filter, issues : Array(Issue)) : Nil
+          schema = @schema.filters[node.name]?
+          return unless schema
+
+          provided_kwargs = node.kwargs.map(&.name).to_set
+          provided_positional = node.args.size
+
+          schema.params.each_with_index do |param, index|
+            next unless param.required?
+            next if index == 0 # Skip first param (the value being filtered)
+
+            # Check if provided as kwarg
+            next if provided_kwargs.includes?(param.name)
+
+            # Check if provided as positional arg
+            positional_index = index - 1
+            next if positional_index < provided_positional
+
+            issues << issue(
+              node.span,
+              "Filter '#{node.name}' requires argument '#{param.name}'."
+            )
+          end
+        end
+
+        private def check_test_required(node : AST::Test, issues : Array(Issue)) : Nil
+          schema = @schema.tests[node.name]?
+          return unless schema
+
+          provided_kwargs = node.kwargs.map(&.name).to_set
+          provided_positional = node.args.size
+
+          schema.params.each_with_index do |param, index|
+            next unless param.required?
+            next if index == 0 # Skip first param (the value being tested)
+
+            # Check if provided as kwarg
+            next if provided_kwargs.includes?(param.name)
+
+            # Check if provided as positional arg
+            positional_index = index - 1
+            next if positional_index < provided_positional
+
+            issues << issue(
+              node.span,
+              "Test '#{node.name}' requires argument '#{param.name}'."
+            )
+          end
+        end
+
+        private def check_function_required(node : AST::Call, issues : Array(Issue)) : Nil
+          callee = node.callee
+          return unless callee.is_a?(AST::Name)
+
+          schema = @schema.functions[callee.value]?
+          return unless schema
+
+          provided_kwargs = node.kwargs.map(&.name).to_set
+          provided_positional = node.args.size
+
+          schema.params.each_with_index do |param, index|
+            next unless param.required?
+
+            # Check if provided as kwarg
+            next if provided_kwargs.includes?(param.name)
+
+            # Check if provided as positional arg
+            next if index < provided_positional
+
+            issues << issue(
+              node.span,
+              "Function '#{callee.value}' requires argument '#{param.name}'."
+            )
+          end
+        end
+      end
+
+      class DeprecatedUsage < Rule
+        def initialize(@schema : Schema::Registry) : Nil
+          super("Lint/DeprecatedUsage", Severity::Warning)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            case node
+            when AST::Output
+              collect_deprecated_issues(node.expr, issues)
+            when AST::If
+              collect_deprecated_issues(node.test, issues)
+            when AST::For
+              collect_deprecated_issues(node.iter, issues)
+            when AST::Set
+              collect_deprecated_issues(node.value, issues)
+            end
+          end
+
+          issues
+        end
+
+        private def collect_deprecated_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
+          ASTWalker.walk_expr(expr) do |inner|
+            case inner
+            when AST::Filter
+              schema = @schema.filters[inner.name]?
+              if schema && schema.deprecated?
+                issues << issue(inner.span, "Filter '#{inner.name}' is deprecated.")
+              end
+            when AST::Test
+              schema = @schema.tests[inner.name]?
+              if schema && schema.deprecated?
+                issues << issue(inner.span, "Test '#{inner.name}' is deprecated.")
+              end
+            when AST::Call
+              callee = inner.callee
+              if callee.is_a?(AST::Name)
+                schema = @schema.functions[callee.value]?
+                if schema && schema.deprecated?
+                  issues << issue(inner.span, "Function '#{callee.value}' is deprecated.")
+                end
+              end
+            end
+          end
+        end
+      end
     end
 
     module SourceLines
@@ -352,6 +806,19 @@ module Crinkle
           offset += line.bytesize
           offset += 1 if index < lines.size - 1
         end
+      end
+    end
+
+    # Helper for "did you mean" suggestions using stdlib Levenshtein
+    module DidYouMean
+      def self.suggest(unknown : String, known : Array(String), max_distance : Int32 = 2) : String?
+        return if known.empty?
+
+        best_match = known.min_by? { |k| Levenshtein.distance(unknown, k) }
+        return unless best_match
+
+        dist = Levenshtein.distance(unknown, best_match)
+        dist <= max_distance ? best_match : nil
       end
     end
 

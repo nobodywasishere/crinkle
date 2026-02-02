@@ -66,8 +66,12 @@ module Crinkle
 
     class Runner
       getter ruleset : RuleSet
+      getter schema : Schema::Registry?
 
-      def initialize(@ruleset : RuleSet = Linter.default_ruleset) : Nil
+      def initialize(
+        @ruleset : RuleSet = Linter.default_ruleset,
+        @schema : Schema::Registry? = nil,
+      ) : Nil
       end
 
       def lint(
@@ -80,9 +84,35 @@ module Crinkle
         issues.concat(@ruleset.run(template, context))
         issues
       end
+
+      # Load schema from file path
+      def self.load_schema(path : String) : Schema::Registry?
+        return unless File.exists?(path)
+
+        begin
+          json = File.read(path)
+          Schema::Registry.from_json(json)
+        rescue ex
+          STDERR.puts "Warning: Failed to load schema from #{path}: #{ex.message}"
+          nil
+        end
+      end
+
+      # Auto-discover schema in project directory
+      def self.discover_schema : Schema::Registry?
+        # Check for .crinkle/schema.json in current directory
+        crinkle_schema = ".crinkle/schema.json"
+        return load_schema(crinkle_schema) if File.exists?(crinkle_schema)
+
+        # Check for schema path in .crinkle/config.yaml
+        # TODO: Implement when config file support is added
+
+        # Fall back to nil (built-ins only)
+        nil
+      end
     end
 
-    def self.default_ruleset : RuleSet
+    def self.default_ruleset(schema : Schema::Registry? = nil) : RuleSet
       ruleset = RuleSet.new
       ruleset.add(Rules::MultipleExtends.new)
       ruleset.add(Rules::ExtendsNotFirst.new)
@@ -93,6 +123,18 @@ module Crinkle
       ruleset.add(Rules::MixedIndentation.new)
       ruleset.add(Rules::ExcessiveBlankLines.new)
       ruleset.add(Rules::Formatting.new)
+
+      # Add schema-aware rules if schema is provided
+      if schema
+        ruleset.add(Rules::UnknownFilter.new(schema))
+        ruleset.add(Rules::UnknownTest.new(schema))
+        ruleset.add(Rules::UnknownFunction.new(schema))
+        ruleset.add(Rules::WrongArgumentCount.new(schema))
+        ruleset.add(Rules::UnknownKwarg.new(schema))
+        ruleset.add(Rules::MissingRequiredArgument.new(schema))
+        ruleset.add(Rules::DeprecatedUsage.new(schema))
+      end
+
       ruleset
     end
 

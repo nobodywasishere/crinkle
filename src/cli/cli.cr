@@ -22,6 +22,8 @@ module Crinkle
       property? strict : Bool
       property max_errors : Int32?
       property snapshots_dir : String?
+      property schema_path : String?
+      property? no_schema : Bool
 
       def initialize(
         @stdin : Bool = false,
@@ -33,6 +35,8 @@ module Crinkle
         @strict : Bool = false,
         @max_errors : Int32? = nil,
         @snapshots_dir : String? = nil,
+        @schema_path : String? = nil,
+        @no_schema : Bool = false,
       ) : Nil
       end
     end
@@ -107,6 +111,14 @@ module Crinkle
       when "lint"
         opts = parse_options(args, default_format: OutputFormat::Json)
         sources = read_sources(opts, allow_multiple: true)
+
+        # Load schema
+        schema = load_schema_for_lint(opts)
+
+        # Create linter with schema-aware ruleset
+        ruleset = Linter.default_ruleset(schema)
+        linter = Linter::Runner.new(ruleset, schema)
+
         results = Array(Tuple(String, Array(Linter::Issue))).new
         all_issues = Array(Linter::Issue).new
         sources.each do |entry_source, entry_label|
@@ -115,7 +127,7 @@ module Crinkle
           tokens, _diagnostics = lex_source(entry_source)
           template, _parser_diags = parse_tokens(tokens)
           all_diags = formatter.diagnostics
-          issues = Linter::Runner.new.lint(template, entry_source, all_diags)
+          issues = linter.lint(template, entry_source, all_diags)
           results << {entry_label, issues}
           all_issues.concat(issues)
           write_snapshots(opts.snapshots_dir, entry_label, issues: issues)
@@ -159,7 +171,22 @@ module Crinkle
           --strict               Treat warnings as errors
           --max-errors N         Cap reported diagnostics
           --snapshots-dir PATH   Write tokens/ast/diagnostics/output snapshots
+          --schema PATH          Load schema from PATH for linting
+          --no-schema            Disable schema loading for linting
         USAGE
+    end
+
+    private def self.load_schema_for_lint(opts : Options) : Schema::Registry?
+      # If --no-schema, return nil
+      return if opts.no_schema?
+
+      # If --schema provided, load from that path
+      if schema_path = opts.schema_path
+        return Linter::Runner.load_schema(schema_path)
+      end
+
+      # Otherwise, auto-discover
+      Linter::Runner.discover_schema
     end
 
     private def self.parse_options(args : Array(String), default_format : OutputFormat) : Options
@@ -174,6 +201,8 @@ module Crinkle
       parser.on("--strict", "Treat warnings as errors") { opts.strict = true }
       parser.on("--max-errors N", "Limit diagnostics") { |value| opts.max_errors = value.to_i? }
       parser.on("--snapshots-dir PATH", "Write snapshots") { |value| opts.snapshots_dir = value }
+      parser.on("--schema PATH", "Load schema from PATH") { |value| opts.schema_path = value }
+      parser.on("--no-schema", "Disable schema loading") { opts.no_schema = true }
       parser.on("-h", "--help", "Show help") do
         print_usage
         exit 0
