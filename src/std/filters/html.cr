@@ -1,7 +1,7 @@
 module Crinkle::Std::Filters
   module Html
     def self.register(env : Environment) : Nil
-      env.register_filter("escape") do |value, _args, _kwargs|
+      env.register_filter("escape") do |value, _args, _kwargs, _ctx|
         # Don't double-escape SafeString
         if value.is_a?(SafeString)
           value
@@ -15,7 +15,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("e") do |value, _args, _kwargs|
+      env.register_filter("e") do |value, _args, _kwargs, _ctx|
         # Alias for escape
         if value.is_a?(SafeString)
           value
@@ -29,15 +29,15 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("safe") do |value, _args, _kwargs|
+      env.register_filter("safe") do |value, _args, _kwargs, _ctx|
         SafeString.new(value.to_s)
       end
 
-      env.register_filter("striptags") do |value, _args, _kwargs|
+      env.register_filter("striptags") do |value, _args, _kwargs, _ctx|
         value.to_s.gsub(/<[^>]*>/, "")
       end
 
-      env.register_filter("urlize") do |value, args, kwargs|
+      env.register_filter("urlize") do |value, args, kwargs, _ctx|
         trim_url_limit = args.first?.as?(Int64)
         nofollow = kwargs["nofollow"]?.as?(Bool) || false
         target = kwargs["target"]?.to_s
@@ -65,7 +65,7 @@ module Crinkle::Std::Filters
         SafeString.new(result)
       end
 
-      env.register_filter("urlencode") do |value, _args, _kwargs|
+      env.register_filter("urlencode") do |value, _args, _kwargs, _ctx|
         URI.encode_www_form(value.to_s)
       end
     end

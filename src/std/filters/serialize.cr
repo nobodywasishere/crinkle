@@ -1,7 +1,7 @@
 module Crinkle::Std::Filters
   module Serialize
     def self.register(env : Environment) : Nil
-      env.register_filter("tojson") do |value, args, _kwargs|
+      env.register_filter("tojson") do |value, args, _kwargs, _ctx|
         indent = args.first?.as?(Int64)
 
         json_str = if indent
@@ -13,11 +13,11 @@ module Crinkle::Std::Filters
         SafeString.new(json_str)
       end
 
-      env.register_filter("pprint") do |value, _args, _kwargs|
+      env.register_filter("pprint") do |value, _args, _kwargs, _ctx|
         SafeString.new(value_to_json(value).to_pretty_json)
       end
 
-      env.register_filter("list") do |value, _args, _kwargs|
+      env.register_filter("list") do |value, _args, _kwargs, _ctx|
         case value
         when Array(Value)
           value
@@ -36,11 +36,11 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("string") do |value, _args, _kwargs|
+      env.register_filter("string") do |value, _args, _kwargs, _ctx|
         value.to_s
       end
 
-      env.register_filter("attr") do |value, args, _kwargs|
+      env.register_filter("attr") do |value, args, _kwargs, _ctx|
         name = args.first?.to_s
         case value
         when Hash
@@ -48,7 +48,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("dictsort") do |value, args, kwargs|
+      env.register_filter("dictsort") do |value, args, kwargs, _ctx|
         case_sensitive = kwargs["case_sensitive"]?.as?(Bool) || false
         by = args.first?.to_s || "key"
         reverse = kwargs["reverse"]?.as?(Bool) || false
@@ -113,7 +113,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("items") do |value, _args, _kwargs|
+      env.register_filter("items") do |value, _args, _kwargs, _ctx|
         case value
         when Hash(String, Value)
           result = Array(Value).new

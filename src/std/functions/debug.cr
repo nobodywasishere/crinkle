@@ -1,7 +1,7 @@
 module Crinkle::Std::Functions
   module Debug
     def self.register(env : Environment) : Nil
-      env.register_function("lipsum") do |args, kwargs|
+      env.register_function("lipsum") do |args, kwargs, _ctx|
         n = args.first?.as?(Int64) || 5_i64
         html = kwargs["html"]?.as?(Bool) || true
         min_words = kwargs["min"]?.as?(Int64) || 20_i64
@@ -28,14 +28,14 @@ module Crinkle::Std::Functions
         paragraphs.join(html ? "\n" : "\n\n")
       end
 
-      env.register_function("cycler") do |args, _kwargs|
+      env.register_function("cycler") do |args, _kwargs, _ctx|
         # Returns a cycler object (array with cycle state)
         # In a real implementation this would be a custom object
         # For now, return the array
         args
       end
 
-      env.register_function("joiner") do |args, _kwargs|
+      env.register_function("joiner") do |args, _kwargs, _ctx|
         sep = args.first?.to_s || ", "
         # Returns a joiner object that returns empty on first call, then separator
         # For now, just return the separator

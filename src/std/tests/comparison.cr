@@ -1,22 +1,22 @@
 module Crinkle::Std::Tests
   module Comparison
     def self.register(env : Environment) : Nil
-      env.register_test("eq") do |value, args, _kwargs|
+      env.register_test("eq") do |value, args, _kwargs, _ctx|
         other = args.first?
         value == other
       end
 
-      env.register_test("equalto") do |value, args, _kwargs|
+      env.register_test("equalto") do |value, args, _kwargs, _ctx|
         other = args.first?
         value == other
       end
 
-      env.register_test("ne") do |value, args, _kwargs|
+      env.register_test("ne") do |value, args, _kwargs, _ctx|
         other = args.first?
         value != other
       end
 
-      env.register_test("lt") do |value, args, _kwargs|
+      env.register_test("lt") do |value, args, _kwargs, _ctx|
         other = args.first?
         case value
         when Int64, Float64
@@ -33,7 +33,7 @@ module Crinkle::Std::Tests
         end
       end
 
-      env.register_test("le") do |value, args, _kwargs|
+      env.register_test("le") do |value, args, _kwargs, _ctx|
         other = args.first?
         case value
         when Int64, Float64
@@ -50,7 +50,7 @@ module Crinkle::Std::Tests
         end
       end
 
-      env.register_test("gt") do |value, args, _kwargs|
+      env.register_test("gt") do |value, args, _kwargs, _ctx|
         other = args.first?
         case value
         when Int64, Float64
@@ -67,7 +67,7 @@ module Crinkle::Std::Tests
         end
       end
 
-      env.register_test("ge") do |value, args, _kwargs|
+      env.register_test("ge") do |value, args, _kwargs, _ctx|
         other = args.first?
         case value
         when Int64, Float64
@@ -84,7 +84,7 @@ module Crinkle::Std::Tests
         end
       end
 
-      env.register_test("greaterthan") do |value, args, _kwargs|
+      env.register_test("greaterthan") do |value, args, _kwargs, _ctx|
         other = args.first?
         case value
         when Int64, Float64
@@ -101,7 +101,7 @@ module Crinkle::Std::Tests
         end
       end
 
-      env.register_test("lessthan") do |value, args, _kwargs|
+      env.register_test("lessthan") do |value, args, _kwargs, _ctx|
         other = args.first?
         case value
         when Int64, Float64
@@ -118,7 +118,7 @@ module Crinkle::Std::Tests
         end
       end
 
-      env.register_test("in") do |value, args, _kwargs|
+      env.register_test("in") do |value, args, _kwargs, _ctx|
         container = args.first?
         case container
         when Array

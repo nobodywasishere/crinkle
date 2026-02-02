@@ -1,7 +1,7 @@
 module Crinkle::Std::Functions
   module Range
     def self.register(env : Environment) : Nil
-      env.register_function("range") do |args, _kwargs|
+      env.register_function("range") do |args, _kwargs, _ctx|
         case args.size
         when 1
           # range(n) -> 0...n

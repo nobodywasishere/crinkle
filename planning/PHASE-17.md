@@ -121,11 +121,14 @@ end
 - Test specs pass.
 
 ## Checklist
-- [ ] Create `RenderContext` struct (or equivalent)
-- [ ] Update `FilterProc` alias to include context
-- [ ] Update `FunctionProc` alias to include context
-- [ ] Update `call_filter` to pass context
-- [ ] Update `call_function` to pass context
-- [ ] Update all existing filters to accept new signature
-- [ ] Update all existing tests to accept new signature
-- [ ] Add specs for context access in filters/functions
+- [x] Create `RenderContext` struct (or equivalent)
+- [x] Update `FilterProc` alias to include context
+- [x] Update `FunctionProc` alias to include context
+- [x] Update `TestProc` alias to include context
+- [x] Update `eval_filter` to pass context
+- [x] Update `eval_test` to pass context
+- [x] Update `eval_call` / `render_call_block` to pass context
+- [x] Update all existing filters to accept new signature
+- [x] Update all existing functions to accept new signature
+- [x] Update all existing tests to accept new signature
+- [x] Add specs for context access in filters/functions

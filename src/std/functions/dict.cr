@@ -1,7 +1,7 @@
 module Crinkle::Std::Functions
   module Dict
     def self.register(env : Environment) : Nil
-      env.register_function("dict") do |args, kwargs|
+      env.register_function("dict") do |args, kwargs, _ctx|
         result = Hash(String, Value).new
 
         # Handle kwargs
@@ -32,7 +32,7 @@ module Crinkle::Std::Functions
         result
       end
 
-      env.register_function("namespace") do |_args, kwargs|
+      env.register_function("namespace") do |_args, kwargs, _ctx|
         # Creates a namespace object (hash) for storing state
         result = Hash(String, Value).new
         kwargs.each do |k, v|

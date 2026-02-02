@@ -268,15 +268,15 @@ end
 def build_render_environment : Crinkle::Environment
   env = Crinkle::Environment.new
 
-  env.register_filter("upper") do |value, _args, _kwargs|
+  env.register_filter("upper") do |value, _args, _kwargs, _ctx|
     value.to_s.upcase
   end
 
-  env.register_filter("trim") do |value, _args, _kwargs|
+  env.register_filter("trim") do |value, _args, _kwargs, _ctx|
     value.to_s.strip
   end
 
-  env.register_filter("join") do |value, args, _kwargs|
+  env.register_filter("join") do |value, args, _kwargs, _ctx|
     sep = args.first?.to_s
     case value
     when Array
@@ -286,7 +286,7 @@ def build_render_environment : Crinkle::Environment
     end
   end
 
-  env.register_filter("default") do |value, args, _kwargs|
+  env.register_filter("default") do |value, args, _kwargs, _ctx|
     fallback = args.first?
     if value.nil? || (value.is_a?(String) && value.empty?)
       fallback
@@ -295,11 +295,11 @@ def build_render_environment : Crinkle::Environment
     end
   end
 
-  env.register_filter("escape") do |value, _args, _kwargs|
+  env.register_filter("escape") do |value, _args, _kwargs, _ctx|
     value.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;")
   end
 
-  env.register_filter("length") do |value, _args, _kwargs|
+  env.register_filter("length") do |value, _args, _kwargs, _ctx|
     case value
     when Array  then value.size.to_i64
     when Hash   then value.size.to_i64
@@ -308,17 +308,17 @@ def build_render_environment : Crinkle::Environment
     end
   end
 
-  env.register_filter("if") do |value, args, _kwargs|
+  env.register_filter("if") do |value, args, _kwargs, _ctx|
     condition = args.first?
     condition == true ? value : ""
   end
 
-  env.register_test("lower") do |value, _args, _kwargs|
+  env.register_test("lower") do |value, _args, _kwargs, _ctx|
     str = value.to_s
     !str.empty? && str == str.downcase
   end
 
-  env.register_function("greet") do |args, _kwargs|
+  env.register_function("greet") do |args, _kwargs, _ctx|
     name = args.first?.to_s
     "Hello #{name}"
   end

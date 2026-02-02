@@ -329,7 +329,7 @@ module Crinkle
       end
 
       if fn = resolve_function(node.callee)
-        result = fn.call(args, kwargs)
+        result = fn.call(args, kwargs, current_render_context)
         output = value_to_s(result) + caller_body
         output = output.lstrip if node.trim_right?
         output = output.rstrip if node.end_trim_left?
@@ -475,7 +475,7 @@ module Crinkle
       end
 
       if fn = resolve_function(callee)
-        return fn.call(args, kwargs)
+        return fn.call(args, kwargs, current_render_context)
       end
 
       if @environment.strict_functions?
@@ -492,7 +492,7 @@ module Crinkle
       value = eval_expr(expr.expr)
       args, kwargs = eval_args(expr.args, expr.kwargs)
       if filter = @environment.filters[expr.name]?
-        return filter.call(value, args, kwargs)
+        return filter.call(value, args, kwargs, current_render_context)
       end
       if @environment.strict_filters?
         emit_diagnostic(
@@ -520,7 +520,7 @@ module Crinkle
 
       value = eval_expr(expr.expr)
       if test = @environment.tests[expr.name]?
-        result = test.call(value, args, kwargs)
+        result = test.call(value, args, kwargs, current_render_context)
         return expr.negated? ? !result : result
       end
       if @environment.strict_tests?
@@ -980,6 +980,10 @@ module Crinkle
       result = yield
       @scopes = previous_scopes
       result
+    end
+
+    private def current_render_context : RenderContext
+      RenderContext.new(@environment, self, @scopes.last)
     end
 
     private def truthy?(value : Value) : Bool

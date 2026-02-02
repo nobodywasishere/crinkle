@@ -1,64 +1,64 @@
 module Crinkle::Std::Tests
   module Types
     def self.register(env : Environment) : Nil
-      env.register_test("defined") do |value, _args, _kwargs|
+      env.register_test("defined") do |value, _args, _kwargs, _ctx|
         !value.is_a?(Undefined)
       end
 
-      env.register_test("undefined") do |value, _args, _kwargs|
+      env.register_test("undefined") do |value, _args, _kwargs, _ctx|
         value.is_a?(Undefined)
       end
 
-      env.register_test("none") do |value, _args, _kwargs|
+      env.register_test("none") do |value, _args, _kwargs, _ctx|
         value.nil?
       end
 
-      env.register_test("boolean") do |value, _args, _kwargs|
+      env.register_test("boolean") do |value, _args, _kwargs, _ctx|
         value.is_a?(Bool)
       end
 
-      env.register_test("false") do |value, _args, _kwargs|
+      env.register_test("false") do |value, _args, _kwargs, _ctx|
         value == false
       end
 
-      env.register_test("true") do |value, _args, _kwargs|
+      env.register_test("true") do |value, _args, _kwargs, _ctx|
         value == true
       end
 
-      env.register_test("number") do |value, _args, _kwargs|
+      env.register_test("number") do |value, _args, _kwargs, _ctx|
         value.is_a?(Int64) || value.is_a?(Float64)
       end
 
-      env.register_test("integer") do |value, _args, _kwargs|
+      env.register_test("integer") do |value, _args, _kwargs, _ctx|
         value.is_a?(Int64)
       end
 
-      env.register_test("float") do |value, _args, _kwargs|
+      env.register_test("float") do |value, _args, _kwargs, _ctx|
         value.is_a?(Float64)
       end
 
-      env.register_test("string") do |value, _args, _kwargs|
+      env.register_test("string") do |value, _args, _kwargs, _ctx|
         value.is_a?(String)
       end
 
-      env.register_test("sequence") do |value, _args, _kwargs|
+      env.register_test("sequence") do |value, _args, _kwargs, _ctx|
         value.is_a?(Array) || value.is_a?(String)
       end
 
-      env.register_test("iterable") do |value, _args, _kwargs|
+      env.register_test("iterable") do |value, _args, _kwargs, _ctx|
         value.is_a?(Array) || value.is_a?(Hash) || value.is_a?(String)
       end
 
-      env.register_test("mapping") do |value, _args, _kwargs|
+      env.register_test("mapping") do |value, _args, _kwargs, _ctx|
         value.is_a?(Hash)
       end
 
-      env.register_test("callable") do |value, _args, _kwargs|
+      env.register_test("callable") do |value, _args, _kwargs, _ctx|
         # Check if the value is an Object that can have callable methods
         value.is_a?(Crinkle::Object)
       end
 
-      env.register_test("sameas") do |value, args, _kwargs|
+      env.register_test("sameas") do |value, args, _kwargs, _ctx|
         other = args.first?
         # Identity comparison - same object reference
         # For reference types, use same?; for value types, use ==
@@ -76,11 +76,11 @@ module Crinkle::Std::Tests
         end
       end
 
-      env.register_test("escaped") do |value, _args, _kwargs|
+      env.register_test("escaped") do |value, _args, _kwargs, _ctx|
         value.is_a?(SafeString)
       end
 
-      env.register_test("odd") do |value, _args, _kwargs|
+      env.register_test("odd") do |value, _args, _kwargs, _ctx|
         case value
         when Int64
           value.odd?
@@ -89,7 +89,7 @@ module Crinkle::Std::Tests
         end
       end
 
-      env.register_test("even") do |value, _args, _kwargs|
+      env.register_test("even") do |value, _args, _kwargs, _ctx|
         case value
         when Int64
           value.even?
@@ -98,7 +98,7 @@ module Crinkle::Std::Tests
         end
       end
 
-      env.register_test("divisibleby") do |value, args, _kwargs|
+      env.register_test("divisibleby") do |value, args, _kwargs, _ctx|
         divisor = args.first?.as?(Int64)
         next false unless divisor
 

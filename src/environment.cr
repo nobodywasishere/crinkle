@@ -1,7 +1,7 @@
 module Crinkle
-  alias FilterProc = Proc(Value, Array(Value), Hash(String, Value), Value)
-  alias TestProc = Proc(Value, Array(Value), Hash(String, Value), Bool)
-  alias FunctionProc = Proc(Array(Value), Hash(String, Value), Value)
+  alias FilterProc = Proc(Value, Array(Value), Hash(String, Value), RenderContext, Value)
+  alias TestProc = Proc(Value, Array(Value), Hash(String, Value), RenderContext, Bool)
+  alias FunctionProc = Proc(Array(Value), Hash(String, Value), RenderContext, Value)
 
   alias TagHandler = Proc(Parser, Span, AST::Node?)
   alias TemplateLoader = Proc(String, String?)

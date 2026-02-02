@@ -1,7 +1,7 @@
 module Crinkle::Std::Filters
   module Lists
     def self.register(env : Environment) : Nil
-      env.register_filter("first") do |value, _args, _kwargs|
+      env.register_filter("first") do |value, _args, _kwargs, _ctx|
         case value
         when Array
           value.first?
@@ -10,7 +10,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("last") do |value, _args, _kwargs|
+      env.register_filter("last") do |value, _args, _kwargs, _ctx|
         case value
         when Array
           value.last?
@@ -19,7 +19,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("join") do |value, args, kwargs|
+      env.register_filter("join") do |value, args, kwargs, _ctx|
         sep = kwargs["d"]? || args.first? || ""
         sep = sep.to_s
         case value
@@ -30,7 +30,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("length") do |value, _args, _kwargs|
+      env.register_filter("length") do |value, _args, _kwargs, _ctx|
         case value
         when String
           value.size.to_i64
@@ -43,7 +43,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("sort") do |value, _args, kwargs|
+      env.register_filter("sort") do |value, _args, kwargs, _ctx|
         reverse = kwargs["reverse"]?.as?(Bool) || false
         case value
         when Array
@@ -56,7 +56,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("unique") do |value, _args, _kwargs|
+      env.register_filter("unique") do |value, _args, _kwargs, _ctx|
         case value
         when Array(Value)
           # Manually implement unique using string representation
@@ -76,7 +76,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("batch") do |value, args, kwargs|
+      env.register_filter("batch") do |value, args, kwargs, _ctx|
         case value
         when Array(Value)
           size = args.first?.as?(Int64) || 2_i64
@@ -105,7 +105,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("slice") do |value, args, kwargs|
+      env.register_filter("slice") do |value, args, kwargs, _ctx|
         case value
         when Array(Value)
           slices = args.first?.as?(Int64) || 2_i64
@@ -141,7 +141,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("sum") do |value, args, kwargs|
+      env.register_filter("sum") do |value, args, kwargs, _ctx|
         case value
         when Array
           start = args.first?.as?(Int64 | Float64) || 0_i64
@@ -173,7 +173,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("map") do |value, args, _kwargs|
+      env.register_filter("map") do |value, args, _kwargs, _ctx|
         attribute = args.first?.to_s
         case value
         when Array(Value)
@@ -194,7 +194,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("select") do |value, args, _kwargs|
+      env.register_filter("select") do |value, args, _kwargs, ctx|
         test_name = args.first?.to_s
         case value
         when Array(Value)
@@ -203,7 +203,7 @@ module Crinkle::Std::Filters
 
           result = Array(Value).new
           value.each do |item|
-            if test.call(item, Array(Value).new, Hash(String, Value).new)
+            if test.call(item, Array(Value).new, Hash(String, Value).new, ctx)
               result << item
             end
           end
@@ -213,7 +213,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("reject") do |value, args, _kwargs|
+      env.register_filter("reject") do |value, args, _kwargs, ctx|
         test_name = args.first?.to_s
         case value
         when Array(Value)
@@ -222,7 +222,7 @@ module Crinkle::Std::Filters
 
           result = Array(Value).new
           value.each do |item|
-            unless test.call(item, Array(Value).new, Hash(String, Value).new)
+            unless test.call(item, Array(Value).new, Hash(String, Value).new, ctx)
               result << item
             end
           end
@@ -232,7 +232,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("selectattr") do |value, args, _kwargs|
+      env.register_filter("selectattr") do |value, args, _kwargs, ctx|
         attr = args[0]?.to_s
         test_name = args[1]?.to_s
         case value
@@ -245,12 +245,12 @@ module Crinkle::Std::Filters
             case item
             when Hash(String, Value)
               attr_value = item[attr]?
-              if test.call(attr_value, Array(Value).new, Hash(String, Value).new)
+              if test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx)
                 result << item
               end
             when Hash(Value, Value)
               attr_value = item[attr]?
-              if test.call(attr_value, Array(Value).new, Hash(String, Value).new)
+              if test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx)
                 result << item
               end
             end
@@ -261,7 +261,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("rejectattr") do |value, args, _kwargs|
+      env.register_filter("rejectattr") do |value, args, _kwargs, ctx|
         attr = args[0]?.to_s
         test_name = args[1]?.to_s
         case value
@@ -274,12 +274,12 @@ module Crinkle::Std::Filters
             case item
             when Hash(String, Value)
               attr_value = item[attr]?
-              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new)
+              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx)
                 result << item
               end
             when Hash(Value, Value)
               attr_value = item[attr]?
-              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new)
+              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx)
                 result << item
               end
             end
@@ -290,7 +290,7 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("default") do |value, args, kwargs|
+      env.register_filter("default") do |value, args, kwargs, _ctx|
         fallback = args.first? || ""
         default_value = kwargs["default_value"]?.as?(Bool) || false
 
@@ -311,7 +311,7 @@ module Crinkle::Std::Filters
         empty ? fallback : value
       end
 
-      env.register_filter("random") do |value, _args, _kwargs|
+      env.register_filter("random") do |value, _args, _kwargs, _ctx|
         case value
         when Array(Value)
           value.empty? ? nil : value.sample
