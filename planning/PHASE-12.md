@@ -44,7 +44,7 @@ Mirror the Crinja conversion pipeline defined in `Crinja.value` and `Crinja::Val
 - **variables(object)**: casts any hash-like object to Variables (string keys), wrapping values as Value.
 - **JSON::Any / YAML::Any**:
   - `Crinja.value(any : JSON::Any)` and `Crinja.value(any : YAML::Any)` delegate to `.raw`
-  - `JSON::Any` and `YAML::Any` include `Crinja::Object` and implement `crinja_attribute`
+  - `JSON::Any` and `YAML::Any` include `Crinja::Object` and implement `jinja_attribute`
 - **Undefined**:
   - `Undefined#to_s` prints empty string; `to_json` -> null; `size` -> 0
   - `StrictUndefined` raises on `==`, `<=>`, and `to_s`

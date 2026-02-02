@@ -11,7 +11,7 @@ end
 struct JSON::Any
   include Crinkle::Object
 
-  def crinja_attribute(attr : Crinkle::Value) : Crinkle::Value
+  def jinja_attribute(attr : Crinkle::Value) : Crinkle::Value
     result = nil
     if @raw.is_a?(Hash) || @raw.is_a?(Array)
       case attr

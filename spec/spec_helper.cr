@@ -29,7 +29,7 @@ end
 class TestContext
   include Crinkle::Object
 
-  def crinja_attribute(attr : Crinkle::Value) : Crinkle::Value
+  def jinja_attribute(attr : Crinkle::Value) : Crinkle::Value
     case attr.to_s
     when "name"
       Crinkle.value("TestApp")

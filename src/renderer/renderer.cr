@@ -536,8 +536,8 @@ module Crinkle
     private def eval_get_attr(expr : AST::GetAttr) : Value
       target = eval_expr(expr.target)
       return target if target.is_a?(Undefined) || target.is_a?(StrictUndefined)
-      if target.responds_to?(:crinja_attribute)
-        value = target.crinja_attribute(Crinkle.value(expr.name))
+      if target.responds_to?(:jinja_attribute)
+        value = target.jinja_attribute(Crinkle.value(expr.name))
         emit_missing_attribute(expr.name, expr.span) if value.is_a?(Undefined)
         return value
       end

@@ -68,7 +68,7 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** HIGH
 → [PHASE-13.md](PHASE-13.md)
 
-### Phase 14 — Callable Objects (crinja_call)
+### Phase 14 — Callable Objects (jinja_call)
 **Outcome:** Objects can expose callable methods for template invocation.
 **Priority:** CRITICAL - Blocks Migration
 → [PHASE-14.md](PHASE-14.md)
