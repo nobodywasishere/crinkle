@@ -336,7 +336,7 @@ module Crinkle
       macro finished
         {% verbatim do %}
           def jinja_call(method_name : String) : ::Crinkle::CallableProc?
-            {% methods = @type.methods.select { |m| m.annotation(::Crinkle::Method) }.map { |m| {name: (m.annotation(::Crinkle::Method)[:name] || m.name).id.stringify, method: m.name} } %}
+            {% methods = @type.methods.select(&.annotation(::Crinkle::Method)).map { |method| {name: (method.annotation(::Crinkle::Method)[:name] || method.name).id.stringify, method: method.name} } %}
             {% if !methods.empty? %}
               case method_name
               {% for m in methods %}when {{ m[:name] }} then ->(args : ::Crinkle::Arguments) : ::Crinkle::Value { ::Crinkle.value(self.{{ m[:method].id }}(args)) }
@@ -346,11 +346,24 @@ module Crinkle
           end
 
           def self.callable_schema : ::Crinkle::Schema::CallableSchema
+            {% begin %}{% dc = @type.methods.find(&.annotation(::Crinkle::DefaultCall)) %}{% dc_ann = dc ? dc.annotation(::Crinkle::DefaultCall) : nil %}
             ::Crinkle::Schema::CallableSchema.new(
               class_name: {{ @type.name.stringify }},
-              default_call: {% begin %}{% dc = @type.methods.find { |m| m.annotation(::Crinkle::DefaultCall) } %}{% if dc %}{% ann = dc.annotation(::Crinkle::DefaultCall) %}::Crinkle::Schema::MethodSchema.new(name: "__call__", params: [{% if ann[:params] %}{% for key, type in ann[:params] %}{% dv = ann[:defaults] && ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !dv }}, default: {{ dv ? dv.stringify : nil }}),{% end %}{% end %}], returns: {{ ann[:returns] ? ann[:returns].id.stringify : "Value" }}, doc: {{ ann[:doc] }}){% else %}nil{% end %}{% end %},
-              methods: { {% for method in @type.methods %}{% ann = method.annotation(::Crinkle::Method) %}{% if ann %}{{ (ann[:name] || method.name).id.stringify }} => ::Crinkle::Schema::MethodSchema.new(name: {{ (ann[:name] || method.name).id.stringify }}, params: [{% if ann[:params] %}{% for key, type in ann[:params] %}{% dv = ann[:defaults] && ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !dv }}, default: {{ dv ? dv.stringify : nil }}),{% end %}{% end %}], returns: {{ ann[:returns] ? ann[:returns].id.stringify : "Value" }}, doc: {{ ann[:doc] }}),{% end %}{% end %} } of String => ::Crinkle::Schema::MethodSchema,
-            )
+              default_call: {% if dc_ann %}::Crinkle::Schema::MethodSchema.new(
+                name: "__call__",
+                params: [{% for key, type in dc_ann[:params] || {} of Nil => Nil %}{% dv = dc_ann[:defaults] && dc_ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !dv }}, default: {{ dv ? dv.stringify : nil }}), {% end %}],
+                returns: {{ dc_ann[:returns] ? dc_ann[:returns].id.stringify : "Value" }},
+                doc: {{ dc_ann[:doc] }}
+              ){% else %}nil{% end %},
+              methods: {
+                {% for method in @type.methods %}{% ann = method.annotation(::Crinkle::Method) %}{% if ann %}{% method_name = (ann[:name] || method.name).id.stringify %}{{ method_name }} => ::Crinkle::Schema::MethodSchema.new(
+                  name: {{ method_name }},
+                  params: [{% for key, type in ann[:params] || {} of Nil => Nil %}{% dv = ann[:defaults] && ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !dv }}, default: {{ dv ? dv.stringify : nil }}), {% end %}],
+                  returns: {{ ann[:returns] ? ann[:returns].id.stringify : "Value" }},
+                  doc: {{ ann[:doc] }}
+                ), {% end %}{% end %}
+              } of String => ::Crinkle::Schema::MethodSchema,
+            ){% end %}
           end
         {% end %}
       end

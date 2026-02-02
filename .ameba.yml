@@ -24,8 +24,7 @@ Style/ArrayLiteralSyntax:
 
 Style/HashLiteralSyntax:
   Enabled: true
-
 Naming/BlockParameterName:
   Enabled: true
-  Exclude:
-    - src/std/
+  Excluded:
+    - src/std/**/*.cr
