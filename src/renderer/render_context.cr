@@ -25,5 +25,17 @@ module Crinkle
     def has_key?(key : String) : Bool
       @scope.has_key?(key)
     end
+
+    # Access a global variable by name.
+    # Checks the environment's globals and parent chain.
+    # Returns the value if found, or Undefined if not.
+    def global(name : String) : Value
+      @env.global(name)
+    end
+
+    # Check if a global variable exists in the environment or parent chain.
+    def has_global?(name : String) : Bool
+      @env.has_global?(name)
+    end
   end
 end

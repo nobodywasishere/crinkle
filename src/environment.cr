@@ -27,11 +27,13 @@ module Crinkle
     getter tests : Hash(String, TestProc)
     getter functions : Hash(String, FunctionProc)
     getter? override_builtins : Bool
-    getter template_loader : TemplateLoader?
+    property template_loader : TemplateLoader?
     getter? strict_undefined : Bool
     getter? strict_filters : Bool
     getter? strict_tests : Bool
     getter? strict_functions : Bool
+    getter parent : Environment?
+    getter globals : Hash(String, Value)
 
     def initialize(
       @override_builtins : Bool = false,
@@ -40,14 +42,46 @@ module Crinkle
       @strict_tests : Bool = true,
       @strict_functions : Bool = true,
       load_std : Bool = true,
+      @parent : Environment? = nil,
     ) : Nil
       @tag_extensions = Hash(String, TagExtension).new
       @filters = Hash(String, FilterProc).new
       @tests = Hash(String, TestProc).new
       @functions = Hash(String, FunctionProc).new
+      @globals = Hash(String, Value).new
       @template_loader = nil
 
       Std.load_all(self) if load_std
+    end
+
+    # Create a child environment that inherits from this one.
+    # The child inherits filters, tests, functions, and the template loader.
+    def new_child : Environment
+      child = Environment.new(
+        parent: self,
+        override_builtins: @override_builtins,
+        strict_undefined: @strict_undefined,
+        strict_filters: @strict_filters,
+        strict_tests: @strict_tests,
+        strict_functions: @strict_functions,
+        load_std: false,
+      )
+      child.filters.merge!(@filters)
+      child.tests.merge!(@tests)
+      child.functions.merge!(@functions)
+      child.tag_extensions.merge!(@tag_extensions)
+      child.template_loader = @template_loader
+      child
+    end
+
+    # Look up a global variable, checking parent chain if not found locally.
+    def global(name : String) : Value
+      @globals[name]? || @parent.try(&.global(name)) || Undefined.new(name)
+    end
+
+    # Check if a global variable is defined in this environment or parent chain.
+    def has_global?(name : String) : Bool
+      @globals.has_key?(name) || (@parent.try(&.has_global?(name)) || false)
     end
 
     def register_tag(

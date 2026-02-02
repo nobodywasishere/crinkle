@@ -136,8 +136,8 @@ end
 - Template caching works correctly with inheritance.
 
 ## Checklist
-- [ ] Add `parent` property to Environment
-- [ ] Add `globals` hash to Environment
-- [ ] Add `new_child` method to Environment
-- [ ] Update Renderer to check parent globals
-- [ ] Add specs for context inheritance
+- [x] Add `parent` property to Environment
+- [x] Add `globals` hash to Environment
+- [x] Add `new_child` method to Environment
+- [x] Update Renderer to check parent globals
+- [x] Add specs for context inheritance

@@ -836,11 +836,19 @@ module Crinkle
     end
 
     private def lookup(expr : AST::Name, emit_diagnostic : Bool) : Value
+      # Check local scopes first (LIFO order)
       @scopes.reverse_each do |scope|
         if scope.has_key?(expr.value)
           return scope[expr.value]
         end
       end
+
+      # Check environment globals (includes parent chain)
+      global_value = @environment.global(expr.value)
+      unless global_value.is_a?(Undefined)
+        return global_value
+      end
+
       if emit_diagnostic
         emit_diagnostic(
           DiagnosticType::UnknownVariable,
@@ -854,7 +862,8 @@ module Crinkle
     private def defined_expr?(expr : AST::Expr) : Bool
       case expr
       when AST::Name
-        @scopes.any?(&.has_key?(expr.value))
+        # Check local scopes and environment globals
+        @scopes.any?(&.has_key?(expr.value)) || @environment.has_global?(expr.value)
       else
         !eval_expr(expr).nil?
       end
