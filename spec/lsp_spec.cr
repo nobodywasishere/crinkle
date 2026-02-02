@@ -155,6 +155,27 @@ describe Crinkle::LSP do
       result.should contain "-32601"
     end
 
+    it "writes error responses with correct JSON structure" do
+      output = IO::Memory.new
+      transport = Crinkle::LSP::Transport.new(IO::Memory.new, output)
+
+      transport.write_error(42_i64, -32601, "Method not found: textDocument/hover")
+
+      result = output.to_s
+      # Extract JSON body (after headers)
+      if body_start = result.index("{")
+        json_body = result[body_start..]
+
+        parsed = JSON.parse(json_body)
+        parsed["jsonrpc"].should eq "2.0"
+        parsed["id"].should eq 42
+        parsed["error"]["code"].should eq -32601
+        parsed["error"]["message"].should eq "Method not found: textDocument/hover"
+      else
+        fail "No JSON body found in response"
+      end
+    end
+
     it "writes notifications" do
       output = IO::Memory.new
       transport = Crinkle::LSP::Transport.new(IO::Memory.new, output)
@@ -164,6 +185,27 @@ describe Crinkle::LSP do
       result = output.to_s
       result.should contain "textDocument/publishDiagnostics"
       result.should_not contain "\"id\""
+    end
+
+    it "writes notifications with correct JSON structure" do
+      output = IO::Memory.new
+      transport = Crinkle::LSP::Transport.new(IO::Memory.new, output)
+
+      transport.write_notification("window/logMessage", JSON.parse(%({"type": 3, "message": "test"})))
+
+      result = output.to_s
+      if body_start = result.index("{")
+        json_body = result[body_start..]
+
+        parsed = JSON.parse(json_body)
+        parsed["jsonrpc"].should eq "2.0"
+        parsed["method"].should eq "window/logMessage"
+        parsed["params"]["type"].should eq 3
+        parsed["params"]["message"].should eq "test"
+        parsed["id"]?.should be_nil
+      else
+        fail "No JSON body found in notification"
+      end
     end
 
     it "reads messages with Content-Length header" do

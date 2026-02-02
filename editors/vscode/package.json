@@ -1,0 +1,91 @@
+{
+  "name": "crinkle-vscode",
+  "displayName": "Crinkle - Jinja2 Support",
+  "description": "Jinja2 template support powered by Crinkle LSP",
+  "version": "0.1.0",
+  "publisher": "crinkle",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nobodywasishere/crinkle"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "jinja",
+        "aliases": [
+          "Jinja2",
+          "Jinja",
+          "jinja2"
+        ],
+        "extensions": [
+          ".j2",
+          ".jinja",
+          ".jinja2"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "jinja",
+        "scopeName": "text.html.jinja",
+        "path": "./syntaxes/jinja.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Crinkle",
+      "properties": {
+        "crinkle.serverPath": {
+          "type": "string",
+          "default": "crinkle",
+          "description": "Path to the crinkle binary"
+        },
+        "crinkle.logLevel": {
+          "type": "string",
+          "default": "info",
+          "enum": [
+            "debug",
+            "info",
+            "warning",
+            "error"
+          ],
+          "description": "Log level for the LSP server"
+        },
+        "crinkle.trace.server": {
+          "type": "string",
+          "default": "off",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "description": "Trace communication between VS Code and the Crinkle LSP server"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

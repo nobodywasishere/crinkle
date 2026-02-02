@@ -375,4 +375,28 @@ module Crinkle::LSP
     ) : Nil
     end
   end
+
+  # Message type for window/logMessage and window/showMessage
+  # LSP requires these as integers, not strings
+  enum MessageType
+    Error   = 1
+    Warning = 2
+    Info    = 3
+    Log     = 4 # Debug level
+
+    def to_json(json : JSON::Builder) : Nil
+      json.number(value)
+    end
+  end
+
+  # LogMessage params (window/logMessage notification)
+  struct LogMessageParams
+    include JSON::Serializable
+
+    property type : MessageType
+    property message : String
+
+    def initialize(@type : MessageType, @message : String) : Nil
+    end
+  end
 end

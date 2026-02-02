@@ -131,20 +131,20 @@ export function deactivate(): Thenable<void> | undefined {
 - Document sync events trigger on file open/edit/close.
 
 ## Checklist
-- [ ] Create `editors/vscode/` directory structure
-- [ ] Create `package.json` with extension manifest
-- [ ] Create `tsconfig.json` for TypeScript compilation
-- [ ] Implement `extension.ts` with LSP client
-- [ ] Create TextMate grammar for Jinja2 syntax highlighting
-- [ ] Create `language-configuration.json` for editor features
-- [ ] Add npm scripts for building and packaging
-- [ ] Test extension with local crinkle binary
-- [ ] Document installation and usage in README.md
+- [x] Create `editors/vscode/` directory structure
+- [x] Create `package.json` with extension manifest
+- [x] Create `tsconfig.json` for TypeScript compilation
+- [x] Implement `extension.ts` with LSP client
+- [x] Create TextMate grammar for Jinja2 syntax highlighting
+- [x] Create `language-configuration.json` for editor features
+- [x] Add npm scripts for building and packaging
+- [x] Test extension with local crinkle binary
+- [x] Document installation and usage in README.md
 
 ## Development Workflow
 ```bash
 # Build crinkle
-crystal build src/cli/cli.cr -o crinkle
+shards build
 
 # Install extension dependencies
 cd editors/vscode

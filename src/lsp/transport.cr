@@ -35,40 +35,61 @@ module Crinkle::LSP
 
     # Write a response message to the transport.
     def write_response(id : (Int64 | String)?, result : JSON::Any) : Nil
-      message = {
-        "jsonrpc" => "2.0",
-        "id"      => id,
-        "result"  => result,
-      }
-      write_message(message.to_json)
+      body = JSON.build do |json|
+        json.object do
+          json.field "jsonrpc", "2.0"
+          json.field "id" do
+            write_id(json, id)
+          end
+          json.field "result", result
+        end
+      end
+      write_message(body)
     end
 
     # Write an error response to the transport.
     def write_error(id : (Int64 | String)?, code : Int32, message : String, data : JSON::Any? = nil) : Nil
-      error = {
-        "code"    => code,
-        "message" => message,
-      }
-      if data
-        error = error.merge({"data" => data})
+      body = JSON.build do |json|
+        json.object do
+          json.field "jsonrpc", "2.0"
+          json.field "id" do
+            write_id(json, id)
+          end
+          json.field "error" do
+            json.object do
+              json.field "code", code
+              json.field "message", message
+              if data
+                json.field "data", data
+              end
+            end
+          end
+        end
       end
-
-      response = {
-        "jsonrpc" => "2.0",
-        "id"      => id,
-        "error"   => error,
-      }
-      write_message(response.to_json)
+      write_message(body)
     end
 
     # Write a notification to the transport (no id).
     def write_notification(method : String, params : JSON::Any) : Nil
-      message = {
-        "jsonrpc" => "2.0",
-        "method"  => method,
-        "params"  => params,
-      }
-      write_message(message.to_json)
+      body = JSON.build do |json|
+        json.object do
+          json.field "jsonrpc", "2.0"
+          json.field "method", method
+          json.field "params" { params.to_json(json) }
+        end
+      end
+      write_message(body)
+    end
+
+    private def write_id(json : JSON::Builder, id : (Int64 | String)?) : Nil
+      case id
+      when Int64
+        json.number(id)
+      when String
+        json.string(id)
+      else
+        json.null
+      end
     end
 
     private def read_headers : Int32?

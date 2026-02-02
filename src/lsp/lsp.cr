@@ -7,7 +7,7 @@ require "./server"
 module Crinkle::LSP
   def self.run(args : Array(String)) : Int32
     log_file : String? = nil
-    log_level = Logger::Level::Info
+    log_level = MessageType::Info
 
     args.each_with_index do |arg, i|
       case arg
@@ -16,11 +16,11 @@ module Crinkle::LSP
       when "--log-level"
         if level = args[i + 1]?
           log_level = case level.downcase
-                      when "debug"   then Logger::Level::Debug
-                      when "info"    then Logger::Level::Info
-                      when "warning" then Logger::Level::Warning
-                      when "error"   then Logger::Level::Error
-                      else                Logger::Level::Info
+                      when "debug"   then MessageType::Log
+                      when "info"    then MessageType::Info
+                      when "warning" then MessageType::Warning
+                      when "error"   then MessageType::Error
+                      else                MessageType::Info
                       end
         end
       when "-h", "--help"
@@ -32,14 +32,25 @@ module Crinkle::LSP
       end
     end
 
-    logger = log_file.try { |file| Logger.file(file, log_level) }
+    # Create file logger if specified (for debugging)
+    file_logger : Logger? = nil
+    if log_file
+      file_log_level = case log_level
+                       when .log?     then Logger::Level::Debug
+                       when .info?    then Logger::Level::Info
+                       when .warning? then Logger::Level::Warning
+                       when .error?   then Logger::Level::Error
+                       else                Logger::Level::Info
+                       end
+      file_logger = Logger.file(log_file, file_log_level)
+    end
 
-    transport = Transport.new(STDIN, STDOUT, logger)
-    server = Server.new(transport, logger)
+    transport = Transport.new(STDIN, STDOUT, file_logger)
+    server = Server.new(transport, file_logger, log_level)
 
     exit_code = server.run
 
-    logger.try(&.close)
+    file_logger.try(&.close)
 
     exit_code
   end
@@ -51,7 +62,7 @@ module Crinkle::LSP
       Start the Language Server Protocol server for Jinja2/Crinkle templates.
 
       Options:
-        --log FILE           Log to file (default: no logging)
+        --log FILE           Log to file (for debugging)
         --log-level LEVEL    Log level: debug, info, warning, error (default: info)
         -h, --help           Show this help
         -v, --version        Show version
