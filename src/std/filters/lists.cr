@@ -19,8 +19,9 @@ module Crinkle::Std::Filters
         end
       end
 
-      env.register_filter("join") do |value, args, _kwargs|
-        sep = args.first?.to_s
+      env.register_filter("join") do |value, args, kwargs|
+        sep = kwargs["d"]? || args.first? || ""
+        sep = sep.to_s
         case value
         when Array
           value.map(&.to_s).join(sep)
@@ -308,6 +309,15 @@ module Crinkle::Std::Filters
                   false
                 end
         empty ? fallback : value
+      end
+
+      env.register_filter("random") do |value, _args, _kwargs|
+        case value
+        when Array(Value)
+          value.empty? ? nil : value.sample
+        else
+          value
+        end
       end
     end
   end

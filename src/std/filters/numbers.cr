@@ -1,15 +1,19 @@
 module Crinkle::Std::Filters
   module Numbers
     def self.register(env : Environment) : Nil
-      env.register_filter("int") do |value, args, _kwargs|
-        default = args.first?.as?(Int64) || 0_i64
+      env.register_filter("int") do |value, args, kwargs|
+        default = kwargs["default"]? || args.first? || 0_i64
+        default = default.as?(Int64) || 0_i64
+        base_arg = kwargs["base"]? || args[1]?
+        base = base_arg ? (base_arg.as?(Int64) || base_arg.to_s.to_i? || 10) : 10
+
         case value
         when Int64
           value
         when Float64
           value.to_i64
         when String
-          value.to_i64? || default
+          value.to_i64?(base) || default
         when Bool
           value ? 1_i64 : 0_i64
         else

@@ -1,0 +1,109 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "This is a very long text that needs truncating"
+        },
+        "name": "truncate",
+        "args": [
+          {
+            "type": "Literal",
+            "value": 20
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "Short text"
+        },
+        "name": "truncate",
+        "args": [
+          {
+            "type": "Literal",
+            "value": 20
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "This is a very long text that needs truncating"
+        },
+        "name": "truncate",
+        "args": [
+          {
+            "type": "Literal",
+            "value": 20
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "killwords",
+            "value": {
+              "type": "Literal",
+              "value": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "One two three four five six seven"
+        },
+        "name": "truncate",
+        "args": [
+          {
+            "type": "Literal",
+            "value": 15
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "end",
+            "value": {
+              "type": "Literal",
+              "value": "..."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

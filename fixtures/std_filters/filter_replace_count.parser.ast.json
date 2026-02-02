@@ -1,0 +1,125 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "hello world hello world"
+        },
+        "name": "replace",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "world"
+          },
+          {
+            "type": "Literal",
+            "value": "universe"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "hello world hello world"
+        },
+        "name": "replace",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "world"
+          },
+          {
+            "type": "Literal",
+            "value": "universe"
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "count",
+            "value": {
+              "type": "Literal",
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "aaabbbccc"
+        },
+        "name": "replace",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "b"
+          },
+          {
+            "type": "Literal",
+            "value": "x"
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "count",
+            "value": {
+              "type": "Literal",
+              "value": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "test test test"
+        },
+        "name": "replace",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "test"
+          },
+          {
+            "type": "Literal",
+            "value": "demo"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

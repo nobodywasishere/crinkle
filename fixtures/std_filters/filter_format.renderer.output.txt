@@ -1,0 +1,4 @@
+Hello World!
+Number: 42
+Float: 3.14
+Multiple: test 100 2.5

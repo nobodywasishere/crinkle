@@ -1,0 +1,101 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "Hello %s!"
+        },
+        "name": "format",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "World"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "Number: %d"
+        },
+        "name": "format",
+        "args": [
+          {
+            "type": "Literal",
+            "value": 42
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "Float: %f"
+        },
+        "name": "format",
+        "args": [
+          {
+            "type": "Literal",
+            "value": 3.14
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "Multiple: %s %d %f"
+        },
+        "name": "format",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "test"
+          },
+          {
+            "type": "Literal",
+            "value": 100
+          },
+          {
+            "type": "Literal",
+            "value": 2.5
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

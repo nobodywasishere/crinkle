@@ -1,0 +1,97 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "ListLiteral",
+          "items": [
+            {
+              "type": "Literal",
+              "value": "a"
+            },
+            {
+              "type": "Literal",
+              "value": "b"
+            },
+            {
+              "type": "Literal",
+              "value": "c"
+            }
+          ]
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "-"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "ListLiteral",
+          "items": [
+            {
+              "type": "Literal",
+              "value": "x"
+            },
+            {
+              "type": "Literal",
+              "value": "y"
+            },
+            {
+              "type": "Literal",
+              "value": "z"
+            }
+          ]
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": " | "
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "items"
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": ", "
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
