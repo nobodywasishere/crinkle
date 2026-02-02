@@ -37,5 +37,13 @@ module Crinkle
     def has_global?(name : String) : Bool
       @env.has_global?(name)
     end
+
+    # Add a diagnostic from within a filter/test/function.
+    # Uses a zero-span since we don't have exact source location at runtime.
+    def add_diagnostic(type : DiagnosticType, message : String) : Nil
+      zero_pos = Position.new(0, 1, 1)
+      span = Span.new(zero_pos, zero_pos)
+      @renderer.add_diagnostic(type, message, span)
+    end
   end
 end

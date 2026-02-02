@@ -25,6 +25,8 @@ module Crinkle
     HtmlUnexpectedEndTag
     HtmlMismatchedEndTag
     HtmlUnclosedTag
+    TypeMismatch
+    MissingArgument
   end
 
   enum Severity
@@ -86,6 +88,8 @@ module Crinkle
       in DiagnosticType::HtmlUnexpectedEndTag   then "E_HTML_UNEXPECTED_END_TAG"
       in DiagnosticType::HtmlMismatchedEndTag   then "E_HTML_MISMATCHED_END_TAG"
       in DiagnosticType::HtmlUnclosedTag        then "E_HTML_UNCLOSED_TAG"
+      in DiagnosticType::TypeMismatch           then "E_TYPE_MISMATCH"
+      in DiagnosticType::MissingArgument        then "E_MISSING_ARGUMENT"
       end
     end
   end

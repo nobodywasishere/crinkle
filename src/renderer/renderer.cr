@@ -1150,6 +1150,11 @@ module Crinkle
       @diagnostics << Diagnostic.new(type, Severity::Error, message, span)
     end
 
+    # Public method for filters/tests/functions to add diagnostics via RenderContext
+    def add_diagnostic(type : DiagnosticType, message : String, span : Span) : Nil
+      @diagnostics << Diagnostic.new(type, Severity::Error, message, span)
+    end
+
     private def to_iterable(value : Value) : Array(Value)?
       return value if value.is_a?(Array(Value))
       if value.is_a?(Hash(String, Value))
