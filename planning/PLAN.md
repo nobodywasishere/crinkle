@@ -78,8 +78,8 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** HIGH
 → [PHASE-15.md](PHASE-15.md)
 
-### Phase 16 — Required Builtin Tests
-**Outcome:** Complete set of tests (`none`, `defined`, `undefined`, `sequence`).
+### Phase 16 — Required Builtin Tests ✅
+**Outcome:** 29 Jinja2 builtin tests implemented (`filter`/`test` deferred to Phase 17).
 **Priority:** HIGH
 → [PHASE-16.md](PHASE-16.md)
 

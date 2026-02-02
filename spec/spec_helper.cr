@@ -495,5 +495,8 @@ def render_context : Hash(String, Crinkle::Value)
   # Callable object context
   context["ctx"] = TestContext.new
 
+  # Nil value for testing
+  context["nil_value"] = nil
+
   context
 end

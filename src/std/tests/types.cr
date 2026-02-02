@@ -42,7 +42,7 @@ module Crinkle::Std::Tests
       end
 
       env.register_test("sequence") do |value, _args, _kwargs|
-        value.is_a?(Array)
+        value.is_a?(Array) || value.is_a?(String)
       end
 
       env.register_test("iterable") do |value, _args, _kwargs|
@@ -53,9 +53,31 @@ module Crinkle::Std::Tests
         value.is_a?(Hash)
       end
 
-      env.register_test("callable") do |_value, _args, _kwargs|
-        # In this context, functions registered in env are callable
-        false
+      env.register_test("callable") do |value, _args, _kwargs|
+        # Check if the value is an Object that can have callable methods
+        value.is_a?(Crinkle::Object)
+      end
+
+      env.register_test("sameas") do |value, args, _kwargs|
+        other = args.first?
+        # Identity comparison - same object reference
+        # For reference types, use same?; for value types, use ==
+        case value
+        when Reference
+          case other
+          when Reference
+            value.same?(other)
+          else
+            false
+          end
+        else
+          # For value types (primitives), identity is the same as equality
+          value == other
+        end
+      end
+
+      env.register_test("escaped") do |value, _args, _kwargs|
+        value.is_a?(SafeString)
       end
 
       env.register_test("odd") do |value, _args, _kwargs|

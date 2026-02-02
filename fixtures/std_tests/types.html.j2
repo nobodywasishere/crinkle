@@ -9,3 +9,6 @@
 {% if 3 is odd %}odd{% endif %}
 {% if 4 is even %}even{% endif %}
 {% if 10 is divisibleby(5) %}divisible{% endif %}
+{% if ctx is callable %}callable{% endif %}
+{% if safe_value is escaped %}escaped{% endif %}
+{% if name is sameas(name) %}sameas{% endif %}

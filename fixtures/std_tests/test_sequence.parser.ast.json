@@ -1,0 +1,85 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "items"
+        },
+        "name": "sequence",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "array"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": " "
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "name"
+        },
+        "name": "sequence",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "string"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": " "
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "count"
+        },
+        "name": "sequence",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "no"
+        }
+      ],
+      "else": [
+        {
+          "type": "Text",
+          "value": "not-sequence"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

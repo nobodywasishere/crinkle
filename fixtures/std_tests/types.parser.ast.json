@@ -280,6 +280,86 @@
     {
       "type": "Text",
       "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "ctx"
+        },
+        "name": "callable",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "callable"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "safe_value"
+        },
+        "name": "escaped",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "escaped"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "name"
+        },
+        "name": "sameas",
+        "negated": false,
+        "args": [
+          {
+            "type": "Name",
+            "value": "name"
+          }
+        ],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "sameas"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
     }
   ]
 }

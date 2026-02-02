@@ -9,3 +9,6 @@ sequence
 odd
 even
 divisible
+callable
+escaped
+sameas

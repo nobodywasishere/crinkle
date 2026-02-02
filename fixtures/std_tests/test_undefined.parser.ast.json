@@ -1,0 +1,30 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "missing"
+        },
+        "name": "undefined",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "not set"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

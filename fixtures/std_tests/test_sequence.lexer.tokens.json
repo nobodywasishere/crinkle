@@ -1,0 +1,978 @@
+[
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 0,
+        "line": 1,
+        "column": 1
+      },
+      "end": {
+        "offset": 2,
+        "line": 1,
+        "column": 3
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 2,
+        "line": 1,
+        "column": 3
+      },
+      "end": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "if",
+    "span": {
+      "start": {
+        "offset": 3,
+        "line": 1,
+        "column": 4
+      },
+      "end": {
+        "offset": 5,
+        "line": 1,
+        "column": 6
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 5,
+        "line": 1,
+        "column": 6
+      },
+      "end": {
+        "offset": 6,
+        "line": 1,
+        "column": 7
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "items",
+    "span": {
+      "start": {
+        "offset": 6,
+        "line": 1,
+        "column": 7
+      },
+      "end": {
+        "offset": 11,
+        "line": 1,
+        "column": 12
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 11,
+        "line": 1,
+        "column": 12
+      },
+      "end": {
+        "offset": 12,
+        "line": 1,
+        "column": 13
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "is",
+    "span": {
+      "start": {
+        "offset": 12,
+        "line": 1,
+        "column": 13
+      },
+      "end": {
+        "offset": 14,
+        "line": 1,
+        "column": 15
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 14,
+        "line": 1,
+        "column": 15
+      },
+      "end": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "sequence",
+    "span": {
+      "start": {
+        "offset": 15,
+        "line": 1,
+        "column": 16
+      },
+      "end": {
+        "offset": 23,
+        "line": 1,
+        "column": 24
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 23,
+        "line": 1,
+        "column": 24
+      },
+      "end": {
+        "offset": 24,
+        "line": 1,
+        "column": 25
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 24,
+        "line": 1,
+        "column": 25
+      },
+      "end": {
+        "offset": 26,
+        "line": 1,
+        "column": 27
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "array",
+    "span": {
+      "start": {
+        "offset": 26,
+        "line": 1,
+        "column": 27
+      },
+      "end": {
+        "offset": 31,
+        "line": 1,
+        "column": 32
+      }
+    }
+  },
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 31,
+        "line": 1,
+        "column": 32
+      },
+      "end": {
+        "offset": 33,
+        "line": 1,
+        "column": 34
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 33,
+        "line": 1,
+        "column": 34
+      },
+      "end": {
+        "offset": 34,
+        "line": 1,
+        "column": 35
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "endif",
+    "span": {
+      "start": {
+        "offset": 34,
+        "line": 1,
+        "column": 35
+      },
+      "end": {
+        "offset": 39,
+        "line": 1,
+        "column": 40
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 39,
+        "line": 1,
+        "column": 40
+      },
+      "end": {
+        "offset": 40,
+        "line": 1,
+        "column": 41
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 40,
+        "line": 1,
+        "column": 41
+      },
+      "end": {
+        "offset": 42,
+        "line": 1,
+        "column": 43
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 42,
+        "line": 1,
+        "column": 43
+      },
+      "end": {
+        "offset": 43,
+        "line": 1,
+        "column": 44
+      }
+    }
+  },
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 43,
+        "line": 1,
+        "column": 44
+      },
+      "end": {
+        "offset": 45,
+        "line": 1,
+        "column": 46
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 45,
+        "line": 1,
+        "column": 46
+      },
+      "end": {
+        "offset": 46,
+        "line": 1,
+        "column": 47
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "if",
+    "span": {
+      "start": {
+        "offset": 46,
+        "line": 1,
+        "column": 47
+      },
+      "end": {
+        "offset": 48,
+        "line": 1,
+        "column": 49
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 48,
+        "line": 1,
+        "column": 49
+      },
+      "end": {
+        "offset": 49,
+        "line": 1,
+        "column": 50
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "name",
+    "span": {
+      "start": {
+        "offset": 49,
+        "line": 1,
+        "column": 50
+      },
+      "end": {
+        "offset": 53,
+        "line": 1,
+        "column": 54
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 53,
+        "line": 1,
+        "column": 54
+      },
+      "end": {
+        "offset": 54,
+        "line": 1,
+        "column": 55
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "is",
+    "span": {
+      "start": {
+        "offset": 54,
+        "line": 1,
+        "column": 55
+      },
+      "end": {
+        "offset": 56,
+        "line": 1,
+        "column": 57
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 56,
+        "line": 1,
+        "column": 57
+      },
+      "end": {
+        "offset": 57,
+        "line": 1,
+        "column": 58
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "sequence",
+    "span": {
+      "start": {
+        "offset": 57,
+        "line": 1,
+        "column": 58
+      },
+      "end": {
+        "offset": 65,
+        "line": 1,
+        "column": 66
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 65,
+        "line": 1,
+        "column": 66
+      },
+      "end": {
+        "offset": 66,
+        "line": 1,
+        "column": 67
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 66,
+        "line": 1,
+        "column": 67
+      },
+      "end": {
+        "offset": 68,
+        "line": 1,
+        "column": 69
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "string",
+    "span": {
+      "start": {
+        "offset": 68,
+        "line": 1,
+        "column": 69
+      },
+      "end": {
+        "offset": 74,
+        "line": 1,
+        "column": 75
+      }
+    }
+  },
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 74,
+        "line": 1,
+        "column": 75
+      },
+      "end": {
+        "offset": 76,
+        "line": 1,
+        "column": 77
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 76,
+        "line": 1,
+        "column": 77
+      },
+      "end": {
+        "offset": 77,
+        "line": 1,
+        "column": 78
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "endif",
+    "span": {
+      "start": {
+        "offset": 77,
+        "line": 1,
+        "column": 78
+      },
+      "end": {
+        "offset": 82,
+        "line": 1,
+        "column": 83
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 82,
+        "line": 1,
+        "column": 83
+      },
+      "end": {
+        "offset": 83,
+        "line": 1,
+        "column": 84
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 83,
+        "line": 1,
+        "column": 84
+      },
+      "end": {
+        "offset": 85,
+        "line": 1,
+        "column": 86
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 85,
+        "line": 1,
+        "column": 86
+      },
+      "end": {
+        "offset": 86,
+        "line": 1,
+        "column": 87
+      }
+    }
+  },
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 86,
+        "line": 1,
+        "column": 87
+      },
+      "end": {
+        "offset": 88,
+        "line": 1,
+        "column": 89
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 88,
+        "line": 1,
+        "column": 89
+      },
+      "end": {
+        "offset": 89,
+        "line": 1,
+        "column": 90
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "if",
+    "span": {
+      "start": {
+        "offset": 89,
+        "line": 1,
+        "column": 90
+      },
+      "end": {
+        "offset": 91,
+        "line": 1,
+        "column": 92
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 91,
+        "line": 1,
+        "column": 92
+      },
+      "end": {
+        "offset": 92,
+        "line": 1,
+        "column": 93
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "count",
+    "span": {
+      "start": {
+        "offset": 92,
+        "line": 1,
+        "column": 93
+      },
+      "end": {
+        "offset": 97,
+        "line": 1,
+        "column": 98
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 97,
+        "line": 1,
+        "column": 98
+      },
+      "end": {
+        "offset": 98,
+        "line": 1,
+        "column": 99
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "is",
+    "span": {
+      "start": {
+        "offset": 98,
+        "line": 1,
+        "column": 99
+      },
+      "end": {
+        "offset": 100,
+        "line": 1,
+        "column": 101
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 100,
+        "line": 1,
+        "column": 101
+      },
+      "end": {
+        "offset": 101,
+        "line": 1,
+        "column": 102
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "sequence",
+    "span": {
+      "start": {
+        "offset": 101,
+        "line": 1,
+        "column": 102
+      },
+      "end": {
+        "offset": 109,
+        "line": 1,
+        "column": 110
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 109,
+        "line": 1,
+        "column": 110
+      },
+      "end": {
+        "offset": 110,
+        "line": 1,
+        "column": 111
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 110,
+        "line": 1,
+        "column": 111
+      },
+      "end": {
+        "offset": 112,
+        "line": 1,
+        "column": 113
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "no",
+    "span": {
+      "start": {
+        "offset": 112,
+        "line": 1,
+        "column": 113
+      },
+      "end": {
+        "offset": 114,
+        "line": 1,
+        "column": 115
+      }
+    }
+  },
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 114,
+        "line": 1,
+        "column": 115
+      },
+      "end": {
+        "offset": 116,
+        "line": 1,
+        "column": 117
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 116,
+        "line": 1,
+        "column": 117
+      },
+      "end": {
+        "offset": 117,
+        "line": 1,
+        "column": 118
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "else",
+    "span": {
+      "start": {
+        "offset": 117,
+        "line": 1,
+        "column": 118
+      },
+      "end": {
+        "offset": 121,
+        "line": 1,
+        "column": 122
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 121,
+        "line": 1,
+        "column": 122
+      },
+      "end": {
+        "offset": 122,
+        "line": 1,
+        "column": 123
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 122,
+        "line": 1,
+        "column": 123
+      },
+      "end": {
+        "offset": 124,
+        "line": 1,
+        "column": 125
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "not-sequence",
+    "span": {
+      "start": {
+        "offset": 124,
+        "line": 1,
+        "column": 125
+      },
+      "end": {
+        "offset": 136,
+        "line": 1,
+        "column": 137
+      }
+    }
+  },
+  {
+    "type": "BlockStart",
+    "lexeme": "{%",
+    "span": {
+      "start": {
+        "offset": 136,
+        "line": 1,
+        "column": 137
+      },
+      "end": {
+        "offset": 138,
+        "line": 1,
+        "column": 139
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 138,
+        "line": 1,
+        "column": 139
+      },
+      "end": {
+        "offset": 139,
+        "line": 1,
+        "column": 140
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "endif",
+    "span": {
+      "start": {
+        "offset": 139,
+        "line": 1,
+        "column": 140
+      },
+      "end": {
+        "offset": 144,
+        "line": 1,
+        "column": 145
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 144,
+        "line": 1,
+        "column": 145
+      },
+      "end": {
+        "offset": 145,
+        "line": 1,
+        "column": 146
+      }
+    }
+  },
+  {
+    "type": "BlockEnd",
+    "lexeme": "%}",
+    "span": {
+      "start": {
+        "offset": 145,
+        "line": 1,
+        "column": 146
+      },
+      "end": {
+        "offset": 147,
+        "line": 1,
+        "column": 148
+      }
+    }
+  },
+  {
+    "type": "Text",
+    "lexeme": "\n",
+    "span": {
+      "start": {
+        "offset": 147,
+        "line": 1,
+        "column": 148
+      },
+      "end": {
+        "offset": 148,
+        "line": 2,
+        "column": 1
+      }
+    }
+  },
+  {
+    "type": "EOF",
+    "lexeme": "",
+    "span": {
+      "start": {
+        "offset": 148,
+        "line": 2,
+        "column": 1
+      },
+      "end": {
+        "offset": 148,
+        "line": 2,
+        "column": 1
+      }
+    }
+  }
+]
