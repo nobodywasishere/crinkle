@@ -9,7 +9,7 @@ module Crinkle
   end
 
   module Object
-    # Returns a callable for the given method name, or nil if the method is not callable.
+    # Returns a callable proc for the given method name, or nil if the method is not callable.
     # Objects can override this to expose methods that can be invoked from templates.
     #
     # Example:
@@ -17,14 +17,14 @@ module Crinkle
     # def jinja_call(name : String) : CallableProc?
     #   case name
     #   when "localize"
-    #     ->(args : Arguments) {
+    #     ->(args : Arguments) : Value {
     #       key = args.varargs[0]?.try(&.to_s) || ""
     #       Crinkle.value(translate(key))
     #     }
     #   end
     # end
     # ```
-    def jinja_call(name : String) : (Callable | CallableProc)?
+    def jinja_call(name : String) : CallableProc?
       nil # Default: no callable methods
     end
 

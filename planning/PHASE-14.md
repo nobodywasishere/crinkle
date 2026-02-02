@@ -19,7 +19,7 @@ Production applications need objects that expose callable methods, not just attr
 This is different from attribute access (`ctx.user`) - these are method invocations with arguments.
 
 ## Scope (Phase 14)
-- Create `Callable` module and `CallableInstance` class.
+- Create `CallableProc` type alias for callable procs.
 - Create `Arguments` struct for argument handling.
 - Add `jinja_call` method to `Object` module.
 - Update renderer to check `jinja_call` before attribute access.
@@ -28,7 +28,7 @@ This is different from attribute access (`ctx.user`) - these are method invocati
 ```
 src/
   runtime/
-    callable.cr      # Callable module and CallableInstance
+    callable.cr      # CallableProc type alias
     arguments.cr     # Arguments struct
   runtime/object.cr  # Modified to add jinja_call
   renderer/renderer.cr # Modified for callable invocation
@@ -40,26 +40,8 @@ src/
 ### `src/runtime/callable.cr`
 ```crystal
 module Crinkle
-  module Callable
-    abstract def call(arguments : Arguments) : Value
-  end
-
+  # Simple type alias for callable procs
   alias CallableProc = Arguments -> Value
-
-  class CallableInstance
-    include Callable
-
-    getter proc : CallableProc
-    getter defaults : Hash(String, Value)
-    getter name : String?
-
-    def initialize(@proc, @defaults = Hash(String, Value).new, @name = nil)
-    end
-
-    def call(arguments : Arguments) : Value
-      @proc.call(arguments)
-    end
-  end
 end
 ```
 
@@ -112,7 +94,7 @@ end
 ### Object Module Extension
 ```crystal
 module Crinkle::Object
-  def jinja_call(name : String) : Callable | CallableProc | Nil
+  def jinja_call(name : String) : CallableProc?
     nil # Default: no callable methods
   end
 end
@@ -120,14 +102,17 @@ end
 
 ### Renderer Modifications
 ```crystal
-private def eval_method_call(obj : Value, method_name : String, args : Array(Value), kwargs : Hash(String, Value)) : Value
-  if obj.is_a?(Crinkle::Object)
-    if callable = obj.jinja_call(method_name)
-      arguments = Arguments.new(env: @environment, varargs: args, kwargs: kwargs)
-      return callable.call(arguments)
+# Inside eval_call method - check if callee is a method call on an object
+if callee.is_a?(AST::GetAttr)
+  target = eval_expr(callee.target)
+  unless target.is_a?(Undefined) || target.is_a?(StrictUndefined)
+    if target.responds_to?(:jinja_call)
+      if callable = target.jinja_call(callee.name)
+        arguments = Arguments.new(env: @environment, varargs: args, kwargs: kwargs, target: target)
+        return callable.call(arguments)
+      end
     end
   end
-  eval_attribute(obj, method_name)
 end
 ```
 
@@ -146,12 +131,12 @@ class MyContext
   def jinja_call(name : String) : Crinkle::CallableProc?
     case name
     when "localize"
-      ->(args : Crinkle::Arguments) {
+      ->(args : Crinkle::Arguments) : Crinkle::Value {
         key = args.varargs[0]?.try(&.to_s) || ""
         Crinkle.value(translate(key))
       }
     when "flag"
-      ->(args : Crinkle::Arguments) {
+      ->(args : Crinkle::Arguments) : Crinkle::Value {
         flag_name = args.varargs[0]?.try(&.to_s) || ""
         Crinkle.value(check_flag(flag_name))
       }
@@ -172,9 +157,40 @@ end
 - Test fixtures pass for callable object scenarios.
 
 ## Checklist
-- [x] Create `src/runtime/callable.cr` with Callable module and CallableInstance
+- [x] Create `src/runtime/callable.cr` with CallableProc type alias
 - [x] Create `src/runtime/arguments.cr` with Arguments struct
 - [x] Add `jinja_call` method to `src/runtime/object.cr`
 - [x] Update renderer to check `jinja_call` before attribute access
 - [x] Create test fixtures for callable objects
 - [x] Add specs for callable invocation
+
+## Implementation Notes
+
+### Design Simplification (Post-Implementation)
+
+The initial design included three types:
+- `Callable` module (abstract interface with `call` method)
+- `CallableInstance` class (wrapper with metadata: proc, defaults, name)
+- `CallableProc` type alias (`Arguments -> Value`)
+
+The return type was `(Callable | CallableProc)?`, and the renderer handled both with a case statement:
+```crystal
+case callable
+when Callable
+  return callable.call(arguments)
+when CallableProc
+  return callable.call(arguments)  # Identical!
+end
+```
+
+**Problem:** Both branches were identical because procs already have a `.call` method. The `CallableInstance` class was never used - it existed for potential future metadata support (defaults, name), but these features weren't needed since:
+- Arguments already handles defaults via the `defaults` hash
+- Method names are passed as strings to `jinja_call`
+
+**Simplification:** Removed `Callable` module and `CallableInstance` class, keeping only `CallableProc` as a simple type alias. Benefits:
+- Simpler API: `jinja_call` returns `CallableProc?` instead of union type
+- Less code: No unused wrapper class or abstract interface
+- Single code path in renderer: Direct proc call instead of case statement
+- Clear intent: Users return procs directly from `jinja_call`
+
+All 203 specs pass with the simplified design.

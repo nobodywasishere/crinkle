@@ -451,12 +451,7 @@ module Crinkle
           if target.responds_to?(:jinja_call)
             if callable = target.jinja_call(callee.name)
               arguments = Arguments.new(env: @environment, varargs: args, kwargs: kwargs, target: target)
-              case callable
-              when Callable
-                return callable.call(arguments)
-              when CallableProc
-                return callable.call(arguments)
-              end
+              return callable.call(arguments)
             end
           end
         end
