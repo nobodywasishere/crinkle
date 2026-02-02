@@ -99,5 +99,43 @@ module Crinkle
     def tag_extension(name : String) : TagExtension?
       @tag_extensions[name]?
     end
+
+    def get_template(name : String) : Template
+      source = load_template_source(name)
+      parse_template(source, name)
+    end
+
+    def from_string(source : String, name : String? = nil) : Template
+      parse_template(source, name || "<string>")
+    end
+
+    def render(template_name : String, context : Hash(String, Value) = Hash(String, Value).new) : String
+      get_template(template_name).render(context)
+    end
+
+    def render(template_name : String, **variables) : String
+      context = Hash(String, Value).new
+      variables.each do |key, value|
+        context[key.to_s] = Crinkle.value(value)
+      end
+      render(template_name, context)
+    end
+
+    private def load_template_source(name : String) : String
+      if loader = @template_loader
+        if source = loader.call(name)
+          return source
+        end
+      end
+      raise TemplateNotFoundError.new(name)
+    end
+
+    private def parse_template(source : String, name : String) : Template
+      lexer = Lexer.new(source)
+      tokens = lexer.lex_all
+      parser = Parser.new(tokens, self)
+      ast = parser.parse
+      Template.new(source, ast, name, name, self)
+    end
   end
 end
