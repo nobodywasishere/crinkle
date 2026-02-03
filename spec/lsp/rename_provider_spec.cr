@@ -73,7 +73,7 @@ describe Crinkle::LSP do
         macro_path = File.join(templates_dir, "macros.html.j2")
         page_path = File.join(templates_dir, "page.html.j2")
         File.write(macro_path, "{% macro button() %}ok{% endmacro %}")
-        File.write(page_path, "{{ button() }}")
+        File.write(page_path, "{% from \"macros.html.j2\" import button %}{{ button() }}")
 
         config = Crinkle::LSP::Config.new(template_paths: ["templates"])
         inference = Crinkle::LSP::InferenceEngine.new(config, tmp_dir)
@@ -86,7 +86,9 @@ describe Crinkle::LSP do
 
         provider = Crinkle::LSP::RenameProvider.new(inference, documents, index, tmp_dir)
 
-        edit = provider.rename(page_uri, File.read(page_path), Crinkle::LSP::Position.new(0, 3), "primary_button")
+        content = File.read(page_path)
+        offset = content.index!("button")
+        edit = provider.rename(page_uri, content, Crinkle::LSP::Position.new(0, offset), "primary_button")
 
         edit.should_not be_nil
         if e = edit
@@ -191,6 +193,45 @@ describe Crinkle::LSP do
       end
     end
 
+    it "renames macros imported without alias" do
+      tmp_dir = File.join(Dir.tempdir, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Process.pid}")
+      templates_dir = File.join(tmp_dir, "templates")
+      FileUtils.mkdir_p(templates_dir)
+
+      begin
+        macro_path = File.join(templates_dir, "macros.html.j2")
+        page_path = File.join(templates_dir, "page.html.j2")
+        File.write(macro_path, "{% macro toggle_switch() %}ok{% endmacro %}")
+        File.write(page_path, "{% import \"macros.html.j2\" %}{{ toggle_switch() }}")
+
+        config = Crinkle::LSP::Config.new(template_paths: ["templates"])
+        inference = Crinkle::LSP::InferenceEngine.new(config, tmp_dir)
+        documents = Crinkle::LSP::DocumentStore.new
+        index = Crinkle::LSP::WorkspaceIndex.new(config, tmp_dir)
+        index.rebuild
+
+        page_uri = "file://#{page_path}"
+        documents.open(page_uri, "jinja2", File.read(page_path), 1)
+
+        provider = Crinkle::LSP::RenameProvider.new(inference, documents, index, tmp_dir)
+
+        content = File.read(page_path)
+        call_offset = content.index!("toggle_switch")
+        edit = provider.rename(page_uri, content, Crinkle::LSP::Position.new(0, call_offset), "switch_toggle")
+
+        edit.should_not be_nil
+        if e = edit
+          changes = e.changes
+          changes.should_not be_nil
+          changes = changes.as(Hash(String, Array(Crinkle::LSP::TextEdit)))
+          changes.keys.should contain page_uri
+          changes.keys.should contain "file://#{macro_path}"
+        end
+      ensure
+        FileUtils.rm_r(tmp_dir) if Dir.exists?(tmp_dir)
+      end
+    end
+
     it "renames blocks only in the same extends chain" do
       tmp_dir = File.join(Dir.tempdir, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Process.pid}")
       templates_dir = File.join(tmp_dir, "templates")
@@ -252,6 +293,29 @@ describe Crinkle::LSP do
       result = provider.prepare_rename(uri, template, Crinkle::LSP::Position.new(0, offset))
 
       result.should be_nil
+    end
+
+    it "renames macro parameters and uses" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::RenameProvider.new(inference, documents)
+
+      template = "{% macro button(text, size=1) %}{{ text }}{% endmacro %}{{ text }}"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+      inference.analyze(uri, template)
+
+      offset = template.index!("text,")
+      edit = provider.rename(uri, template, Crinkle::LSP::Position.new(0, offset), "label")
+
+      edit.should_not be_nil
+      if e = edit
+        changes = e.changes
+        changes.should_not be_nil
+        changes = changes.as(Hash(String, Array(Crinkle::LSP::TextEdit)))
+        changes[uri].size.should eq 2
+      end
     end
   end
 end

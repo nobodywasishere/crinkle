@@ -144,7 +144,10 @@ module Crinkle::LSP
 
       all_edits = Hash(String, Array(TextEdit)).new
 
+      candidate_uris = candidate_macro_uris(target)
+
       each_workspace_uri do |doc_uri, doc_text|
+        next if candidate_uris && !candidate_uris.includes?(doc_uri)
         begin
           ast = parse(doc_text)
           context = build_macro_context(ast)
@@ -178,6 +181,40 @@ module Crinkle::LSP
       return if all_edits.empty?
 
       WorkspaceEdit.new(changes: all_edits)
+    end
+
+    private def candidate_macro_uris(target : MacroRenameTarget) : Set(String)?
+      return unless target.template_path
+      return unless index = @index
+
+      importer_uris = Set(String).new
+      index.entries.each do |uri, entry|
+        entry.relationships.each do |relationship|
+          if matches_template_relationship?(relationship, target)
+            importer_uris << uri
+            break
+          end
+        end
+      end
+      if source_uri = target.source_uri
+        importer_uris << source_uri
+      end
+      Logger.stderr(Logger::Level::Debug).debug(
+        "Rename macro imports for #{target.template_path}: #{importer_uris.to_a.join(", ")}"
+      )
+      importer_uris
+    end
+
+    private def matches_template_relationship?(relationship : String, target : MacroRenameTarget) : Bool
+      if template_path = target.template_path
+        return true if relationship == template_path
+      end
+      if source_uri = target.source_uri
+        if resolved = resolve_uri_for_template_path(relationship)
+          return resolved == source_uri
+        end
+      end
+      false
     end
 
     # Rename a block (updates definition and overrides in the same extends chain)
@@ -230,7 +267,7 @@ module Crinkle::LSP
       span = node.span
       name_start = Position.new(
         line: span.start_pos.line - 1,
-        character: span.start_pos.column + 9 # "{% macro " = 9 chars
+        character: span.start_pos.column + 8 # "{% macro " = 9 chars, 0-based
       )
       name_end = Position.new(
         line: span.start_pos.line - 1,
@@ -271,6 +308,7 @@ module Crinkle::LSP
       local_macros = Hash(String, AST::Macro).new
       from_imports = Hash(String, MacroImport).new
       import_aliases = Hash(String, String).new
+      import_paths = Set(String).new
 
       AST::Walker.walk_nodes(ast.body) do |node|
         case node
@@ -287,12 +325,14 @@ module Crinkle::LSP
           if path = extract_template_path(node.template)
             if alias_name = node.alias
               import_aliases[alias_name] = path
+            else
+              import_paths << path
             end
           end
         end
       end
 
-      MacroContext.new(local_macros, from_imports, import_aliases)
+      MacroContext.new(local_macros, from_imports, import_aliases, import_paths)
     end
 
     private def resolve_macro_binding(expr : AST::Expr, context : MacroContext) : MacroBinding?
@@ -506,6 +546,11 @@ module Crinkle::LSP
       ) : Nil
       end
 
+      protected def enter_node(node : AST::Node) : Nil
+        return unless node.is_a?(AST::CallBlock)
+        @rename_proc.call(node.callee, @context, @target, @new_name, @edits)
+      end
+
       protected def enter_expr(expr : AST::Expr) : Nil
         return unless expr.is_a?(AST::Call)
         @rename_proc.call(expr.callee, @context, @target, @new_name, @edits)
@@ -526,7 +571,7 @@ module Crinkle::LSP
         next unless node.is_a?(AST::FromImport)
         next unless target.template_path
         next unless path = extract_template_path(node.template)
-        next unless path == target.template_path
+        next unless matches_template_relationship?(path, target)
 
         node.names.each do |import_name|
           if target.kind == MacroRenameKind::ImportAlias
@@ -566,8 +611,9 @@ module Crinkle::LSP
     ) : Nil
       binding = resolve_macro_binding(callee, context)
       unless binding
-        if target.kind == MacroRenameKind::Imported && callee.is_a?(AST::Name)
-          if callee.value == target.macro_name
+        if callee.is_a?(AST::Name) && callee.value == target.macro_name
+          if target.kind == MacroRenameKind::Imported ||
+             (target.kind == MacroRenameKind::Local && import_paths_match?(context.import_paths, target))
             if name_range = call_name_range(callee)
               edits << TextEdit.new(range: name_range, new_text: new_name)
             end
@@ -595,17 +641,23 @@ module Crinkle::LSP
         return unless name_range = call_name_range(callee)
         edits << TextEdit.new(range: name_range, new_text: new_name)
       when MacroBindingKind::FromImport
-        return unless target.template_path && binding.path == target.template_path
+        path = binding.path
+        return unless path && matches_template_relationship?(path, target)
         return unless binding.original_name == target.macro_name
         return if binding.alias?
         return unless name_range = call_name_range(callee)
         edits << TextEdit.new(range: name_range, new_text: new_name)
       when MacroBindingKind::ImportAlias
-        return unless target.template_path && binding.path == target.template_path
+        path = binding.path
+        return unless path && matches_template_relationship?(path, target)
         return unless binding.original_name == target.macro_name
         return unless name_range = call_name_range(callee)
         edits << TextEdit.new(range: name_range, new_text: new_name)
       end
+    end
+
+    private def import_paths_match?(paths : Set(String), target : MacroRenameTarget) : Bool
+      paths.any? { |path| matches_template_relationship?(path, target) }
     end
 
     private def call_name_range(expr : AST::Expr) : Range?
@@ -837,11 +889,13 @@ module Crinkle::LSP
       getter local_macros : Hash(String, AST::Macro)
       getter from_imports : Hash(String, MacroImport)
       getter import_aliases : Hash(String, String)
+      getter import_paths : Set(String)
 
       def initialize(
         @local_macros : Hash(String, AST::Macro),
         @from_imports : Hash(String, MacroImport),
         @import_aliases : Hash(String, String),
+        @import_paths : Set(String),
       ) : Nil
       end
     end
@@ -1087,6 +1141,15 @@ module Crinkle::LSP
           end
         end
 
+        if role = macro_definition_role(tokens, index)
+          case role
+          when .macro_name?
+            return RenameContext.new(RenameContextType::Macro, name, range)
+          when .param?
+            return RenameContext.new(RenameContextType::Variable, name, range)
+          end
+        end
+
         first_ident = find_first_ident_after_block_start(tokens, index)
         if first_ident
           case first_ident.lexeme
@@ -1179,6 +1242,59 @@ module Crinkle::LSP
     private def in_from_import_context?(tokens : Array(Token), index : Int32) : Bool
       first_ident = find_first_ident_after_block_start(tokens, index)
       !!(first_ident && first_ident.lexeme == "from")
+    end
+
+    private enum MacroDefRole
+      MacroName
+      Param
+    end
+
+    private def macro_definition_role(tokens : Array(Token), index : Int32) : MacroDefRole?
+      block_start = find_block_start_index(tokens, index)
+      return unless block_start
+      block_end = find_block_end_index(tokens, block_start)
+      return unless block_end
+
+      identifiers = Array(Int32).new
+      (block_start + 1).upto(block_end - 1) do |idx|
+        identifiers << idx if tokens[idx].type == TokenType::Identifier
+      end
+
+      return if identifiers.empty?
+      return unless tokens[identifiers.first].lexeme == "macro"
+      return if identifiers.size < 2
+
+      macro_name_idx = identifiers[1]
+      return MacroDefRole::MacroName if macro_name_idx == index
+
+      if identifiers[2..].includes?(index)
+        return MacroDefRole::Param
+      end
+
+      nil
+    end
+
+    private def find_block_start_index(tokens : Array(Token), index : Int32) : Int32?
+      idx = index
+      while idx >= 0
+        case tokens[idx].type
+        when TokenType::BlockStart
+          return idx
+        when TokenType::BlockEnd, TokenType::VarStart, TokenType::VarEnd, TokenType::Text
+          return
+        end
+        idx -= 1
+      end
+      nil
+    end
+
+    private def find_block_end_index(tokens : Array(Token), start_idx : Int32) : Int32?
+      idx = start_idx + 1
+      while idx < tokens.size
+        return idx if tokens[idx].type == TokenType::BlockEnd
+        idx += 1
+      end
+      nil
     end
 
     # Convert a Span (1-based lines from lexer) to an LSP Range (0-based lines)
