@@ -548,10 +548,10 @@ module Crinkle
       sync_indent
       @printer.write("#{block_start(node.trim_left?)} import ")
       format_expr(node.template)
-      if node.alias.strip.empty?
+      if (alias_ = node.alias).nil? || alias_.strip.empty?
         @printer.write(" #{block_end(node.trim_right?)}")
       else
-        @printer.write(" as #{node.alias} #{block_end(node.trim_right?)}")
+        @printer.write(" as #{alias_} #{block_end(node.trim_right?)}")
       end
     end
 

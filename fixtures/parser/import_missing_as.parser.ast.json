@@ -7,7 +7,7 @@
         "type": "Literal",
         "value": "macros.html.j2"
       },
-      "alias": ""
+      "alias": null
     },
     {
       "type": "Text",

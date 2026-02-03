@@ -425,13 +425,14 @@ module Crinkle
       template = parse_expression([TokenType::BlockEnd])
       skip_whitespace
 
-      alias_name = ""
+      alias_name = nil
       if keyword?("as")
         advance
         skip_whitespace
         alias_name = parse_name("Expected alias after 'as'.")
-      else
-        emit_expected_token("Expected 'as' after import target.")
+        # NOTE(margret): `as` is optional for crinja, copying that behaviour
+        # else
+        #   emit_expected_token("Expected 'as' after import target.")
       end
 
       skip_whitespace

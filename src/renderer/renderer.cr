@@ -294,7 +294,11 @@ module Crinkle
       return unless template
 
       macros = collect_macros(template.body)
-      @macro_namespaces[node.alias] = macros
+      if alias_ = node.alias
+        @macro_namespaces[alias_] = macros
+      else
+        @macros.merge!(macros)
+      end
     end
 
     private def render_from_import(node : AST::FromImport) : Nil

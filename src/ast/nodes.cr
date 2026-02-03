@@ -213,14 +213,14 @@ module Crinkle
 
     class Import
       getter template : Expr
-      getter alias : String
+      getter alias : String?
       getter span : Span
       getter? trim_left : Bool
       getter? trim_right : Bool
 
       def initialize(
         @template : Expr,
-        @alias : String,
+        @alias : String?,
         @span : Span,
         @trim_left : Bool = false,
         @trim_right : Bool = false,
