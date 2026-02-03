@@ -87,5 +87,43 @@ describe Crinkle::LSP do
       labels.should contain "username"
       labels.should_not contain "product"
     end
+
+    it "adds auto-import edits for workspace macros" do
+      tmp_root = ENV["TMPDIR"]? || "/tmp"
+      dir = File.join(tmp_root, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Random.rand(1000)}")
+      Dir.mkdir(dir)
+
+      begin
+        macro_path = File.join(dir, "macros.j2")
+        File.write(macro_path, "{% macro badge(text, style) %}{% endmacro %}")
+
+        config = Crinkle::LSP::Config.new(template_paths: ["."])
+        schema_provider = Crinkle::LSP::SchemaProvider.new(config, dir)
+        inference = Crinkle::LSP::InferenceEngine.new(config, dir)
+        workspace_index = Crinkle::LSP::WorkspaceIndex.new(config, dir)
+        workspace_index.rebuild
+
+        provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference, dir, workspace_index)
+
+        uri = "file://#{File.join(dir, "page.j2")}"
+        inference.analyze(uri, "{% call ")
+
+        completions = provider.completions(uri, "{% call ", Crinkle::LSP::Position.new(0, 8))
+        item = completions.find(&.label.==("badge"))
+        item.should_not be_nil
+
+        edits = item.as(Crinkle::LSP::CompletionItem).additional_text_edits
+        edits.should_not be_nil
+        edits = edits.as(Array(Crinkle::LSP::TextEdit))
+        edits.size.should eq 1
+        edits.first.new_text.should contain(%({% from "macros.j2" import badge %}))
+      ensure
+        Dir.each_child(dir) do |entry|
+          path = File.join(dir, entry)
+          File.delete(path) if File.file?(path)
+        end
+        Dir.delete(dir)
+      end
+    end
   end
 end

@@ -250,7 +250,9 @@ module Crinkle::LSP
             InferenceEngine.debug = true
             DefinitionProvider.debug = true
 
-            @completion_provider = CompletionProvider.new(schema_provider, inference)
+            @workspace_index = WorkspaceIndex.new(@config, root_path)
+            @workspace_index.try(&.rebuild)
+            @completion_provider = CompletionProvider.new(schema_provider, inference, root_path, @workspace_index)
             @hover_provider = HoverProvider.new(schema_provider, inference)
             @signature_help_provider = SignatureHelpProvider.new(schema_provider)
             @definition_provider = DefinitionProvider.new(inference, root_path)
@@ -259,8 +261,6 @@ module Crinkle::LSP
             @folding_provider = FoldingProvider.new
             @highlight_provider = DocumentHighlightProvider.new(inference)
             @link_provider = DocumentLinkProvider.new(root_path)
-            @workspace_index = WorkspaceIndex.new(@config, root_path)
-            @workspace_index.try(&.rebuild)
             @workspace_symbol_provider = WorkspaceSymbolProvider.new(inference, @workspace_index)
             @rename_provider = RenameProvider.new(inference, @documents, @workspace_index, root_path)
             @code_action_provider = CodeActionProvider.new(inference, root_path, @workspace_index)
@@ -1043,7 +1043,7 @@ module Crinkle::LSP
 
       # Update providers that depend on schema
       if inference = @inference
-        @completion_provider = CompletionProvider.new(schema_provider, inference)
+        @completion_provider = CompletionProvider.new(schema_provider, inference, root_path, @workspace_index)
         @definition_provider = DefinitionProvider.new(inference, root_path)
         @hover_provider = HoverProvider.new(schema_provider, inference)
         @references_provider = ReferencesProvider.new(inference, @documents)

@@ -569,6 +569,10 @@ module Crinkle::LSP
     property filter_text : String?
     @[JSON::Field(key: "insertText")]
     property insert_text : String?
+    @[JSON::Field(key: "textEdit")]
+    property text_edit : TextEdit?
+    @[JSON::Field(key: "additionalTextEdits")]
+    property additional_text_edits : Array(TextEdit)?
 
     def initialize(
       @label : String,
@@ -578,6 +582,8 @@ module Crinkle::LSP
       @sort_text : String? = nil,
       @filter_text : String? = nil,
       @insert_text : String? = nil,
+      @text_edit : TextEdit? = nil,
+      @additional_text_edits : Array(TextEdit)? = nil,
     ) : Nil
     end
   end

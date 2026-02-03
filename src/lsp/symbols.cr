@@ -90,7 +90,11 @@ module Crinkle::LSP
         when AST::For
           add_container(symbol_for_for(node), node)
         when AST::If
-          add_container(symbol_for_if(node), node)
+          if node.is_elif?
+            add_container(symbol_for_elif(node), node)
+          else
+            add_container(symbol_for_if(node), node)
+          end
         when AST::CustomTag
           unless node.body.empty?
             add_container(symbol_for_custom_tag(node), node)
@@ -103,6 +107,10 @@ module Crinkle::LSP
         return unless @node_stack.last == node
         @node_stack.pop
         @stack.pop
+
+        if node.is_a?(AST::If)
+          visit_nodes(node.else_body)
+        end
       end
 
       private def add_container(symbol : DocumentSymbol, node : AST::Node) : Nil
@@ -122,6 +130,15 @@ module Crinkle::LSP
           @symbols << symbol
         else
           @stack.last << symbol
+        end
+      end
+
+      protected def visit_node_children(node : AST::Node) : Nil
+        case node
+        when AST::If
+          visit_nodes(node.body)
+        else
+          super
         end
       end
 
@@ -196,6 +213,19 @@ module Crinkle::LSP
           kind: SymbolKind::Boolean,
           range: span_to_range(node.span),
           selection_range: name_selection_range(node.span, "if ".size, test.size),
+          detail: "conditional",
+          children: children
+        )
+      end
+
+      private def symbol_for_elif(node : AST::If) : DocumentSymbol
+        test = expr_preview(node.test, 30)
+        children = Array(DocumentSymbol).new
+        DocumentSymbol.new(
+          name: "elif #{test}",
+          kind: SymbolKind::Boolean,
+          range: span_to_range(node.span),
+          selection_range: name_selection_range(node.span, "elif ".size, test.size),
           detail: "conditional",
           children: children
         )
@@ -292,8 +322,8 @@ module Crinkle::LSP
 
       private def span_to_range(span : Span) : Range
         Range.new(
-          start: Position.new(line: span.start_pos.line - 1, character: span.start_pos.column),
-          end_pos: Position.new(line: span.end_pos.line - 1, character: span.end_pos.column)
+          start: Position.new(line: span.start_pos.line - 1, character: span.start_pos.column - 1),
+          end_pos: Position.new(line: span.end_pos.line - 1, character: span.end_pos.column - 1)
         )
       end
     end
@@ -301,8 +331,8 @@ module Crinkle::LSP
     # Convert Span to LSP Range (1-based to 0-based)
     private def span_to_range(span : Span) : Range
       Range.new(
-        start: Position.new(line: span.start_pos.line - 1, character: span.start_pos.column),
-        end_pos: Position.new(line: span.end_pos.line - 1, character: span.end_pos.column)
+        start: Position.new(line: span.start_pos.line - 1, character: span.start_pos.column - 1),
+        end_pos: Position.new(line: span.end_pos.line - 1, character: span.end_pos.column - 1)
       )
     end
   end

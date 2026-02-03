@@ -83,6 +83,13 @@ module Crinkle::LSP
           paths << path
         end
       end
+      if paths.empty?
+        Dir.glob(File.join(@root_path, "**", "*")) do |path|
+          next unless File.file?(path)
+          next unless template_file?(path)
+          paths << path
+        end
+      end
       paths
     end
 

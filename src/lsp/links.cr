@@ -156,8 +156,8 @@ module Crinkle::LSP
     # Convert a Span (1-based lines from lexer) to an LSP Range (0-based lines)
     private def span_to_range(span : Span) : Range
       Range.new(
-        start: Position.new(line: span.start_pos.line - 1, character: span.start_pos.column),
-        end_pos: Position.new(line: span.end_pos.line - 1, character: span.end_pos.column)
+        start: Position.new(line: span.start_pos.line - 1, character: span.start_pos.column - 1),
+        end_pos: Position.new(line: span.end_pos.line - 1, character: span.end_pos.column - 1)
       )
     end
   end

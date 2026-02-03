@@ -27,8 +27,15 @@ module Crinkle::LSP
   class CompletionProvider
     @schema_provider : SchemaProvider
     @inference : InferenceEngine
+    @root_path : String?
+    @index : WorkspaceIndex?
 
-    def initialize(@schema_provider : SchemaProvider, @inference : InferenceEngine) : Nil
+    def initialize(
+      @schema_provider : SchemaProvider,
+      @inference : InferenceEngine,
+      @root_path : String? = nil,
+      @index : WorkspaceIndex? = nil,
+    ) : Nil
     end
 
     # Get completions for the given position in the document
@@ -54,7 +61,7 @@ module Crinkle::LSP
       when .block?
         block_completions(uri, context.prefix)
       when .macro?
-        macro_completions(uri, context.prefix)
+        macro_completions(uri, text, context.prefix)
       when .tag?
         tag_completions(text, position, context.prefix)
       when .end_tag?
@@ -163,13 +170,17 @@ module Crinkle::LSP
       end
     end
 
-    # Get macro completions based on inference
-    private def macro_completions(uri : String, prefix : String) : Array(CompletionItem)
-      macros = @inference.macros_for(uri)
-      macros.select do |mac|
+    # Get macro completions based on inference and workspace index
+    private def macro_completions(uri : String, text : String, prefix : String) : Array(CompletionItem)
+      items = Array(CompletionItem).new
+
+      local_macros = @inference.macros_for(uri)
+      local_names = local_macros.map(&.name).to_set
+
+      local_macros.select do |mac|
         mac.name.starts_with?(prefix)
-      end.map do |mac|
-        CompletionItem.new(
+      end.each do |mac|
+        items << CompletionItem.new(
           label: mac.name,
           kind: CompletionItemKind::Function,
           detail: mac.signature,
@@ -178,6 +189,95 @@ module Crinkle::LSP
           sort_text: mac.name
         )
       end
+
+      source = if index = @index
+                 index.all_macros
+               else
+                 @inference.all_macros
+               end
+
+      source.each do |macro_uri, macros|
+        next if macro_uri == uri
+        macros.each do |mac|
+          next unless mac.name.starts_with?(prefix)
+          next if local_names.includes?(mac.name)
+
+          import_path = template_path_for_uri(macro_uri)
+          next unless import_path
+          next if already_imported?(text, import_path, mac.name)
+
+          import_edit = build_import_edit(text, mac.name, import_path)
+          next unless import_edit
+
+          items << CompletionItem.new(
+            label: mac.name,
+            kind: CompletionItemKind::Function,
+            detail: "#{mac.signature} (auto-import)",
+            documentation: "Import macro from #{import_path}",
+            insert_text: mac.name,
+            sort_text: mac.name,
+            additional_text_edits: [import_edit]
+          )
+        end
+      end
+
+      items
+    end
+
+    private def template_path_for_uri(uri : String) : String?
+      return unless uri.starts_with?("file://")
+      full_path = uri.sub(/^file:\/\//, "")
+
+      if root = @root_path
+        root = root.rstrip('/')
+        if full_path.starts_with?(root)
+          relative = full_path[root.size..]
+          return relative.lstrip('/')
+        end
+      end
+
+      File.basename(full_path)
+    end
+
+    private def already_imported?(text : String, import_path : String, macro_name : String) : Bool
+      ast = parse(text)
+      found = false
+      AST::Walker.walk_nodes(ast.body) do |node|
+        next unless node.is_a?(AST::FromImport)
+
+        if path = extract_string_value(node.template)
+          next unless path == import_path
+
+          node.names.each do |import_name|
+            name = import_name.alias || import_name.name
+            if name == macro_name
+              found = true
+              break
+            end
+          end
+        end
+      end
+      found
+    rescue
+      false
+    end
+
+    private def build_import_edit(text : String, macro_name : String, import_path : String) : TextEdit?
+      insertion_offset = find_import_insertion_offset(text)
+      insertion_pos = position_at(text, insertion_offset)
+
+      prefix = if insertion_offset > 0 && text[insertion_offset - 1]? != '\n'
+                 "\n"
+               else
+                 ""
+               end
+
+      insert_text = "#{prefix}{% from \"#{import_path}\" import #{macro_name} %}\n"
+
+      TextEdit.new(
+        range: Range.new(start: insertion_pos, end_pos: insertion_pos),
+        new_text: insert_text
+      )
     end
 
     # Get tag completions
@@ -266,6 +366,59 @@ module Crinkle::LSP
       end
 
       items
+    end
+
+    private def parse(text : String) : AST::Template
+      lexer = Lexer.new(text)
+      tokens = lexer.lex_all
+      parser = Parser.new(tokens)
+      parser.parse
+    end
+
+    private def extract_string_value(expr : AST::Expr) : String?
+      case expr
+      when AST::Literal
+        value = expr.value
+        value.is_a?(String) ? value : nil
+      end
+    end
+
+    private def find_import_insertion_offset(text : String) : Int32
+      ast = parse(text)
+      insertion_offset = 0
+
+      ast.body.each do |node|
+        case node
+        when AST::Extends, AST::Import, AST::FromImport
+          insertion_offset = node.span.end_pos.offset
+        else
+          break
+        end
+      end
+
+      insertion_offset
+    rescue
+      0
+    end
+
+    private def position_at(text : String, offset : Int32) : Position
+      line = 0
+      character = 0
+      current_offset = 0
+
+      text.each_char do |char|
+        break if current_offset >= offset
+
+        if char == '\n'
+          line += 1
+          character = 0
+        else
+          character += 1
+        end
+        current_offset += 1
+      end
+
+      Position.new(line, character)
     end
 
     # Find open block tags before the cursor position
