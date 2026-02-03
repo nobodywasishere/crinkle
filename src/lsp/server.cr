@@ -11,6 +11,7 @@ require "./inference"
 require "./completion"
 require "./hover"
 require "./signature_help"
+require "./definition"
 
 module Crinkle::LSP
   # LSP server for Jinja2/Crinkle templates.
@@ -36,6 +37,7 @@ module Crinkle::LSP
     @completion_provider : CompletionProvider?
     @hover_provider : HoverProvider?
     @signature_help_provider : SignatureHelpProvider?
+    @definition_provider : DefinitionProvider?
 
     def initialize(
       @transport : Transport,
@@ -55,6 +57,7 @@ module Crinkle::LSP
       @completion_provider = nil
       @hover_provider = nil
       @signature_help_provider = nil
+      @definition_provider = nil
     end
 
     # Main run loop - read and handle messages until exit.
@@ -121,6 +124,8 @@ module Crinkle::LSP
           handle_hover(id, params)
         when "textDocument/signatureHelp"
           handle_signature_help(id, params)
+        when "textDocument/definition"
+          handle_definition(id, params)
         else
           log(MessageType::Log, "<<< Error: Method not found: #{method}")
           send_error(id, ErrorCodes::MethodNotFound, "Method not found: #{method}")
@@ -155,6 +160,8 @@ module Crinkle::LSP
       when "$/setTrace"
         # Ignore trace configuration
         log(MessageType::Log, "    Ignoring setTrace")
+      when "workspace/didChangeWatchedFiles"
+        handle_did_change_watched_files(params)
       else
         log(MessageType::Log, "    Unknown notification, ignoring")
       end
@@ -192,6 +199,7 @@ module Crinkle::LSP
             @completion_provider = CompletionProvider.new(schema_provider, inference)
             @hover_provider = HoverProvider.new(schema_provider)
             @signature_help_provider = SignatureHelpProvider.new(schema_provider)
+            @definition_provider = DefinitionProvider.new(inference, root_path)
 
             # Recreate analyzer with schema for schema-aware linting and typo detection
             custom_schema = schema_provider.custom_schema
@@ -215,7 +223,8 @@ module Crinkle::LSP
         hover_provider: true,
         signature_help_provider: SignatureHelpOptions.new(
           trigger_characters: ["(", ","]
-        )
+        ),
+        definition_provider: true
       )
 
       result = InitializeResult.new(
@@ -403,6 +412,44 @@ module Crinkle::LSP
       end
     end
 
+    # textDocument/definition handler - go to definition for template references
+    private def handle_definition(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        # Reuse HoverParams since it has the same structure (textDocument + position)
+        def_params = HoverParams.from_json(params.to_json)
+        uri = def_params.text_document.uri
+        position = def_params.position
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        # Get definition from provider
+        if provider = @definition_provider
+          if location = provider.definition(uri, doc.text, position)
+            log(MessageType::Log, "<<< Response: definition (found: #{location.uri})")
+            send_response(id, JSON.parse(location.to_json))
+          else
+            log(MessageType::Log, "<<< Response: definition (null)")
+            send_response(id, JSON::Any.new(nil))
+          end
+        else
+          log(MessageType::Log, "<<< Response: definition (no provider)")
+          send_response(id, JSON::Any.new(nil))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide definition: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Definition error: #{ex.message}")
+      end
+    end
+
     # Exit notification handler
     private def handle_exit : Nil
       log(MessageType::Info, "Exit received")
@@ -473,6 +520,87 @@ module Crinkle::LSP
         send_notification("textDocument/publishDiagnostics", JSON.parse(clear_params.to_json))
       rescue ex
         log(MessageType::Error, "Failed to handle didClose: #{ex.message}")
+      end
+    end
+
+    # workspace/didChangeWatchedFiles notification handler
+    private def handle_did_change_watched_files(params : JSON::Any?) : Nil
+      return unless params
+
+      begin
+        watched_params = DidChangeWatchedFilesParams.from_json(params.to_json)
+
+        watched_params.changes.each do |change|
+          uri = change.uri
+          path = uri_to_path(uri)
+
+          case
+          when path.ends_with?("config.yaml")
+            log(MessageType::Info, "Config file changed: #{path}")
+            reload_config
+          when path.ends_with?("schema.json")
+            log(MessageType::Info, "Schema file changed: #{path}")
+            reload_schema
+          when path.ends_with?(".j2") || path.ends_with?(".jinja2") || path.ends_with?(".jinja")
+            # Re-run inference for template changes (only if file is open)
+            if doc = @documents.get(uri)
+              log(MessageType::Info, "Template changed: #{path}")
+              @inference.try(&.analyze(uri, doc.text))
+            end
+          end
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to handle didChangeWatchedFiles: #{ex.message}")
+      end
+    end
+
+    # Reload configuration from disk
+    private def reload_config : Nil
+      return unless root_path = @root_path
+
+      @config = Config.load(root_path)
+      log(MessageType::Info, "Config reloaded")
+
+      # Reinitialize inference engine with new config
+      @inference = InferenceEngine.new(@config)
+
+      # Re-analyze all open documents
+      reanalyze_open_documents
+    end
+
+    # Reload schema from disk
+    private def reload_schema : Nil
+      return unless root_path = @root_path
+
+      # Reinitialize schema provider
+      schema_provider = SchemaProvider.new(@config, root_path)
+      @schema_provider = schema_provider
+
+      # Update providers that depend on schema
+      if inference = @inference
+        @completion_provider = CompletionProvider.new(schema_provider, inference)
+        @definition_provider = DefinitionProvider.new(inference, root_path)
+      end
+      @hover_provider = HoverProvider.new(schema_provider)
+      @signature_help_provider = SignatureHelpProvider.new(schema_provider)
+
+      # Update analyzer with new schema
+      custom_schema = schema_provider.custom_schema
+      @analyzer = Analyzer.new(custom_schema || Schema.registry, @inference)
+
+      log(MessageType::Info, "Schema reloaded")
+
+      # Re-publish diagnostics for all open documents
+      reanalyze_open_documents
+    end
+
+    # Re-analyze all open documents (after config/schema reload)
+    private def reanalyze_open_documents : Nil
+      @documents.uris.each do |uri|
+        if doc = @documents.get(uri)
+          @inference.try(&.analyze(uri, doc.text))
+          publish_diagnostics(uri, doc.text, doc.version)
+        end
       end
     end
 

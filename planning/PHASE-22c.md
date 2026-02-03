@@ -177,30 +177,34 @@ end
 ## Acceptance Criteria
 
 ### Variable Completions
-- [ ] Track variables from for loops, set statements, macro params
-- [ ] Suggest variables in `{{ █ }}` context
-- [ ] Include variables from extended/included templates
+- [x] Track variables from for loops, set statements, macro params
+- [x] Suggest variables in `{{ █ }}` context
+- [x] Include variables from extended/included templates
 
 ### Block Completions
-- [ ] Extract block names from parent templates
-- [ ] Suggest in `{% block █ %}` context
-- [ ] Follow extends chains
+- [x] Extract block names from parent templates
+- [x] Suggest in `{% block █ %}` context
+- [x] Follow extends chains
 
 ### Macro Completions
-- [ ] Track macro definitions with signatures
-- [ ] Suggest in `{% call █ %}` context
-- [ ] Show parameter hints
+- [x] Track macro definitions with signatures
+- [x] Suggest in `{% call █ %}` context
+- [x] Show parameter hints
 
 ### Go-to-Definition
-- [ ] Handle extends/include/import/from-import
-- [ ] Resolve relative template paths
-- [ ] Return correct file location
+- [x] Handle extends/include/import/from-import
+- [x] Resolve relative template paths
+- [x] Return correct file location
 
 ### File Watcher
-- [ ] Register for workspace file events
-- [ ] Reload config on change
-- [ ] Reload schema on change
-- [ ] Re-run inference on template changes
+- [x] Register for workspace file events
+- [x] Reload config on change
+- [x] Reload schema on change
+- [x] Re-run inference on template changes
+
+## Status
+
+**COMPLETE** - All Phase 22c features implemented.
 
 ## Dependencies
 
@@ -209,32 +213,32 @@ end
 ## Checklist
 
 ### Variable Completions
-- [ ] Add variable tracking to InferenceEngine
-- [ ] Track for loop variables
-- [ ] Track set variables
-- [ ] Track macro parameters
-- [ ] Update CompletionProvider for variable context
-- [ ] Include cross-template variables
+- [x] Add variable tracking to InferenceEngine
+- [x] Track for loop variables
+- [x] Track set variables
+- [x] Track macro parameters
+- [x] Update CompletionProvider for variable context
+- [x] Include cross-template variables
 
 ### Block Completions
-- [ ] Add block extraction to InferenceEngine
-- [ ] Parse extended templates on demand
-- [ ] Cache block names
-- [ ] Update CompletionProvider for block context
+- [x] Add block extraction to InferenceEngine
+- [x] Parse extended templates on demand
+- [x] Cache block names
+- [x] Update CompletionProvider for block context
 
 ### Macro Completions
-- [ ] Track macro definitions with signatures
-- [ ] Update CompletionProvider for call context
+- [x] Track macro definitions with signatures
+- [x] Update CompletionProvider for call context
 
 ### Go-to-Definition
-- [ ] Create DefinitionProvider class
-- [ ] Parse template references at position
-- [ ] Resolve template paths
-- [ ] Wire up textDocument/definition handler
+- [x] Create DefinitionProvider class
+- [x] Parse template references at position
+- [x] Resolve template paths
+- [x] Wire up textDocument/definition handler
 
 ### File Watcher
-- [ ] Add workspace capabilities
-- [ ] Handle didChangeWatchedFiles notification
-- [ ] Implement config reload
-- [ ] Implement schema reload
-- [ ] Test with VS Code
+- [x] Add workspace capabilities
+- [x] Handle didChangeWatchedFiles notification
+- [x] Implement config reload
+- [x] Implement schema reload
+- [ ] Test with VS Code (manual testing required)

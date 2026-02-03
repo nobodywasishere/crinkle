@@ -404,4 +404,306 @@ describe Crinkle::LSP do
       issues.any? { |issue| issue.id == "Lint/DuplicateBlock" }.should be_true
     end
   end
+
+  describe Crinkle::LSP::InferenceEngine do
+    it "extracts variables from for loops" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% for item in items %}{{ item.name }}{% endfor %}"
+      engine.analyze("file:///test.j2", template)
+
+      vars = engine.variables_for("file:///test.j2")
+      var_names = vars.map(&.name)
+
+      var_names.should contain "item"
+      var_names.should contain "items"
+
+      item_var = vars.find { |var| var.name == "item" }
+      item_var.should_not be_nil
+      item_var.try(&.source).should eq Crinkle::LSP::VariableSource::ForLoop
+    end
+
+    it "extracts variables from set statements" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% set greeting = 'Hello' %}{{ greeting }}"
+      engine.analyze("file:///test.j2", template)
+
+      vars = engine.variables_for("file:///test.j2")
+      var_names = vars.map(&.name)
+
+      var_names.should contain "greeting"
+
+      greeting_var = vars.find { |var| var.name == "greeting" }
+      greeting_var.try(&.source).should eq Crinkle::LSP::VariableSource::Set
+    end
+
+    it "extracts variables from macro parameters" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% macro button(text, style) %}{{ text }}{% endmacro %}"
+      engine.analyze("file:///test.j2", template)
+
+      vars = engine.variables_for("file:///test.j2")
+      var_names = vars.map(&.name)
+
+      var_names.should contain "text"
+      var_names.should contain "style"
+
+      text_var = vars.find { |var| var.name == "text" }
+      text_var.try(&.source).should eq Crinkle::LSP::VariableSource::MacroParam
+    end
+
+    it "extracts context variables from expressions" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{{ user.name }} {{ product.price }}"
+      engine.analyze("file:///test.j2", template)
+
+      vars = engine.variables_for("file:///test.j2")
+      var_names = vars.map(&.name)
+
+      var_names.should contain "user"
+      var_names.should contain "product"
+    end
+
+    it "extracts block names" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = <<-JINJA
+        {% block header %}Header{% endblock %}
+        {% block content %}Content{% endblock %}
+        {% block footer %}Footer{% endblock %}
+        JINJA
+      engine.analyze("file:///test.j2", template)
+
+      blocks = engine.blocks_for("file:///test.j2")
+      blocks.should contain "header"
+      blocks.should contain "content"
+      blocks.should contain "footer"
+    end
+
+    it "extracts macro definitions" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = <<-JINJA
+        {% macro button(text, style="primary") %}Button{% endmacro %}
+        {% macro icon(name) %}Icon{% endmacro %}
+        JINJA
+      engine.analyze("file:///test.j2", template)
+
+      macros = engine.macros_for("file:///test.j2")
+      macro_names = macros.map(&.name)
+
+      macro_names.should contain "button"
+      macro_names.should contain "icon"
+
+      button_macro = macros.find { |mac| mac.name == "button" }
+      button_macro.should_not be_nil
+      button_macro.try(&.params).should eq ["text", "style"]
+      button_macro.try(&.signature).should eq %(button(text, style="primary"))
+    end
+
+    it "handles tuple unpacking in for loops" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% for key, value in items.items() %}{{ key }}: {{ value }}{% endfor %}"
+      engine.analyze("file:///test.j2", template)
+
+      vars = engine.variables_for("file:///test.j2")
+      var_names = vars.map(&.name)
+
+      var_names.should contain "key"
+      var_names.should contain "value"
+    end
+  end
+
+  describe Crinkle::LSP::CompletionProvider do
+    it "provides variable completions in output context" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference)
+
+      # Analyze template to populate inference
+      inference.analyze("file:///test.j2", "{% set greeting = 'Hi' %}{% for item in items %}{% endfor %}")
+
+      # Request completions after {{
+      completions = provider.completions(
+        "file:///test.j2",
+        "{{ ",
+        Crinkle::LSP::Position.new(0, 3)
+      )
+
+      labels = completions.map(&.label)
+      labels.should contain "greeting"
+      labels.should contain "item"
+      labels.should contain "items"
+    end
+
+    it "provides block completions after {% block" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference)
+
+      # Analyze template with blocks
+      inference.analyze("file:///base.j2", "{% block header %}{% endblock %}{% block content %}{% endblock %}")
+
+      # Request completions after {% block in child template
+      completions = provider.completions(
+        "file:///base.j2",
+        "{% block ",
+        Crinkle::LSP::Position.new(0, 9)
+      )
+
+      labels = completions.map(&.label)
+      labels.should contain "header"
+      labels.should contain "content"
+    end
+
+    it "provides macro completions after {% call" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference)
+
+      # Analyze template with macros
+      inference.analyze("file:///test.j2", "{% macro button(text) %}{% endmacro %}{% macro icon(name) %}{% endmacro %}")
+
+      # Request completions after {% call
+      completions = provider.completions(
+        "file:///test.j2",
+        "{% call ",
+        Crinkle::LSP::Position.new(0, 8)
+      )
+
+      labels = completions.map(&.label)
+      labels.should contain "button"
+      labels.should contain "icon"
+    end
+
+    it "filters completions by prefix" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference)
+
+      # Analyze template with multiple variables
+      inference.analyze("file:///test.j2", "{% set user = 1 %}{% set username = 2 %}{% set product = 3 %}")
+
+      # Request completions with prefix "us"
+      completions = provider.completions(
+        "file:///test.j2",
+        "{{ us",
+        Crinkle::LSP::Position.new(0, 5)
+      )
+
+      labels = completions.map(&.label)
+      labels.should contain "user"
+      labels.should contain "username"
+      labels.should_not contain "product"
+    end
+  end
+
+  describe Crinkle::LSP::DefinitionProvider do
+    it "returns nil for extends when file does not exist" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, ".")
+
+      template = %({% extends "nonexistent.j2" %})
+
+      # Position inside the quoted string
+      location = provider.definition("file:///test.j2", template, Crinkle::LSP::Position.new(0, 15))
+
+      # Location should be nil because file doesn't exist
+      location.should be_nil
+    end
+
+    it "returns nil for include when file does not exist" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, ".")
+
+      template = %({% include "nonexistent.j2" %})
+
+      # Position inside the quoted string
+      location = provider.definition("file:///test.j2", template, Crinkle::LSP::Position.new(0, 14))
+
+      # Location should be nil because file doesn't exist
+      location.should be_nil
+    end
+
+    it "returns nil for position outside template reference" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, ".")
+
+      template = %(Hello {% extends "base.j2" %})
+
+      # Position at "Hello"
+      location = provider.definition("file:///test.j2", template, Crinkle::LSP::Position.new(0, 2))
+
+      location.should be_nil
+    end
+
+    it "returns location for existing file" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      # Use actual spec directory as root
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, "spec")
+
+      # Reference spec_helper.cr which exists in spec/
+      template = %({% extends "spec_helper.cr" %})
+
+      # Position inside the quoted string
+      location = provider.definition("file:///spec/test.j2", template, Crinkle::LSP::Position.new(0, 15))
+
+      location.should_not be_nil
+      if loc = location
+        loc.uri.should contain "spec_helper.cr"
+      end
+    end
+  end
+
+  describe Crinkle::LSP::VariableInfo do
+    it "stores variable information" do
+      info = Crinkle::LSP::VariableInfo.new("item", Crinkle::LSP::VariableSource::ForLoop, "loop variable")
+
+      info.name.should eq "item"
+      info.source.should eq Crinkle::LSP::VariableSource::ForLoop
+      info.detail.should eq "loop variable"
+    end
+  end
+
+  describe Crinkle::LSP::MacroInfo do
+    it "generates signature without defaults" do
+      info = Crinkle::LSP::MacroInfo.new("button", ["text", "style"])
+
+      info.signature.should eq "button(text, style)"
+    end
+
+    it "generates signature with defaults" do
+      defaults = {"style" => %("primary")}
+      info = Crinkle::LSP::MacroInfo.new("button", ["text", "style"], defaults)
+
+      info.signature.should eq %(button(text, style="primary"))
+    end
+  end
+
+  describe "FileChangeType enum" do
+    it "has correct values" do
+      Crinkle::LSP::FileChangeType::Created.value.should eq 1
+      Crinkle::LSP::FileChangeType::Changed.value.should eq 2
+      Crinkle::LSP::FileChangeType::Deleted.value.should eq 3
+    end
+  end
 end

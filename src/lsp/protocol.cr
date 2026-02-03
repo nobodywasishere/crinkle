@@ -256,6 +256,8 @@ module Crinkle::LSP
     property hover_provider : Bool?
     @[JSON::Field(key: "signatureHelpProvider")]
     property signature_help_provider : SignatureHelpOptions?
+    @[JSON::Field(key: "definitionProvider")]
+    property definition_provider : Bool?
 
     def initialize(
       @text_document_sync : TextDocumentSyncOptions? = nil,
@@ -263,6 +265,7 @@ module Crinkle::LSP
       @completion_provider : CompletionOptions? = nil,
       @hover_provider : Bool? = nil,
       @signature_help_provider : SignatureHelpOptions? = nil,
+      @definition_provider : Bool? = nil,
     ) : Nil
     end
   end
@@ -636,6 +639,38 @@ module Crinkle::LSP
       @active_signature : Int32? = nil,
       @active_parameter : Int32? = nil,
     ) : Nil
+    end
+  end
+
+  # File change type for workspace/didChangeWatchedFiles
+  enum FileChangeType
+    Created = 1
+    Changed = 2
+    Deleted = 3
+
+    def to_json(json : JSON::Builder) : Nil
+      json.number(value)
+    end
+  end
+
+  # File event for workspace/didChangeWatchedFiles
+  struct FileEvent
+    include JSON::Serializable
+
+    property uri : String
+    property type : FileChangeType
+
+    def initialize(@uri : String, @type : FileChangeType) : Nil
+    end
+  end
+
+  # DidChangeWatchedFiles params
+  struct DidChangeWatchedFilesParams
+    include JSON::Serializable
+
+    property changes : Array(FileEvent)
+
+    def initialize(@changes : Array(FileEvent)) : Nil
     end
   end
 end

@@ -12,6 +12,9 @@ module Crinkle::LSP
     Test
     Function
     Property
+    Variable # {{ █ }} - suggest known variables
+    Block    # {% block █ %} - suggest block names from parent
+    Macro    # {% call █ %} - suggest macro names
   end
 
   # Completion context information
@@ -50,6 +53,12 @@ module Crinkle::LSP
         else
           Array(CompletionItem).new
         end
+      when .variable?
+        variable_completions(uri, context.prefix)
+      when .block?
+        block_completions(uri, context.prefix)
+      when .macro?
+        macro_completions(uri, context.prefix)
       else
         Array(CompletionItem).new
       end
@@ -115,6 +124,62 @@ module Crinkle::LSP
       end
     end
 
+    # Get variable completions based on inference
+    private def variable_completions(uri : String, prefix : String) : Array(CompletionItem)
+      variables = @inference.variables_for(uri)
+      variables.select do |var|
+        var.name.starts_with?(prefix)
+      end.map do |var|
+        detail = case var.source
+                 when .for_loop?    then "loop variable"
+                 when .set?         then "assigned variable"
+                 when .set_block?   then "block assigned"
+                 when .macro_param? then "macro parameter"
+                 else                    "context variable"
+                 end
+        CompletionItem.new(
+          label: var.name,
+          kind: CompletionItemKind::Variable,
+          detail: detail,
+          documentation: var.detail,
+          sort_text: var.name
+        )
+      end
+    end
+
+    # Get block name completions (from extended parent templates)
+    private def block_completions(uri : String, prefix : String) : Array(CompletionItem)
+      blocks = @inference.blocks_for(uri)
+      blocks.select do |blk|
+        blk.starts_with?(prefix)
+      end.map do |blk|
+        CompletionItem.new(
+          label: blk,
+          kind: CompletionItemKind::Struct,
+          detail: "block",
+          documentation: "Override this block from parent template",
+          sort_text: blk
+        )
+      end
+    end
+
+    # Get macro completions based on inference
+    private def macro_completions(uri : String, prefix : String) : Array(CompletionItem)
+      macros = @inference.macros_for(uri)
+      macros.select do |mac|
+        mac.name.starts_with?(prefix)
+      end.map do |mac|
+        CompletionItem.new(
+          label: mac.name,
+          kind: CompletionItemKind::Function,
+          detail: mac.signature,
+          documentation: "Macro defined in template",
+          insert_text: mac.name,
+          sort_text: mac.name
+        )
+      end
+    end
+
     # Analyze the context at the cursor position to determine what kind of completion to provide
     private def analyze_context(text : String, position : Position) : CompletionContext
       lines = text.split('\n')
@@ -136,16 +201,40 @@ module Crinkle::LSP
         return CompletionContext.new(CompletionContextType::Test, match[1])
       end
 
-      # Check for function context: {{ func█
-      # This is tricky - we need to distinguish from variables
-      # For now, match word at cursor that follows {{ or {%
-      if match = before_cursor.match(/[{][{%]\s*(\w+)$/)
-        return CompletionContext.new(CompletionContextType::Function, match[1])
-      end
-
       # Check for property context: {{ variable.prop█
       if match = before_cursor.match(/(\w+)\.(\w*)$/)
         return CompletionContext.new(CompletionContextType::Property, match[2], match[1])
+      end
+
+      # Check for block context: {% block nam█
+      if match = before_cursor.match(/\{%\s*block\s+(\w*)$/)
+        return CompletionContext.new(CompletionContextType::Block, match[1])
+      end
+
+      # Check for macro call context: {% call mac█
+      if match = before_cursor.match(/\{%\s*call\s+(\w*)$/)
+        return CompletionContext.new(CompletionContextType::Macro, match[1])
+      end
+
+      # Check for variable context in output: {{ var█
+      # Must be after {{ and not a filter/property/etc
+      if match = before_cursor.match(/\{\{\s*(\w*)$/)
+        prefix = match[1]
+        # If there's a prefix, it could be a variable or function
+        # We'll provide both variable and function completions
+        return CompletionContext.new(CompletionContextType::Variable, prefix)
+      end
+
+      # Check for variable context after keywords: {% for item in var█
+      # or {% if var█ or {% set x = var█
+      if match = before_cursor.match(/\{%\s*(?:for\s+\w+\s+in|if|elif|set\s+\w+\s*=|print)\s+(\w*)$/)
+        return CompletionContext.new(CompletionContextType::Variable, match[1])
+      end
+
+      # Check for function context: {{ func█ (when there's already a word)
+      # This catches cases like {{ range( where we want function completions
+      if match = before_cursor.match(/[{][{%]\s*(\w+)$/)
+        return CompletionContext.new(CompletionContextType::Function, match[1])
       end
 
       CompletionContext.new(CompletionContextType::None, "")
