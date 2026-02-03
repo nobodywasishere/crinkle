@@ -1,0 +1,10 @@
+{% set users = [
+  {"name": "Ada", "active": true, "email": none},
+  {"name": "Bob", "active": false, "email": "bob@example.com"},
+  {"name": "Cara", "active": true, "email": "cara@example.com"}
+] %}
+
+active: {{ users | selectattr("active") | map(attribute="name") | join(", ") }}
+none_email: {{ users | selectattr("email", "none") | map(attribute="name") | join(", ") }}
+email_eq: {{ users | selectattr("email", "equalto", "cara@example.com") | map(attribute="name") | join(", ") }}
+not_active: {{ users | rejectattr(attribute="active") | map(attribute="name") | join(", ") }}

@@ -229,6 +229,7 @@ module Crinkle::Std::Filters
 
     Crinkle.define_filter :select,
       params: {value: Array, test_name: String},
+      variadic: [:test_name],
       returns: Array,
       doc: "Filter array by test" do |value, test_name|
       test_name = test_name.to_s
@@ -253,6 +254,7 @@ module Crinkle::Std::Filters
 
     Crinkle.define_filter :reject,
       params: {value: Array, test_name: String},
+      variadic: [:test_name],
       returns: Array,
       doc: "Filter array by rejecting test matches" do |value, test_name|
       test_name = test_name.to_s
@@ -276,33 +278,44 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :selectattr,
-      params: {value: Array, attr: String, test_name: String},
+      params: {value: Array, attribute: String, test: String},
+      defaults: {test: ""},
+      variadic: [:test],
       returns: Array,
-      doc: "Filter array by attribute test" do |value, attr, test_name|
-      attr = attr.to_s
-      test_name = test_name.to_s
+      doc: "Filter array by attribute test or truthiness" do |value, attribute, test|
       case value
       when Array(Value)
-        test = env.tests[test_name]?
-        if test
+        varargs = args
+        attribute = attribute.to_s
+        test_name = test.to_s
+
+        test_kwargs = kwargs.dup
+        test_kwargs.delete("attribute")
+        test_kwargs.delete("test")
+
+        if test_name.empty?
           result = Array(Value).new
           value.each do |item|
-            case item
-            when Hash(String, Value)
-              attr_value = item[attr]?
-              if test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx, span)
-                result << item
-              end
-            when Hash(Value, Value)
-              attr_value = item[attr]?
-              if test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx, span)
-                result << item
-              end
-            end
+            selected = selectattr_truthy?(resolve_attr_value(item, attribute))
+            result << item if selected
           end
           result.as(Value)
         else
-          value
+          test = env.tests[test_name]?
+          return value unless test
+
+          start_index = 0
+          start_index += 1 unless kwargs.has_key?("attribute")
+          start_index += 1 unless kwargs.has_key?("test")
+          test_args = varargs.size > start_index ? varargs[start_index..] : Array(Value).new
+          result = Array(Value).new
+          value.each do |item|
+            attr_resolved = resolve_attr_value(item, attribute)
+            if test.call(attr_resolved, test_args, test_kwargs, ctx, span)
+              result << item
+            end
+          end
+          result.as(Value)
         end
       else
         value
@@ -310,36 +323,114 @@ module Crinkle::Std::Filters
     end
 
     Crinkle.define_filter :rejectattr,
-      params: {value: Array, attr: String, test_name: String},
+      params: {value: Array, attribute: String, test: String},
+      defaults: {test: ""},
+      variadic: [:test],
       returns: Array,
-      doc: "Filter array by rejecting attribute test matches" do |value, attr, test_name|
-      attr = attr.to_s
-      test_name = test_name.to_s
+      doc: "Filter array by rejecting attribute test or truthiness" do |value, attribute, test|
       case value
       when Array(Value)
-        test = env.tests[test_name]?
-        if test
+        varargs = args
+        attribute = attribute.to_s
+        test_name = test.to_s
+
+        test_kwargs = kwargs.dup
+        test_kwargs.delete("attribute")
+        test_kwargs.delete("test")
+
+        if test_name.empty?
           result = Array(Value).new
           value.each do |item|
-            case item
-            when Hash(String, Value)
-              attr_value = item[attr]?
-              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx, span)
-                result << item
-              end
-            when Hash(Value, Value)
-              attr_value = item[attr]?
-              unless test.call(attr_value, Array(Value).new, Hash(String, Value).new, ctx, span)
-                result << item
-              end
-            end
+            selected = selectattr_truthy?(resolve_attr_value(item, attribute))
+            result << item unless selected
           end
           result.as(Value)
         else
-          value
+          test = env.tests[test_name]?
+          return value unless test
+
+          start_index = 0
+          start_index += 1 unless kwargs.has_key?("attribute")
+          start_index += 1 unless kwargs.has_key?("test")
+          test_args = varargs.size > start_index ? varargs[start_index..] : Array(Value).new
+          result = Array(Value).new
+          value.each do |item|
+            attr_resolved = resolve_attr_value(item, attribute)
+            unless test.call(attr_resolved, test_args, test_kwargs, ctx, span)
+              result << item
+            end
+          end
+          result.as(Value)
         end
       else
         value
+      end
+    end
+
+    private def self.resolve_attr_value(item : Value, attribute : String) : Value
+      parts = attribute.split(".")
+      current = item
+
+      parts.each do |part|
+        return Crinkle::Undefined.new(attribute) if current.is_a?(Undefined) || current.is_a?(StrictUndefined)
+
+        if part =~ /^\d+$/
+          index = part.to_i
+          case current
+          when Array(Value)
+            current = current[index]? || Crinkle::Undefined.new(attribute)
+          when Hash(String, Value)
+            current = current[index.to_s]? || Crinkle::Undefined.new(attribute)
+          when Hash(Value, Value)
+            current = current[Crinkle.value(index.to_i64)]? || Crinkle::Undefined.new(attribute)
+          else
+            current = Crinkle::Undefined.new(attribute)
+          end
+        else
+          case current
+          when Hash(String, Value)
+            current = current[part]? || Crinkle::Undefined.new(attribute)
+          when Hash(Value, Value)
+            current = current[Crinkle.value(part)]? || Crinkle::Undefined.new(attribute)
+          else
+            if current.responds_to?(:jinja_attribute)
+              current = current.jinja_attribute(Crinkle.value(part))
+            else
+              current = Crinkle::Undefined.new(attribute)
+            end
+          end
+        end
+      end
+
+      current
+    end
+
+    private def self.selectattr_truthy?(value : Value) : Bool
+      case value
+      when Nil
+        false
+      when Undefined, StrictUndefined
+        false
+      when Bool
+        value
+      when Int64
+        value != 0
+      when Int32
+        value != 0
+      when Float64
+        value != 0.0
+      when String
+        !value.empty?
+      when SafeString
+        !value.to_s.empty?
+      when Array(Value)
+        !value.empty?
+      when Hash(String, Value)
+        !value.empty?
+      when Hash(Value, Value)
+        !value.empty?
+      else
+        true
       end
     end
 

@@ -1,0 +1,329 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "users"
+      },
+      "value": {
+        "type": "ListLiteral",
+        "items": [
+          {
+            "type": "DictLiteral",
+            "pairs": [
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "name"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": "Ada"
+                }
+              },
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "active"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": true
+                }
+              },
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "email"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": null
+                }
+              }
+            ]
+          },
+          {
+            "type": "DictLiteral",
+            "pairs": [
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "name"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": "Bob"
+                }
+              },
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "active"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": false
+                }
+              },
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "email"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": "bob@example.com"
+                }
+              }
+            ]
+          },
+          {
+            "type": "DictLiteral",
+            "pairs": [
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "name"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": "Cara"
+                }
+              },
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "active"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": true
+                }
+              },
+              {
+                "key": {
+                  "type": "Literal",
+                  "value": "email"
+                },
+                "value": {
+                  "type": "Literal",
+                  "value": "cara@example.com"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n\nactive: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "Filter",
+            "expr": {
+              "type": "Name",
+              "value": "users"
+            },
+            "name": "selectattr",
+            "args": [
+              {
+                "type": "Literal",
+                "value": "active"
+              }
+            ],
+            "kwargs": []
+          },
+          "name": "map",
+          "args": [],
+          "kwargs": [
+            {
+              "name": "attribute",
+              "value": {
+                "type": "Literal",
+                "value": "name"
+              }
+            }
+          ]
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": ", "
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\nnone_email: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "Filter",
+            "expr": {
+              "type": "Name",
+              "value": "users"
+            },
+            "name": "selectattr",
+            "args": [
+              {
+                "type": "Literal",
+                "value": "email"
+              },
+              {
+                "type": "Literal",
+                "value": "none"
+              }
+            ],
+            "kwargs": []
+          },
+          "name": "map",
+          "args": [],
+          "kwargs": [
+            {
+              "name": "attribute",
+              "value": {
+                "type": "Literal",
+                "value": "name"
+              }
+            }
+          ]
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": ", "
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\nemail_eq: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "Filter",
+            "expr": {
+              "type": "Name",
+              "value": "users"
+            },
+            "name": "selectattr",
+            "args": [
+              {
+                "type": "Literal",
+                "value": "email"
+              },
+              {
+                "type": "Literal",
+                "value": "equalto"
+              },
+              {
+                "type": "Literal",
+                "value": "cara@example.com"
+              }
+            ],
+            "kwargs": []
+          },
+          "name": "map",
+          "args": [],
+          "kwargs": [
+            {
+              "name": "attribute",
+              "value": {
+                "type": "Literal",
+                "value": "name"
+              }
+            }
+          ]
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": ", "
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\nnot_active: "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Filter",
+          "expr": {
+            "type": "Filter",
+            "expr": {
+              "type": "Name",
+              "value": "users"
+            },
+            "name": "rejectattr",
+            "args": [],
+            "kwargs": [
+              {
+                "name": "attribute",
+                "value": {
+                  "type": "Literal",
+                  "value": "active"
+                }
+              }
+            ]
+          },
+          "name": "map",
+          "args": [],
+          "kwargs": [
+            {
+              "name": "attribute",
+              "value": {
+                "type": "Literal",
+                "value": "name"
+              }
+            }
+          ]
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": ", "
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}
