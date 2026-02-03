@@ -132,29 +132,33 @@ module Crinkle::LSP
     # Get property completions based on inference
     private def property_completions(uri : String, variable : String, prefix : String) : Array(CompletionItem)
       items = Array(CompletionItem).new
+      schema = @schema_provider.custom_schema || Schema.registry
       type = types_for(uri)[variable]?
+      type_name = type.try(&.name)
+      if type_name.nil? && !explicit_variable?(uri, variable)
+        type_name = schema.globals[variable]?
+      end
       callable_methods = Hash(String, String).new
-      if type
-        schema = @schema_provider.custom_schema || Schema.registry
-        if callable = schema.callables[type.name]?
+      if type_name
+        if callable = schema.callables[type_name]?
           callable.methods.each do |method_name, method_schema|
             callable_methods[method_name] = method_schema.returns
           end
         end
       end
 
-      properties = @inference.properties_for(uri, variable)
-      properties.select do |prop|
-        prop.starts_with?(prefix)
-      end.each do |prop|
-        priority = callable_methods.has_key?(prop) ? "0" : "1"
-        detail = callable_methods.has_key?(prop) ? "method -> #{callable_methods[prop]}" : "property"
-        items << CompletionItem.new(
-          label: prop,
-          kind: CompletionItemKind::Property,
-          detail: detail,
-          sort_text: "#{priority}#{prop}"
-        )
+      if callable_methods.empty?
+        properties = @inference.properties_for(uri, variable)
+        properties.select do |prop|
+          prop.starts_with?(prefix)
+        end.each do |prop|
+          items << CompletionItem.new(
+            label: prop,
+            kind: CompletionItemKind::Property,
+            detail: "property",
+            sort_text: "1#{prop}"
+          )
+        end
       end
 
       callable_methods.each do |method_name, return_type|
@@ -175,10 +179,13 @@ module Crinkle::LSP
     # Get variable completions based on inference
     private def variable_completions(uri : String, prefix : String) : Array(CompletionItem)
       types = types_for(uri)
+      schema = @schema_provider.custom_schema || Schema.registry
       variables = @inference.variables_for(uri)
-      variables.select do |var|
+      items = variables.select do |var|
         var.name.starts_with?(prefix)
-      end.map do |var|
+      end.compact_map do |var|
+        next if var.source.context? && schema.globals.has_key?(var.name)
+
         source_desc = case var.source
                       when .for_loop?    then "loop variable"
                       when .set?         then "assigned variable"
@@ -200,6 +207,27 @@ module Crinkle::LSP
           sort_text: "#{priority}#{var.name}"
         )
       end
+
+      schema.globals.each do |name, type|
+        next unless name.starts_with?(prefix)
+        next if items.any? { |item| item.label == name }
+
+        detail = "#{name} : #{type} (global)"
+        items << CompletionItem.new(
+          label: name,
+          kind: CompletionItemKind::Variable,
+          detail: detail,
+          sort_text: "0#{name}"
+        )
+      end
+
+      items
+    end
+
+    private def explicit_variable?(uri : String, name : String) : Bool
+      info = @inference.variable_info(uri, name)
+      return false unless info
+      info.source != VariableSource::Context
     end
 
     # Get block name completions (from extended parent templates)
@@ -572,6 +600,18 @@ module Crinkle::LSP
         return CompletionContext.new(CompletionContextType::Tag, "")
       when TokenType::Operator
         if token.lexeme == "|"
+          # After pipe - filter context (unless the pipe is immediately after a property access)
+          if index >= 2
+            prev = tokens[index - 1]
+            prev_prev = tokens[index - 2]
+            if prev.type == TokenType::Identifier && prev_prev.type == TokenType::Punct && prev_prev.lexeme == "."
+              var_token = find_prev_significant(tokens, index - 2)
+              if var_token && var_token.type == TokenType::Identifier
+                return CompletionContext.new(CompletionContextType::Property, prev.lexeme, var_token.lexeme)
+              end
+            end
+          end
+
           # After pipe - filter context
           next_token = tokens[index + 1]?
           if next_token && next_token.type == TokenType::Identifier && cursor_offset <= next_token.span.end_pos.offset
@@ -717,12 +757,20 @@ module Crinkle::LSP
       return CompletionContext.new(CompletionContextType::None, "") unless prev
 
       case prev.type
-      when TokenType::Operator
-        if prev.lexeme == "|"
-          receiver = receiver_before_index(tokens, prev_index)
-          return CompletionContext.new(CompletionContextType::Filter, "", receiver: receiver)
-        end
       when TokenType::Identifier
+        prev_prev_index = prev_index ? find_prev_significant_index(tokens, prev_index) : nil
+        if prev_prev_index
+          prev_prev = tokens[prev_prev_index]
+          if prev_prev.type == TokenType::Punct && prev_prev.lexeme == "."
+            var_index = find_prev_significant_index(tokens, prev_prev_index)
+            if var_index
+              var_token = tokens[var_index]
+              if var_token.type == TokenType::Identifier
+                return CompletionContext.new(CompletionContextType::Property, prev.lexeme, var_token.lexeme)
+              end
+            end
+          end
+        end
         if prev.lexeme == "is"
           receiver = receiver_before_index(tokens, prev_index)
           return CompletionContext.new(CompletionContextType::Test, "", receiver: receiver)
@@ -732,6 +780,21 @@ module Crinkle::LSP
         # After keywords like if, elif, for...in - variable context
         if prev.lexeme.in?("if", "elif", "in", "print") || (prev.lexeme == "=" && in_block_context?(tokens, ws_index))
           return CompletionContext.new(CompletionContextType::Variable, "")
+        end
+      when TokenType::Operator
+        if prev.lexeme == "|"
+          receiver = receiver_before_index(tokens, prev_index)
+          return CompletionContext.new(CompletionContextType::Filter, "", receiver: receiver)
+        end
+      when TokenType::Punct
+        if prev.lexeme == "."
+          var_index = prev_index ? find_prev_significant_index(tokens, prev_index) : nil
+          if var_index
+            var_token = tokens[var_index]
+            if var_token.type == TokenType::Identifier
+              return CompletionContext.new(CompletionContextType::Property, "", var_token.lexeme)
+            end
+          end
         end
       when TokenType::BlockStart
         return CompletionContext.new(CompletionContextType::Tag, "")

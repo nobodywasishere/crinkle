@@ -217,5 +217,296 @@ describe Crinkle::LSP do
         end
       end
     end
+
+    it "completes callable methods for globals" do
+      tmp_root = ENV["TMPDIR"]? || "/tmp"
+      dir = File.join(tmp_root, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Random.rand(1000)}")
+      Dir.mkdir(dir)
+
+      begin
+        schema_dir = File.join(dir, ".crinkle")
+        Dir.mkdir(schema_dir)
+        schema_path = File.join(schema_dir, "schema.json")
+
+        schema = Crinkle::Schema::Registry.new
+        schema.register_global("ctx", "Context")
+        schema.register_callable(
+          Crinkle::Schema::CallableSchema.new(
+            class_name: "Context",
+            methods: {
+              "localize" => Crinkle::Schema::MethodSchema.new(name: "localize", returns: "String"),
+              "flag"     => Crinkle::Schema::MethodSchema.new(name: "flag", returns: "Bool"),
+            }
+          )
+        )
+        File.write(schema_path, schema.to_json)
+
+        config = Crinkle::LSP::Config.new(template_paths: ["."])
+        schema_provider = Crinkle::LSP::SchemaProvider.new(config, dir)
+        inference = Crinkle::LSP::InferenceEngine.new(config, dir, schema_provider.custom_schema || Crinkle::Schema.registry)
+        provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference, dir)
+
+        uri = "file://#{File.join(dir, "page.j2")}"
+        inference.analyze(uri, "{{ ctx. }}")
+
+        var_completions = provider.completions(uri, "{{ ", Crinkle::LSP::Position.new(0, 3))
+        ctx_item = var_completions.find(&.label.==("ctx"))
+        ctx_item.should_not be_nil
+
+        prop_completions = provider.completions(uri, "{{ ctx.", Crinkle::LSP::Position.new(0, 8))
+        localize_item = prop_completions.find(&.label.==("localize"))
+        localize_item.should_not be_nil
+        flag_item = prop_completions.find(&.label.==("flag"))
+        flag_item.should_not be_nil
+      ensure
+        if Dir.exists?(dir)
+          Dir.each_child(dir) do |entry|
+            path = File.join(dir, entry)
+            if File.directory?(path)
+              Dir.each_child(path) do |child|
+                child_path = File.join(path, child)
+                File.delete(child_path) if File.file?(child_path)
+              end
+              Dir.delete(path)
+            else
+              File.delete(path) if File.file?(path)
+            end
+          end
+          Dir.delete(dir)
+        end
+      end
+    end
+
+    it "completes property before pipe when adjacent" do
+      tmp_root = ENV["TMPDIR"]? || "/tmp"
+      dir = File.join(tmp_root, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Random.rand(1000)}")
+      Dir.mkdir(dir)
+
+      begin
+        schema = Crinkle::Schema.registry
+        schema.register_global("ctx", "ContextTest")
+        schema.register_callable(
+          Crinkle::Schema::CallableSchema.new(
+            class_name: "ContextTest",
+            methods: {
+              "something_went_wrong" => Crinkle::Schema::MethodSchema.new(name: "something_went_wrong", returns: "Bool"),
+            }
+          )
+        )
+
+        config = Crinkle::LSP::Config.new(template_paths: ["."])
+        schema_provider = Crinkle::LSP::SchemaProvider.new(config, dir)
+        inference = Crinkle::LSP::InferenceEngine.new(config, dir, schema_provider.custom_schema || Crinkle::Schema.registry)
+        provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference, dir)
+
+        uri = "file://#{File.join(dir, "page.j2")}"
+        inference.analyze(uri, "{{ ctx.someth }}")
+
+        completions = provider.completions(uri, "{{ ctx.someth }}", Crinkle::LSP::Position.new(0, 12))
+        item = completions.find(&.label.==("something_went_wrong"))
+        item.should_not be_nil
+      ensure
+        if Dir.exists?(dir)
+          Dir.each_child(dir) do |entry|
+            path = File.join(dir, entry)
+            if File.directory?(path)
+              Dir.each_child(path) do |child|
+                child_path = File.join(path, child)
+                File.delete(child_path) if File.file?(child_path)
+              end
+              Dir.delete(path)
+            else
+              File.delete(path) if File.file?(path)
+            end
+          end
+          Dir.delete(dir)
+        end
+      end
+    end
+
+    it "does not fall back to globals when variable is explicitly set" do
+      tmp_root = ENV["TMPDIR"]? || "/tmp"
+      dir = File.join(tmp_root, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Random.rand(1000)}")
+      Dir.mkdir(dir)
+
+      begin
+        schema = Crinkle::Schema.registry
+        schema.register_global("ctx", "ContextGlobal")
+        schema.register_callable(
+          Crinkle::Schema::CallableSchema.new(
+            class_name: "ContextGlobal",
+            methods: {
+              "something_went_wrong" => Crinkle::Schema::MethodSchema.new(name: "something_went_wrong", returns: "Bool"),
+            }
+          )
+        )
+
+        config = Crinkle::LSP::Config.new(template_paths: ["."])
+        schema_provider = Crinkle::LSP::SchemaProvider.new(config, dir)
+        inference = Crinkle::LSP::InferenceEngine.new(config, dir, schema_provider.custom_schema || Crinkle::Schema.registry)
+        provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference, dir)
+
+        uri = "file://#{File.join(dir, "page.j2")}"
+        inference.analyze(uri, "{% set ctx = 1 %}{{ ctx. }}")
+
+        completions = provider.completions(uri, "{% set ctx = 1 %}{{ ctx. }}", Crinkle::LSP::Position.new(0, 27))
+        item = completions.find(&.label.==("something_went_wrong"))
+        item.should be_nil
+      ensure
+        if Dir.exists?(dir)
+          Dir.each_child(dir) do |entry|
+            path = File.join(dir, entry)
+            if File.directory?(path)
+              Dir.each_child(path) do |child|
+                child_path = File.join(path, child)
+                File.delete(child_path) if File.file?(child_path)
+              end
+              Dir.delete(path)
+            else
+              File.delete(path) if File.file?(path)
+            end
+          end
+          Dir.delete(dir)
+        end
+      end
+    end
+
+    it "prefers schema globals over inferred context variables" do
+      tmp_root = ENV["TMPDIR"]? || "/tmp"
+      dir = File.join(tmp_root, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Random.rand(1000)}")
+      Dir.mkdir(dir)
+
+      begin
+        schema = Crinkle::Schema.registry
+        schema.register_global("ctx", "ContextGlobal")
+
+        config = Crinkle::LSP::Config.new(template_paths: ["."])
+        schema_provider = Crinkle::LSP::SchemaProvider.new(config, dir)
+        inference = Crinkle::LSP::InferenceEngine.new(config, dir, schema_provider.custom_schema || Crinkle::Schema.registry)
+        provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference, dir)
+
+        uri = "file://#{File.join(dir, "page.j2")}"
+        inference.analyze(uri, "{{ ctx.name }}")
+
+        completions = provider.completions(uri, "{{ ", Crinkle::LSP::Position.new(0, 3))
+        ctx_item = completions.find(&.label.==("ctx"))
+        ctx_item.should_not be_nil
+        ctx_item = ctx_item.as(Crinkle::LSP::CompletionItem)
+        ctx_item.detail.should_not be_nil
+        ctx_item.detail.try(&.includes?("ContextGlobal")).should be_true
+      ensure
+        if Dir.exists?(dir)
+          Dir.each_child(dir) do |entry|
+            path = File.join(dir, entry)
+            if File.directory?(path)
+              Dir.each_child(path) do |child|
+                child_path = File.join(path, child)
+                File.delete(child_path) if File.file?(child_path)
+              end
+              Dir.delete(path)
+            else
+              File.delete(path) if File.file?(path)
+            end
+          end
+          Dir.delete(dir)
+        end
+      end
+    end
+
+    it "completes properties after whitespace in block conditions" do
+      tmp_root = ENV["TMPDIR"]? || "/tmp"
+      dir = File.join(tmp_root, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Random.rand(1000)}")
+      Dir.mkdir(dir)
+
+      begin
+        schema = Crinkle::Schema.registry
+        schema.register_global("ctx", "ContextGlobal")
+        schema.register_callable(
+          Crinkle::Schema::CallableSchema.new(
+            class_name: "ContextGlobal",
+            methods: {
+              "something_went_wrong" => Crinkle::Schema::MethodSchema.new(name: "something_went_wrong", returns: "Bool"),
+            }
+          )
+        )
+
+        config = Crinkle::LSP::Config.new(template_paths: ["."])
+        schema_provider = Crinkle::LSP::SchemaProvider.new(config, dir)
+        inference = Crinkle::LSP::InferenceEngine.new(config, dir, schema_provider.custom_schema || Crinkle::Schema.registry)
+        provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference, dir)
+
+        uri = "file://#{File.join(dir, "page.j2")}"
+        template = "{% if ctx.s %}"
+        inference.analyze(uri, template)
+
+        completions = provider.completions(uri, template, Crinkle::LSP::Position.new(0, 11))
+        item = completions.find(&.label.==("something_went_wrong"))
+        item.should_not be_nil
+      ensure
+        if Dir.exists?(dir)
+          Dir.each_child(dir) do |entry|
+            path = File.join(dir, entry)
+            if File.directory?(path)
+              Dir.each_child(path) do |child|
+                child_path = File.join(path, child)
+                File.delete(child_path) if File.file?(child_path)
+              end
+              Dir.delete(path)
+            else
+              File.delete(path) if File.file?(path)
+            end
+          end
+          Dir.delete(dir)
+        end
+      end
+    end
+
+    it "completes properties after dot in block conditions" do
+      tmp_root = ENV["TMPDIR"]? || "/tmp"
+      dir = File.join(tmp_root, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Random.rand(1000)}")
+      Dir.mkdir(dir)
+
+      begin
+        schema = Crinkle::Schema.registry
+        schema.register_global("ctx", "ContextGlobal")
+        schema.register_callable(
+          Crinkle::Schema::CallableSchema.new(
+            class_name: "ContextGlobal",
+            methods: {
+              "something_went_wrong" => Crinkle::Schema::MethodSchema.new(name: "something_went_wrong", returns: "Bool"),
+            }
+          )
+        )
+
+        config = Crinkle::LSP::Config.new(template_paths: ["."])
+        schema_provider = Crinkle::LSP::SchemaProvider.new(config, dir)
+        inference = Crinkle::LSP::InferenceEngine.new(config, dir, schema_provider.custom_schema || Crinkle::Schema.registry)
+        provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference, dir)
+
+        uri = "file://#{File.join(dir, "page.j2")}"
+        template = "{% if ctx. %}"
+        inference.analyze(uri, template)
+
+        completions = provider.completions(uri, template, Crinkle::LSP::Position.new(0, 10))
+        item = completions.find(&.label.==("something_went_wrong"))
+        item.should_not be_nil
+      ensure
+        if Dir.exists?(dir)
+          Dir.each_child(dir) do |entry|
+            path = File.join(dir, entry)
+            if File.directory?(path)
+              Dir.each_child(path) do |child|
+                child_path = File.join(path, child)
+                File.delete(child_path) if File.file?(child_path)
+              end
+              Dir.delete(path)
+            else
+              File.delete(path) if File.file?(path)
+            end
+          end
+          Dir.delete(dir)
+        end
+      end
+    end
   end
 end

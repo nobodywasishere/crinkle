@@ -172,6 +172,13 @@ When snapshots differ, specs fail showing the diff. Update by regenerating.
 crystal spec
 ```
 
+### Always Run After Changes
+After any code change, run:
+```bash
+crystal spec
+/Users/margret/.local/bin/ameba
+```
+
 ### Run Specific Test
 ```bash
 crystal spec spec/lexer_spec.cr

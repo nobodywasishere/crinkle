@@ -5,6 +5,7 @@ module Crinkle::LSP
     Filter
     Test
     Function
+    Method
     Variable
     Macro
     Block
@@ -15,8 +16,9 @@ module Crinkle::LSP
   struct HoverContext
     property type : HoverContextType
     property name : String
+    property receiver : String?
 
-    def initialize(@type : HoverContextType, @name : String) : Nil
+    def initialize(@type : HoverContextType, @name : String, @receiver : String? = nil) : Nil
     end
   end
 
@@ -42,6 +44,8 @@ module Crinkle::LSP
         test_hover(context.name)
       when .function?
         function_hover(context.name)
+      when .method?
+        method_hover(uri, context.receiver, context.name)
       when .variable?
         variable_hover(uri, text, context.name)
       when .macro?
@@ -51,6 +55,52 @@ module Crinkle::LSP
       when .tag?
         tag_hover(context.name)
       end
+    end
+
+    # Get hover info for a callable method
+    private def method_hover(uri : String, receiver : String?, name : String) : Hover?
+      return unless receiver
+
+      schema = @schema_provider.custom_schema || Schema.registry
+      type_name = @inference.types_for(uri)[receiver]?.try(&.name)
+
+      if type_name.nil?
+        var_info = @inference.variable_info(uri, receiver)
+        if var_info.nil? || var_info.source.context?
+          type_name = schema.globals[receiver]?
+        end
+      end
+
+      return unless type_name
+      callable = schema.callables[type_name]?
+      return unless callable
+      method = callable.methods[name]?
+      return unless method
+
+      signature = String.build do |str|
+        params = method.params.map do |param|
+          param_name = param.variadic? ? "*#{param.name}" : param.name
+          param_str = "#{param_name}: #{param.type}"
+          param_str += " = #{param.default}" if param.default
+          param_str
+        end.join(", ")
+        str << "#{receiver}.#{method.name}(#{params})"
+        str << " -> #{method.returns}"
+      end
+
+      markdown = String.build do |str|
+        str << "```crystal\n"
+        str << signature
+        str << "\n```\n"
+        if doc = method.doc
+          str << "\n---\n\n"
+          str << doc
+        end
+      end
+
+      Hover.new(
+        contents: MarkupContent.new(kind: "markdown", value: markdown)
+      )
     end
 
     # Get hover info for a filter
@@ -142,33 +192,43 @@ module Crinkle::LSP
     # Get hover info for a variable
     private def variable_hover(uri : String, text : String, name : String) : Hover?
       var_info = @inference.variable_info(uri, name)
-      return unless var_info
+      schema = @schema_provider.custom_schema || Schema.registry
+      schema_type = schema.globals[name]?
+
+      return unless var_info || schema_type
+
+      is_global = schema_type && (!var_info || var_info.source.context?)
 
       markdown = String.build do |str|
         str << "**#{name}**"
 
-        # Show source type
-        source_desc = case var_info.source
-                      when .for_loop?    then "loop variable"
-                      when .set?         then "assigned variable"
-                      when .set_block?   then "block assigned variable"
-                      when .macro_param? then "macro parameter"
-                      when .context?     then "context variable"
-                      else                    return # shouldn't happen, but be safe
-                      end
-        str << " - " << source_desc
+        if var_info && !is_global
+          # Show source type
+          source_desc = case var_info.source
+                        when .for_loop?    then "loop variable"
+                        when .set?         then "assigned variable"
+                        when .set_block?   then "block assigned variable"
+                        when .macro_param? then "macro parameter"
+                        when .context?     then "context variable"
+                        else                    return # shouldn't happen, but be safe
+                        end
+          str << " - " << source_desc
 
-        # Show detail if available
-        if detail = var_info.detail
-          str << "\n\n" << detail
+          # Show detail if available
+          if detail = var_info.detail
+            str << "\n\n" << detail
+          end
+        else
+          str << " - global"
         end
 
-        # Show inferred type if available
-        inferred_type = infer_variable_type(text, name, var_info) || "Any"
-        str << "\n\nType: `#{inferred_type}`"
+        # Show inferred or schema type if available
+        inferred_type = var_info && !is_global ? infer_variable_type(text, name, var_info) : nil
+        type_str = inferred_type || schema_type || "Any"
+        str << "\n\nType: `#{type_str}`"
 
         # Show definition location if available (lexer uses 1-based lines)
-        if span = var_info.definition_span
+        if var_info && !is_global && (span = var_info.definition_span)
           str << "\n\nDefined at line #{span.start_pos.line}"
         end
       end
@@ -370,6 +430,13 @@ module Crinkle::LSP
       prev_significant = find_prev_significant(tokens, index)
 
       if prev_token = prev_significant
+        if prev_token.type == TokenType::Punct && prev_token.lexeme == "."
+          if receiver_token = find_prev_significant(tokens, index - 1)
+            if receiver_token.type == TokenType::Identifier
+              return HoverContext.new(HoverContextType::Method, name, receiver_token.lexeme)
+            end
+          end
+        end
         case prev_token.type
         when TokenType::Operator
           if prev_token.lexeme == "|"

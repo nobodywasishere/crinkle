@@ -188,5 +188,95 @@ describe Crinkle::LSP do
         contents.should contain("Type: `Any`")
       end
     end
+
+    it "includes hover info for schema globals" do
+      schema = Crinkle::Schema.registry
+      schema.register_global("ctx", "Context")
+
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      template = "{{ ctx }}"
+      inference.analyze("file:///test.j2", template)
+
+      hover = provider.hover("file:///test.j2", template, Crinkle::LSP::Position.new(0, 4))
+
+      hover.should_not be_nil
+      hover.try do |result|
+        contents = result.contents.as(Crinkle::LSP::MarkupContent).value
+        contents.should contain("**ctx** - global")
+        contents.should contain("Type: `Context`")
+      end
+    end
+
+    it "provides hover for callable methods" do
+      schema = Crinkle::Schema.registry
+      schema.register_global("ctx", "Context")
+      schema.register_callable(
+        Crinkle::Schema::CallableSchema.new(
+          class_name: "Context",
+          methods: {
+            "flag" => Crinkle::Schema::MethodSchema.new(
+              name: "flag",
+              params: [Crinkle::Schema::ParamSchema.new(name: "name", type: "String")],
+              returns: "Bool",
+              doc: "Check a feature flag"
+            ),
+          }
+        )
+      )
+
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      template = "{% if ctx.flag(\"foo\") %}"
+      inference.analyze("file:///test.j2", template)
+
+      hover = provider.hover("file:///test.j2", template, Crinkle::LSP::Position.new(0, 12))
+
+      hover.should_not be_nil
+      hover.try do |result|
+        contents = result.contents.as(Crinkle::LSP::MarkupContent).value
+        contents.should contain("ctx.flag")
+        contents.should contain("Bool")
+      end
+    end
+
+    it "marks variadic params in hover signatures" do
+      schema = Crinkle::Schema.registry
+      schema.register_global("ctx", "ContextVariadic")
+      schema.register_callable(
+        Crinkle::Schema::CallableSchema.new(
+          class_name: "ContextVariadic",
+          methods: {
+            "sum" => Crinkle::Schema::MethodSchema.new(
+              name: "sum",
+              params: [Crinkle::Schema::ParamSchema.new(name: "values", type: "Number", variadic: true)],
+              returns: "Number"
+            ),
+          }
+        )
+      )
+
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      template = "{{ ctx.sum(1, 2, 3) }}"
+      inference.analyze("file:///test.j2", template)
+
+      hover = provider.hover("file:///test.j2", template, Crinkle::LSP::Position.new(0, 8))
+
+      hover.should_not be_nil
+      hover.try do |result|
+        contents = result.contents.as(Crinkle::LSP::MarkupContent).value
+        contents.should contain("*values")
+      end
+    end
   end
 end

@@ -344,7 +344,9 @@ module Crinkle::LSP
         end
 
         # Format the document
-        formatted = Formatter.new(doc.text).format
+        html_aware = Formatter.html_aware?(uri)
+        formatter_options = Formatter::Options.new(html_aware: html_aware, normalize_text_indent: html_aware)
+        formatted = Formatter.new(doc.text, formatter_options).format
 
         # If no changes, return empty array
         if formatted == doc.text

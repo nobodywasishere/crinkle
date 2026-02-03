@@ -94,7 +94,8 @@ module Crinkle::LSP
     # Build a signature string for a filter (includes piped value as first param)
     def filter_signature(filter : Schema::FilterSchema) : String
       params = filter.params.map do |param|
-        param_str = "#{param.name}: #{param.type}"
+        param_name = param.variadic? ? "*#{param.name}" : param.name
+        param_str = "#{param_name}: #{param.type}"
         param_str += " = #{param.default}" if param.default
         param_str
       end.join(", ")
@@ -110,7 +111,8 @@ module Crinkle::LSP
         "#{filter.name} -> #{filter.returns}"
       else
         params = args.map do |param|
-          param_str = "#{param.name}: #{param.type}"
+          param_name = param.variadic? ? "*#{param.name}" : param.name
+          param_str = "#{param_name}: #{param.type}"
           param_str += " = #{param.default}" if param.default
           param_str
         end.join(", ")
@@ -121,7 +123,8 @@ module Crinkle::LSP
     # Build a signature string for a test (includes tested value as first param)
     def test_signature(test : Schema::TestSchema) : String
       params = test.params.map do |param|
-        param_str = "#{param.name}: #{param.type}"
+        param_name = param.variadic? ? "*#{param.name}" : param.name
+        param_str = "#{param_name}: #{param.type}"
         param_str += " = #{param.default}" if param.default
         param_str
       end.join(", ")
@@ -137,7 +140,8 @@ module Crinkle::LSP
         test.name
       else
         params = args.map do |param|
-          param_str = "#{param.name}: #{param.type}"
+          param_name = param.variadic? ? "*#{param.name}" : param.name
+          param_str = "#{param_name}: #{param.type}"
           param_str += " = #{param.default}" if param.default
           param_str
         end.join(", ")
@@ -148,7 +152,8 @@ module Crinkle::LSP
     # Build a signature string for a function
     def function_signature(func : Schema::FunctionSchema) : String
       params = func.params.map do |param|
-        param_str = "#{param.name}: #{param.type}"
+        param_name = param.variadic? ? "*#{param.name}" : param.name
+        param_str = "#{param_name}: #{param.type}"
         param_str += " = #{param.default}" if param.default
         param_str
       end.join(", ")

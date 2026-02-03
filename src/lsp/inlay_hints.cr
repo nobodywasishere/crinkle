@@ -73,6 +73,13 @@ module Crinkle::LSP
       call_range = span_to_range(call.span)
       return unless ranges_overlap?(call_range, range)
 
+      if callee = call.callee
+        if callee.is_a?(AST::GetAttr)
+          collect_method_hints(call, callee, uri, hints)
+          return
+        end
+      end
+
       # Get the macro name
       macro_name = extract_callee_name(call.callee)
       return unless macro_name
@@ -106,6 +113,58 @@ module Crinkle::LSP
         hints << InlayHint.new(
           position: arg_pos,
           label: "#{param_name}:",
+          kind: InlayHintKind::Parameter,
+          padding_right: true
+        )
+      end
+    end
+
+    private def collect_method_hints(
+      call : AST::Call,
+      callee : AST::GetAttr,
+      uri : String,
+      hints : Array(InlayHint),
+    ) : Nil
+      return if call.args.empty?
+
+      receiver = callee.target
+      return unless receiver.is_a?(AST::Name)
+      method_name = callee.name
+
+      schema = @schema_provider.custom_schema || Schema.registry
+      type_name = @inference.types_for(uri)[receiver.value]?.try(&.name)
+
+      if type_name.nil?
+        var_info = @inference.variable_info(uri, receiver.value)
+        if var_info.nil? || var_info.source.context?
+          type_name = schema.globals[receiver.value]?
+        end
+      end
+
+      return unless type_name
+      callable = schema.callables[type_name]?
+      return unless callable
+      method = callable.methods[method_name]?
+      return unless method
+
+      call.args.each_with_index do |arg, idx|
+        break if idx >= method.params.size
+
+        param = method.params[idx]
+        if arg.is_a?(AST::Name) && arg.value == param.name
+          next
+        end
+
+        arg_pos = Position.new(
+          line: arg.span.start_pos.line - 1,
+          character: arg.span.start_pos.column - 1
+        )
+
+        label = "#{"*" if param.variadic?}#{param.name}:"
+
+        hints << InlayHint.new(
+          position: arg_pos,
+          label: label,
           kind: InlayHintKind::Parameter,
           padding_right: true
         )

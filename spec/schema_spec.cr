@@ -189,6 +189,7 @@ describe "Crinkle::Schema" do
     it "merges globals into template context" do
       registry = Crinkle::Schema::Registry.new
       registry.register_global("ctx", "Context")
+      registry.register_global("user", "GlobalUser")
       registry.register_template(
         Crinkle::Schema::TemplateContextSchema.new(
           path: "templates/example.html.j2",
