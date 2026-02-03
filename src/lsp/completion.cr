@@ -63,7 +63,7 @@ module Crinkle::LSP
         CompletionItem.new(
           label: filter.name,
           kind: CompletionItemKind::Function,
-          detail: @schema_provider.filter_signature(filter),
+          detail: @schema_provider.filter_args_signature(filter),
           documentation: filter.doc,
           sort_text: filter.name
         )
@@ -78,7 +78,7 @@ module Crinkle::LSP
         CompletionItem.new(
           label: test.name,
           kind: CompletionItemKind::Function,
-          detail: @schema_provider.test_signature(test),
+          detail: @schema_provider.test_args_signature(test),
           documentation: test.doc,
           sort_text: test.name
         )

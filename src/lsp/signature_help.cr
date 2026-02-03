@@ -43,8 +43,11 @@ module Crinkle::LSP
       filter = @schema_provider.filter(name)
       return unless filter
 
-      # Build parameter information
-      params = filter.params.map do |param|
+      # Skip the first parameter (the piped value) - user doesn't type it
+      filter_args = filter.params.skip(1)
+
+      # Build parameter information for remaining args
+      params = filter_args.map do |param|
         label = "#{param.name}: #{param.type}"
         label += " = #{param.default}" if param.default
 
@@ -52,10 +55,10 @@ module Crinkle::LSP
         doc += " (default: #{param.default})" if param.default
 
         ParameterInformation.new(label: label, documentation: doc)
-      end
+      end.to_a
 
       signature = SignatureInformation.new(
-        label: @schema_provider.filter_signature(filter),
+        label: @schema_provider.filter_args_signature(filter),
         documentation: filter.doc,
         parameters: params
       )

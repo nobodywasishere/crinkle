@@ -89,7 +89,7 @@ module Crinkle::LSP
       !@schema.nil?
     end
 
-    # Build a signature string for a filter
+    # Build a signature string for a filter (includes piped value as first param)
     def filter_signature(filter : Schema::FilterSchema) : String
       params = filter.params.map do |param|
         param_str = "#{param.name}: #{param.type}"
@@ -99,7 +99,24 @@ module Crinkle::LSP
       "#{filter.name}(#{params}) -> #{filter.returns}"
     end
 
-    # Build a signature string for a test
+    # Build a signature string for filter arguments only (excludes piped value)
+    # Used for completions and signature help where the first param is implicit
+    def filter_args_signature(filter : Schema::FilterSchema) : String
+      # Skip the first parameter (the piped value)
+      args = filter.params.skip(1)
+      if args.empty?
+        "#{filter.name} -> #{filter.returns}"
+      else
+        params = args.map do |param|
+          param_str = "#{param.name}: #{param.type}"
+          param_str += " = #{param.default}" if param.default
+          param_str
+        end.join(", ")
+        "#{filter.name}(#{params}) -> #{filter.returns}"
+      end
+    end
+
+    # Build a signature string for a test (includes tested value as first param)
     def test_signature(test : Schema::TestSchema) : String
       params = test.params.map do |param|
         param_str = "#{param.name}: #{param.type}"
@@ -107,6 +124,23 @@ module Crinkle::LSP
         param_str
       end.join(", ")
       "#{test.name}(#{params})"
+    end
+
+    # Build a signature string for test arguments only (excludes tested value)
+    # Used for completions where the first param is implicit via `is`
+    def test_args_signature(test : Schema::TestSchema) : String
+      # Skip the first parameter (the tested value)
+      args = test.params.skip(1)
+      if args.empty?
+        test.name
+      else
+        params = args.map do |param|
+          param_str = "#{param.name}: #{param.type}"
+          param_str += " = #{param.default}" if param.default
+          param_str
+        end.join(", ")
+        "#{test.name}(#{params})"
+      end
     end
 
     # Build a signature string for a function
