@@ -14,20 +14,67 @@ module Crinkle::LSP
     @cached_ast : AST::Template?
     @cached_diagnostics : Array(::Crinkle::Diagnostic)?
 
+    # Cached analysis results (full LSP diagnostics)
+    @cached_lsp_diagnostics : Array(Diagnostic)?
+    @cached_analysis_version : Int32?
+
     def initialize(@uri : String, @language_id : String, @text : String, @version : Int32) : Nil
       @cached_tokens = nil
       @cached_ast = nil
       @cached_diagnostics = nil
+      @cached_lsp_diagnostics = nil
+      @cached_analysis_version = nil
     end
 
     # Update the document content (full sync).
     def update(text : String, version : Int32) : Nil
       @text = text
       @version = version
-      # Invalidate cache on update
+      invalidate_cache
+    end
+
+    # Apply an incremental change to the document.
+    # Takes a range and replacement text, updates only that portion.
+    def apply_change(range : Range, text : String, version : Int32) : Nil
+      start_offset = offset_at(range.start)
+      end_offset = offset_at(range.end_pos)
+
+      # Replace the range with new text
+      before = start_offset > 0 ? @text[0...start_offset] : ""
+      after = end_offset < @text.size ? @text[end_offset..] : ""
+      @text = before + text + after
+
+      @version = version
+      invalidate_cache
+    end
+
+    # Invalidate all cached data.
+    private def invalidate_cache : Nil
       @cached_tokens = nil
       @cached_ast = nil
       @cached_diagnostics = nil
+      @cached_lsp_diagnostics = nil
+      @cached_analysis_version = nil
+    end
+
+    # Get cached LSP diagnostics if version matches.
+    def cached_lsp_diagnostics : Array(Diagnostic)?
+      if @cached_analysis_version == @version
+        @cached_lsp_diagnostics
+      end
+    end
+
+    # Cache LSP diagnostics for the current version.
+    def cache_diagnostics(diagnostics : Array(Diagnostic)) : Nil
+      @cached_lsp_diagnostics = diagnostics
+      @cached_analysis_version = @version
+    end
+
+    # Clear only the analysis cache (for memory management).
+    # Keeps tokens and AST cache intact.
+    def clear_analysis_cache : Nil
+      @cached_lsp_diagnostics = nil
+      @cached_analysis_version = nil
     end
 
     # Get cached tokens, lexing if needed
@@ -122,36 +169,55 @@ module Crinkle::LSP
     end
   end
 
-  # Stores open documents by URI.
+  # Stores open documents by URI with memory tracking.
   class DocumentStore
+    # Maximum number of cached analysis results (LRU eviction)
+    MAX_CACHED_ANALYSES = 100
+
     @documents : Hash(String, Document)
+    @access_order : Array(String) # Track access order for LRU eviction
 
     def initialize : Nil
       @documents = Hash(String, Document).new
+      @access_order = Array(String).new
     end
 
     # Open a new document.
     def open(uri : String, language_id : String, text : String, version : Int32) : Document
       doc = Document.new(uri, language_id, text, version)
       @documents[uri] = doc
+      @access_order << uri
       doc
     end
 
-    # Update an existing document.
+    # Update an existing document (full sync).
     def update(uri : String, text : String, version : Int32) : Document?
       doc = @documents[uri]?
       doc.try(&.update(text, version))
       doc
     end
 
+    # Apply an incremental change to a document.
+    def apply_change(uri : String, range : Range, text : String, version : Int32) : Document?
+      doc = @documents[uri]?
+      doc.try(&.apply_change(range, text, version))
+      doc
+    end
+
     # Close a document.
     def close(uri : String) : Document?
+      @access_order.delete(uri)
       @documents.delete(uri)
     end
 
-    # Get a document by URI.
+    # Get a document by URI (updates access order for LRU tracking).
     def get(uri : String) : Document?
-      @documents[uri]?
+      if doc = @documents[uri]?
+        # Update access order for LRU tracking
+        @access_order.delete(uri)
+        @access_order << uri
+        doc
+      end
     end
 
     # Check if a document is open.
@@ -167,6 +233,37 @@ module Crinkle::LSP
     # Get the number of open documents.
     def size : Int32
       @documents.size
+    end
+
+    # Get approximate memory usage in bytes (for monitoring).
+    def memory_usage : Int64
+      total = 0_i64
+      @documents.each_value do |doc|
+        # Text content
+        total += doc.text.bytesize.to_i64
+        # Rough estimate for cached data (if any)
+        total += 1024_i64 # Base overhead per document
+      end
+      total
+    end
+
+    # Evict cached analysis from least-recently-used documents.
+    # Only evicts cache, not the documents themselves.
+    def evict_stale_caches(max_cached : Int32 = MAX_CACHED_ANALYSES) : Int32
+      evicted = 0
+      docs_with_cache = @access_order.select do |uri|
+        @documents[uri]?.try(&.cached_lsp_diagnostics) != nil
+      end
+
+      while docs_with_cache.size > max_cached && !docs_with_cache.empty?
+        oldest_uri = docs_with_cache.shift
+        if doc = @documents[oldest_uri]?
+          doc.clear_analysis_cache
+          evicted += 1
+        end
+      end
+
+      evicted
     end
   end
 end

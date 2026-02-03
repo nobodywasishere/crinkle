@@ -264,6 +264,7 @@ module Crinkle::LSP
     property document_symbol_provider : Bool?
     @[JSON::Field(key: "foldingRangeProvider")]
     property folding_range_provider : Bool?
+    property workspace : WorkspaceServerCapabilities?
 
     def initialize(
       @text_document_sync : TextDocumentSyncOptions? = nil,
@@ -275,6 +276,7 @@ module Crinkle::LSP
       @references_provider : Bool? = nil,
       @document_symbol_provider : Bool? = nil,
       @folding_range_provider : Bool? = nil,
+      @workspace : WorkspaceServerCapabilities? = nil,
     ) : Nil
     end
   end
@@ -823,6 +825,92 @@ module Crinkle::LSP
     property text_document : TextDocumentIdentifier
 
     def initialize(@text_document : TextDocumentIdentifier) : Nil
+    end
+  end
+
+  # Workspace capabilities for server
+  struct WorkspaceServerCapabilities
+    include JSON::Serializable
+
+    @[JSON::Field(key: "workspaceFolders")]
+    property workspace_folders : WorkspaceFoldersServerCapabilities?
+
+    def initialize(@workspace_folders : WorkspaceFoldersServerCapabilities? = nil) : Nil
+    end
+  end
+
+  struct WorkspaceFoldersServerCapabilities
+    include JSON::Serializable
+
+    property? supported : Bool?
+    @[JSON::Field(key: "changeNotifications")]
+    property change_notifications : (Bool | String)?
+
+    def initialize(
+      @supported : Bool? = nil,
+      @change_notifications : (Bool | String)? = nil,
+    ) : Nil
+    end
+  end
+
+  # Configuration item for workspace/configuration request
+  struct ConfigurationItem
+    include JSON::Serializable
+
+    @[JSON::Field(key: "scopeUri")]
+    property scope_uri : String?
+    property section : String?
+
+    def initialize(@scope_uri : String? = nil, @section : String? = nil) : Nil
+    end
+  end
+
+  # Params for workspace/configuration request
+  struct ConfigurationParams
+    include JSON::Serializable
+
+    property items : Array(ConfigurationItem)
+
+    def initialize(@items : Array(ConfigurationItem)) : Nil
+    end
+  end
+
+  # DidChangeConfiguration notification params
+  struct DidChangeConfigurationParams
+    include JSON::Serializable
+
+    property settings : JSON::Any
+
+    def initialize(@settings : JSON::Any) : Nil
+    end
+  end
+
+  # Crinkle LSP settings (from client/editor configuration)
+  struct CrinkleLspSettings
+    include JSON::Serializable
+
+    # Enable/disable linting
+    @[JSON::Field(key: "lintEnabled")]
+    property? lint_enabled : Bool = true
+
+    # Maximum file size in bytes for full analysis (larger files get basic analysis)
+    @[JSON::Field(key: "maxFileSize")]
+    property max_file_size : Int32 = 1_000_000
+
+    # Enable/disable diagnostics debouncing
+    @[JSON::Field(key: "debounceMs")]
+    property debounce_ms : Int32 = 150
+
+    # Enable/disable property typo detection
+    @[JSON::Field(key: "typoDetection")]
+    property? typo_detection : Bool = true
+
+    def initialize(
+      @lint_enabled : Bool = true,
+      @max_file_size : Int32 = 1_000_000,
+      @debounce_ms : Int32 = 150,
+      @typo_detection : Bool = true,
+    ) : Nil
     end
   end
 end

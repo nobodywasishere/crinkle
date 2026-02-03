@@ -15,6 +15,17 @@ module Crinkle
         @source_type : DiagnosticType? = nil,
       ) : Nil
       end
+
+      # Create an Issue from a Crinkle::Diagnostic.
+      def self.from_diagnostic(diag : Diagnostic) : Issue
+        Issue.new(
+          id: diag.id,
+          severity: diag.severity,
+          message: diag.message,
+          span: diag.span,
+          source_type: diag.type
+        )
+      end
     end
 
     class Context

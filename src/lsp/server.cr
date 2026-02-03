@@ -17,12 +17,29 @@ require "./symbols"
 require "./folding"
 
 module Crinkle::LSP
+  # Cancellation token for long-running operations.
+  # Allows analysis to be cancelled when document changes.
+  class CancellationToken
+    @cancelled : Atomic(Int32)
+
+    def initialize : Nil
+      @cancelled = Atomic(Int32).new(0)
+    end
+
+    # Check if the token has been cancelled.
+    def cancelled? : Bool
+      @cancelled.get == 1
+    end
+
+    # Cancel the token.
+    def cancel : Nil
+      @cancelled.set(1)
+    end
+  end
+
   # LSP server for Jinja2/Crinkle templates.
   class Server
     VERSION = "0.1.0"
-
-    # Debounce delay for diagnostics (milliseconds).
-    DEBOUNCE_MS = 150
 
     @transport : Transport
     @documents : DocumentStore
@@ -35,6 +52,7 @@ module Crinkle::LSP
     @analyzer : Analyzer
     @pending_analysis : Hash(String, Time::Instant)
     @config : Config
+    @lsp_settings : CrinkleLspSettings
     @schema_provider : SchemaProvider?
     @inference : InferenceEngine?
     @completion_provider : CompletionProvider?
@@ -44,6 +62,9 @@ module Crinkle::LSP
     @references_provider : ReferencesProvider?
     @symbol_provider : SymbolProvider?
     @folding_provider : FoldingProvider?
+
+    # Cancellation tokens for pending analysis per URI
+    @cancellation_tokens : Hash(String, CancellationToken)
 
     def initialize(
       @transport : Transport,
@@ -58,6 +79,7 @@ module Crinkle::LSP
       @analyzer = Analyzer.new
       @pending_analysis = Hash(String, Time::Instant).new
       @config = Config.new
+      @lsp_settings = CrinkleLspSettings.new
       @schema_provider = nil
       @inference = nil
       @completion_provider = nil
@@ -67,6 +89,7 @@ module Crinkle::LSP
       @references_provider = nil
       @symbol_provider = nil
       @folding_provider = nil
+      @cancellation_tokens = Hash(String, CancellationToken).new
     end
 
     # Main run loop - read and handle messages until exit.
@@ -177,6 +200,8 @@ module Crinkle::LSP
         log(MessageType::Log, "    Ignoring setTrace")
       when "workspace/didChangeWatchedFiles"
         handle_did_change_watched_files(params)
+      when "workspace/didChangeConfiguration"
+        handle_did_change_configuration(params)
       else
         log(MessageType::Log, "    Unknown notification, ignoring")
       end
@@ -231,7 +256,7 @@ module Crinkle::LSP
       capabilities = ServerCapabilities.new(
         text_document_sync: TextDocumentSyncOptions.new(
           open_close: true,
-          change: 1, # Full sync
+          change: 2, # Incremental sync
           save: SaveOptions.new(include_text: true)
         ),
         document_formatting_provider: true,
@@ -606,16 +631,26 @@ module Crinkle::LSP
         uri = change_params.text_document.uri
         version = change_params.text_document.version
 
-        # Full sync: just take the last content change
-        if change = change_params.content_changes.last?
-          @documents.update(uri, change.text, version)
+        # Apply each content change
+        change_params.content_changes.each do |change|
+          if range = change.range
+            # Incremental sync: apply change to specific range
+            @documents.apply_change(uri, range, change.text, version)
+          else
+            # Full sync fallback: replace entire content
+            @documents.update(uri, change.text, version)
+          end
+        end
+
+        # Get the final document text for analysis
+        if doc = @documents.get(uri)
           log(MessageType::Info, "Updated: #{uri} (version #{version})")
 
           # Run inference analysis
-          @inference.try(&.analyze(uri, change.text))
+          @inference.try(&.analyze(uri, doc.text))
 
           # Run diagnostics with debouncing
-          publish_diagnostics(uri, change.text, version, debounce: true)
+          publish_diagnostics(uri, doc.text, version, debounce: true)
         end
       rescue ex
         log(MessageType::Error, "Failed to handle didChange: #{ex.message}")
@@ -676,6 +711,29 @@ module Crinkle::LSP
       end
     end
 
+    # workspace/didChangeConfiguration notification handler
+    private def handle_did_change_configuration(params : JSON::Any?) : Nil
+      return unless params
+
+      begin
+        config_params = DidChangeConfigurationParams.from_json(params.to_json)
+        settings = config_params.settings
+
+        # Try to extract crinkle-specific settings
+        # Settings may be nested under "crinkle" key or at root level
+        crinkle_settings = settings["crinkle"]? || settings
+
+        @lsp_settings = CrinkleLspSettings.from_json(crinkle_settings.to_json)
+        log(MessageType::Info, "LSP settings updated: lint=#{@lsp_settings.lint_enabled?}, maxFileSize=#{@lsp_settings.max_file_size}, debounceMs=#{@lsp_settings.debounce_ms}")
+
+        # Re-analyze all open documents with new settings
+        reanalyze_open_documents
+      rescue ex
+        log(MessageType::Warning, "Failed to parse configuration: #{ex.message}")
+        # Keep existing settings on parse error
+      end
+    end
+
     # Reload configuration from disk
     private def reload_config : Nil
       return unless root_path = @root_path
@@ -733,25 +791,78 @@ module Crinkle::LSP
 
     # Schedule diagnostics with debouncing.
     # This prevents excessive recomputation during rapid typing.
+    # Schedule diagnostics with debouncing.
+    # Spawns a fiber that waits for the debounce delay, then runs analysis.
     private def schedule_diagnostics(uri : String, text : String, version : Int32) : Nil
       scheduled_at = Time.instant
       @pending_analysis[uri] = scheduled_at
 
+      # Cancel any pending analysis for this URI
+      @cancellation_tokens[uri]?.try(&.cancel)
+
+      # Create a new cancellation token for this request
+      token = CancellationToken.new
+      @cancellation_tokens[uri] = token
+
+      debounce_ms = @lsp_settings.debounce_ms
+
       spawn do
-        sleep(DEBOUNCE_MS.milliseconds)
+        sleep(debounce_ms.milliseconds)
 
         # Only run if this is still the most recent scheduled analysis
-        if @pending_analysis[uri]? == scheduled_at
-          run_diagnostics(uri, text, version)
+        next unless @pending_analysis[uri]? == scheduled_at
+        next if token.cancelled?
+
+        # Check document version hasn't changed
+        if doc = @documents.get(uri)
+          next if doc.version != version
+        end
+
+        run_diagnostics(uri, text, version, token)
+
+        # Evict stale caches to manage memory
+        evicted = @documents.evict_stale_caches
+        if evicted > 0
+          log(MessageType::Log, "Evicted #{evicted} stale analysis caches")
         end
       end
     end
 
     # Run diagnostics immediately (bypasses debouncing).
     # Used for document open events where we want immediate feedback.
-    private def run_diagnostics(uri : String, text : String, version : Int32) : Nil
-      # Use the analyzer to run full pipeline: lex → parse → lint → typo detection
-      lsp_diagnostics = @analyzer.analyze_to_lsp(text, uri)
+    # Accepts an optional cancellation token for background analysis.
+    private def run_diagnostics(uri : String, text : String, version : Int32, token : CancellationToken? = nil) : Nil
+      doc = @documents.get(uri)
+
+      # Check for cached diagnostics
+      if doc && (cached = doc.cached_lsp_diagnostics)
+        params = PublishDiagnosticsParams.new(
+          uri: uri,
+          diagnostics: cached,
+          version: version
+        )
+        send_notification("textDocument/publishDiagnostics", JSON.parse(params.to_json))
+        log(MessageType::Log, "Published #{cached.size} cached diagnostics for #{uri}")
+        return
+      end
+
+      # Check for cancellation before starting analysis
+      return if token.try(&.cancelled?)
+
+      # Check file size for graceful degradation
+      lsp_diagnostics = if text.bytesize > @lsp_settings.max_file_size
+                          log(MessageType::Info, "Large file detected (#{text.bytesize} bytes), using basic analysis for #{uri}")
+                          run_basic_analysis(text, uri)
+                        else
+                          # Use the analyzer to run full pipeline: lex → parse → lint → typo detection
+                          @analyzer.analyze_to_lsp(text, uri)
+                        end
+
+      # Check for cancellation after analysis (don't publish stale results)
+      return if token.try(&.cancelled?)
+
+      # Cache the results
+      doc.try(&.cache_diagnostics(lsp_diagnostics))
 
       # Publish diagnostics
       params = PublishDiagnosticsParams.new(
@@ -764,6 +875,32 @@ module Crinkle::LSP
       log(MessageType::Log, "Published #{lsp_diagnostics.size} diagnostics for #{uri}")
     rescue ex
       log(MessageType::Error, "Failed to publish diagnostics: #{ex.message}")
+    end
+
+    # Run basic analysis for large files (only lexer and parser errors).
+    # Skips linting and typo detection for performance.
+    private def run_basic_analysis(text : String, uri : String) : Array(Diagnostic)
+      issues = Array(Linter::Issue).new
+
+      # Lex the template
+      lexer = Lexer.new(text)
+      lexer.lex_all
+      lexer.diagnostics.each do |diag|
+        issues << Linter::Issue.from_diagnostic(diag)
+      end
+
+      # Parse the template (for syntax errors)
+      begin
+        parser = Parser.new(lexer.lex_all)
+        parser.parse
+        parser.diagnostics.each do |diag|
+          issues << Linter::Issue.from_diagnostic(diag)
+        end
+      rescue
+        # If parsing fails completely, we already have lexer diagnostics
+      end
+
+      Diagnostics.convert_all(issues)
     end
 
     # Run diagnostics on document open (immediate) or change (debounced).

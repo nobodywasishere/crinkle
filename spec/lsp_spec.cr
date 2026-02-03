@@ -30,6 +30,136 @@ describe Crinkle::LSP do
       doc.line(2).should eq "line3"
       doc.line(3).should be_nil
     end
+
+    describe "#apply_change (incremental sync)" do
+      it "inserts text at the beginning" do
+        doc = Crinkle::LSP::Document.new("file:///test.j2", "jinja2", "World", 1)
+        range = Crinkle::LSP::Range.new(
+          Crinkle::LSP::Position.new(0, 0),
+          Crinkle::LSP::Position.new(0, 0)
+        )
+        doc.apply_change(range, "Hello ", 2)
+        doc.text.should eq "Hello World"
+        doc.version.should eq 2
+      end
+
+      it "inserts text in the middle" do
+        doc = Crinkle::LSP::Document.new("file:///test.j2", "jinja2", "Hello World", 1)
+        range = Crinkle::LSP::Range.new(
+          Crinkle::LSP::Position.new(0, 5),
+          Crinkle::LSP::Position.new(0, 5)
+        )
+        doc.apply_change(range, " Beautiful", 2)
+        doc.text.should eq "Hello Beautiful World"
+      end
+
+      it "replaces text range" do
+        doc = Crinkle::LSP::Document.new("file:///test.j2", "jinja2", "Hello World", 1)
+        range = Crinkle::LSP::Range.new(
+          Crinkle::LSP::Position.new(0, 6),
+          Crinkle::LSP::Position.new(0, 11)
+        )
+        doc.apply_change(range, "Crystal", 2)
+        doc.text.should eq "Hello Crystal"
+      end
+
+      it "deletes text when replacement is empty" do
+        doc = Crinkle::LSP::Document.new("file:///test.j2", "jinja2", "Hello World", 1)
+        range = Crinkle::LSP::Range.new(
+          Crinkle::LSP::Position.new(0, 5),
+          Crinkle::LSP::Position.new(0, 11)
+        )
+        doc.apply_change(range, "", 2)
+        doc.text.should eq "Hello"
+      end
+
+      it "handles multi-line changes" do
+        doc = Crinkle::LSP::Document.new("file:///test.j2", "jinja2", "line1\nline2\nline3", 1)
+        range = Crinkle::LSP::Range.new(
+          Crinkle::LSP::Position.new(1, 0),
+          Crinkle::LSP::Position.new(2, 0)
+        )
+        doc.apply_change(range, "new\n", 2)
+        doc.text.should eq "line1\nnew\nline3"
+      end
+
+      it "invalidates cache on change" do
+        doc = Crinkle::LSP::Document.new("file:///test.j2", "jinja2", "{{ x }}", 1)
+        # Force caching by accessing tokens
+        doc.tokens.size.should be > 0
+
+        # Apply change
+        range = Crinkle::LSP::Range.new(
+          Crinkle::LSP::Position.new(0, 3),
+          Crinkle::LSP::Position.new(0, 4)
+        )
+        doc.apply_change(range, "name", 2)
+
+        # Tokens should be recomputed with new content
+        doc.text.should eq "{{ name }}"
+      end
+    end
+
+    describe "LSP diagnostics caching" do
+      it "caches and retrieves diagnostics" do
+        doc = Crinkle::LSP::Document.new("file:///test.j2", "jinja2", "{{ x }}", 1)
+        diagnostics = [
+          Crinkle::LSP::Diagnostic.new(
+            range: Crinkle::LSP::Range.new(
+              Crinkle::LSP::Position.new(0, 0),
+              Crinkle::LSP::Position.new(0, 7)
+            ),
+            message: "Test diagnostic"
+          ),
+        ]
+
+        doc.cache_diagnostics(diagnostics)
+        cached = doc.cached_lsp_diagnostics
+
+        cached.should_not be_nil
+        cached.try(&.size).should eq 1
+        cached.try(&.first.message).should eq "Test diagnostic"
+      end
+
+      it "returns nil for cached diagnostics when version changes" do
+        doc = Crinkle::LSP::Document.new("file:///test.j2", "jinja2", "{{ x }}", 1)
+        diagnostics = [
+          Crinkle::LSP::Diagnostic.new(
+            range: Crinkle::LSP::Range.new(
+              Crinkle::LSP::Position.new(0, 0),
+              Crinkle::LSP::Position.new(0, 7)
+            ),
+            message: "Test"
+          ),
+        ]
+
+        doc.cache_diagnostics(diagnostics)
+        doc.update("{{ y }}", 2)
+
+        doc.cached_lsp_diagnostics.should be_nil
+      end
+
+      it "clears analysis cache separately from other caches" do
+        doc = Crinkle::LSP::Document.new("file:///test.j2", "jinja2", "{{ x }}", 1)
+        diagnostics = [
+          Crinkle::LSP::Diagnostic.new(
+            range: Crinkle::LSP::Range.new(
+              Crinkle::LSP::Position.new(0, 0),
+              Crinkle::LSP::Position.new(0, 7)
+            ),
+            message: "Test"
+          ),
+        ]
+
+        # Cache diagnostics
+        doc.cache_diagnostics(diagnostics)
+        doc.cached_lsp_diagnostics.should_not be_nil
+
+        # Clear analysis cache
+        doc.clear_analysis_cache
+        doc.cached_lsp_diagnostics.should be_nil
+      end
+    end
   end
 
   describe Crinkle::LSP::DocumentStore do
@@ -69,6 +199,72 @@ describe Crinkle::LSP do
       store.size.should eq 2
       store.uris.should contain "file:///a.j2"
       store.uris.should contain "file:///b.j2"
+    end
+
+    it "applies incremental changes" do
+      store = Crinkle::LSP::DocumentStore.new
+      store.open("file:///test.j2", "jinja2", "Hello World", 1)
+
+      range = Crinkle::LSP::Range.new(
+        Crinkle::LSP::Position.new(0, 6),
+        Crinkle::LSP::Position.new(0, 11)
+      )
+      store.apply_change("file:///test.j2", range, "Crystal", 2)
+
+      doc = store.get("file:///test.j2")
+      doc.try(&.text).should eq "Hello Crystal"
+      doc.try(&.version).should eq 2
+    end
+
+    describe "memory management" do
+      it "tracks memory usage" do
+        store = Crinkle::LSP::DocumentStore.new
+        store.open("file:///a.j2", "jinja2", "Hello", 1)
+        store.open("file:///b.j2", "jinja2", "World", 1)
+
+        # Memory should be at least the text size
+        store.memory_usage.should be >= 10
+      end
+
+      it "evicts stale caches when limit exceeded" do
+        store = Crinkle::LSP::DocumentStore.new
+
+        # Open documents and cache diagnostics
+        5.times do |i|
+          doc = store.open("file:///doc#{i}.j2", "jinja2", "{{ x }}", 1)
+          doc.cache_diagnostics(Array(Crinkle::LSP::Diagnostic).new)
+        end
+
+        # All should have cached diagnostics
+        5.times do |i|
+          store.get("file:///doc#{i}.j2").try(&.cached_lsp_diagnostics).should_not be_nil
+        end
+
+        # Evict with a small limit
+        evicted = store.evict_stale_caches(2)
+
+        evicted.should eq 3
+      end
+
+      it "evicts least recently used first" do
+        store = Crinkle::LSP::DocumentStore.new
+
+        # Open documents in order
+        store.open("file:///old.j2", "jinja2", "old", 1).cache_diagnostics(Array(Crinkle::LSP::Diagnostic).new)
+        store.open("file:///middle.j2", "jinja2", "middle", 1).cache_diagnostics(Array(Crinkle::LSP::Diagnostic).new)
+        store.open("file:///new.j2", "jinja2", "new", 1).cache_diagnostics(Array(Crinkle::LSP::Diagnostic).new)
+
+        # Access old document to make it recently used
+        store.get("file:///old.j2")
+
+        # Evict to keep only 1
+        store.evict_stale_caches(1)
+
+        # Old should still have cache (was accessed most recently)
+        store.get("file:///old.j2").try(&.cached_lsp_diagnostics).should_not be_nil
+        # Middle should have been evicted (least recently used)
+        store.get("file:///middle.j2").try(&.cached_lsp_diagnostics).should be_nil
+      end
     end
   end
 
@@ -1355,6 +1551,112 @@ describe Crinkle::LSP do
 
       # Should return empty or partial results without crashing
       symbols.size.should be <= 1
+    end
+  end
+
+  describe "Linter::Issue.from_diagnostic" do
+    it "creates Issue from Diagnostic" do
+      span = Crinkle::Span.new(
+        Crinkle::Position.new(0, 1, 5),
+        Crinkle::Position.new(10, 1, 15)
+      )
+      diag = Crinkle::Diagnostic.new(
+        Crinkle::DiagnosticType::UnknownFilter,
+        Crinkle::Severity::Warning,
+        "Unknown filter 'foo'",
+        span
+      )
+
+      issue = Crinkle::Linter::Issue.from_diagnostic(diag)
+
+      issue.id.should eq "E_UNKNOWN_FILTER"
+      issue.severity.should eq Crinkle::Severity::Warning
+      issue.message.should eq "Unknown filter 'foo'"
+      issue.span.should eq span
+      issue.source_type.should eq Crinkle::DiagnosticType::UnknownFilter
+    end
+
+    it "preserves error severity" do
+      span = Crinkle::Span.new(
+        Crinkle::Position.new(0, 1, 1),
+        Crinkle::Position.new(5, 1, 6)
+      )
+      diag = Crinkle::Diagnostic.new(
+        Crinkle::DiagnosticType::UnterminatedExpression,
+        Crinkle::Severity::Error,
+        "Unterminated expression",
+        span
+      )
+
+      issue = Crinkle::Linter::Issue.from_diagnostic(diag)
+
+      issue.severity.should eq Crinkle::Severity::Error
+    end
+  end
+
+  describe Crinkle::LSP::CancellationToken do
+    it "starts uncancelled" do
+      token = Crinkle::LSP::CancellationToken.new
+      token.cancelled?.should be_false
+    end
+
+    it "can be cancelled" do
+      token = Crinkle::LSP::CancellationToken.new
+      token.cancel
+      token.cancelled?.should be_true
+    end
+
+    it "remains cancelled after multiple cancel calls" do
+      token = Crinkle::LSP::CancellationToken.new
+      token.cancel
+      token.cancel
+      token.cancelled?.should be_true
+    end
+  end
+
+  describe Crinkle::LSP::CrinkleLspSettings do
+    it "has default values" do
+      settings = Crinkle::LSP::CrinkleLspSettings.new
+      settings.lint_enabled?.should be_true
+      settings.max_file_size.should eq 1_000_000
+      settings.debounce_ms.should eq 150
+      settings.typo_detection?.should be_true
+    end
+
+    it "deserializes from JSON" do
+      json = %({"lintEnabled": false, "maxFileSize": 500000, "debounceMs": 200, "typoDetection": false})
+      settings = Crinkle::LSP::CrinkleLspSettings.from_json(json)
+
+      settings.lint_enabled?.should be_false
+      settings.max_file_size.should eq 500000
+      settings.debounce_ms.should eq 200
+      settings.typo_detection?.should be_false
+    end
+
+    it "uses defaults for missing fields" do
+      json = %({"lintEnabled": false})
+      settings = Crinkle::LSP::CrinkleLspSettings.from_json(json)
+
+      settings.lint_enabled?.should be_false
+      settings.max_file_size.should eq 1_000_000 # default
+      settings.debounce_ms.should eq 150         # default
+      settings.typo_detection?.should be_true    # default
+    end
+
+    it "serializes to JSON" do
+      settings = Crinkle::LSP::CrinkleLspSettings.new(
+        lint_enabled: false,
+        max_file_size: 2_000_000,
+        debounce_ms: 100,
+        typo_detection: false
+      )
+      json = settings.to_json
+      parsed = JSON.parse(json)
+
+      parsed["lintEnabled"].as_bool.should be_false
+      parsed["maxFileSize"].should eq 2_000_000
+      parsed["debounceMs"].should eq 100
+      parsed["typoDetection"].as_bool.should be_false
     end
   end
 

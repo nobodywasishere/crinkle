@@ -1,3 +1,4 @@
+require "../crinkle"
 require "./protocol"
 require "./logger"
 require "./transport"

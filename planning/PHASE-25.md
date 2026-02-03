@@ -137,13 +137,66 @@ end
 - Works across VS Code, Neovim, and other editors.
 
 ## Checklist
-- [ ] Implement incremental document sync
-- [ ] Add AST caching with invalidation on change
+- [x] Implement incremental document sync
+- [x] Add AST caching with invalidation on change
+- [x] Add background analysis thread/fiber
+- [x] Implement `workspace/configuration` for settings
+- [x] Implement `workspace/didChangeConfiguration`
+- [x] Add graceful degradation for large files
+- [x] Add memory usage monitoring/limits
+- [x] Add cancellation token support for long-running operations
+- [x] Add specs for all new functionality
 - [ ] Profile and optimize hot paths
-- [ ] Add background analysis thread/fiber
-- [ ] Implement `workspace/configuration` for settings
-- [ ] Implement `workspace/didChangeConfiguration`
-- [ ] Add graceful degradation for large files
-- [ ] Add memory usage monitoring/limits
 - [ ] Performance testing with large templates
 - [ ] Integration testing with multiple editors (VS Code, Neovim, etc.)
+
+## Implementation Summary
+
+### Completed Features
+
+#### Incremental Document Sync
+- Changed from `TextDocumentSyncKind::Full` (1) to `TextDocumentSyncKind::Incremental` (2)
+- Added `Document#apply_change(range, text, version)` method for range-based updates
+- Updated `handle_did_change` to process incremental changes with fallback to full sync
+
+#### Document Caching
+- Added `@cached_lsp_diagnostics` and `@cached_analysis_version` to Document
+- Server checks cache before running analysis
+- Cache invalidated automatically on document update
+
+#### Background Analysis
+- Debounced analysis runs in spawned fibers after configurable delay
+- Simple pattern: spawn → sleep → check guards → run analysis
+- No Channel overhead - direct fiber spawn per request
+
+#### Workspace Configuration Support
+- Added `CrinkleLspSettings` struct with configurable options:
+  - `lintEnabled` - enable/disable linting (default: true)
+  - `maxFileSize` - threshold for large file handling (default: 1MB)
+  - `debounceMs` - configurable debounce delay (default: 150ms)
+  - `typoDetection` - enable/disable typo detection (default: true)
+- Implemented `workspace/didChangeConfiguration` handler
+
+#### Graceful Degradation for Large Files
+- Files exceeding `maxFileSize` get basic analysis (lexer + parser only)
+- Skips linting and typo detection for performance
+- Added `Linter::Issue.from_diagnostic` helper
+
+#### Cancellation Token Support
+- `CancellationToken` class with atomic flag for thread-safe cancellation
+- Tokens tracked per URI, cancelled when new edit arrives
+- Checked before and after analysis to avoid stale diagnostics
+
+#### Memory Usage Monitoring/Limits
+- Added LRU tracking in `DocumentStore` with `@access_order`
+- Added `memory_usage` method for monitoring
+- Added `evict_stale_caches` to limit cached analyses (default: 100)
+- Automatic cache eviction after each analysis
+
+### Files Modified
+- `src/lsp/server.cr` - Debounced analysis with cancellation, configuration, large file handling
+- `src/lsp/document.cr` - Incremental sync, caching, LRU tracking, memory management
+- `src/lsp/protocol.cr` - Workspace configuration types, LSP settings struct
+- `src/linter/linter.cr` - Added `Issue.from_diagnostic`
+- `src/lsp/lsp.cr` - Updated requires
+- `spec/lsp_spec.cr` - Added 22 new specs for all new functionality
