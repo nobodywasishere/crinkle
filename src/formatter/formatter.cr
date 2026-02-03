@@ -444,7 +444,9 @@ module Crinkle
         @printer.write_raw("#{indent}#{start_delim}\n")
         lines = text.split('\n', remove_empty: false)
         lines.each_with_index do |line, i|
-          @printer.write_raw("#{inner_indent}#{line.strip}")
+          if l = line.strip.presence
+            @printer.write_raw("#{inner_indent}#{l}")
+          end
           @printer.write_raw("\n") if i < lines.size - 1
         end
         @printer.write_raw("\n#{indent}#{end_delim}")
