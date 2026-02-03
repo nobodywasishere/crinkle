@@ -218,7 +218,7 @@ module Crinkle::LSP
         ),
         document_formatting_provider: true,
         completion_provider: CompletionOptions.new(
-          trigger_characters: ["|", ".", " "]
+          trigger_characters: ["{", "%", "|", ".", " "]
         ),
         hover_provider: true,
         signature_help_provider: SignatureHelpOptions.new(

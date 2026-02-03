@@ -69,6 +69,42 @@ When typing `{% call █`, suggest defined macros:
   icon(name)
 ```
 
+### Tag Completions
+
+When typing `{% █`, suggest tag names:
+
+```jinja
+{% █ %}
+   ↓
+  if         (conditional)
+  for        (iteration)
+  set        (assignment)
+  block      (template block)
+  macro      (macro definition)
+  extends    (template inheritance)
+  include    (template inclusion)
+  import     (macro import)
+  from       (selective import)
+  call       (macro call)
+  filter     (output filtering)
+  raw        (raw output)
+  ...
+```
+
+Also suggest end tags when appropriate:
+
+```jinja
+{% if condition %}
+  ...
+{% end█ %}
+     ↓
+  endif
+```
+
+Sources:
+- Built-in tags from schema
+- Custom tags registered in schema
+
 ### Go-to-Definition
 
 Ctrl+click on template paths to navigate:
@@ -191,6 +227,11 @@ end
 - [x] Suggest in `{% call █ %}` context
 - [x] Show parameter hints
 
+### Tag Completions
+- [x] Suggest built-in tags in `{% █ %}` context
+- [x] Suggest custom tags from schema
+- [x] Suggest end tags when inside a block tag
+
 ### Go-to-Definition
 - [x] Handle extends/include/import/from-import
 - [x] Resolve relative template paths
@@ -229,6 +270,13 @@ end
 ### Macro Completions
 - [x] Track macro definitions with signatures
 - [x] Update CompletionProvider for call context
+
+### Tag Completions
+- [x] Add built-in tag list to schema or constants
+- [x] Detect `{% █` context in CompletionProvider
+- [x] Suggest tags with descriptions
+- [x] Track open block tags for end tag suggestions
+- [x] Include custom tags from schema
 
 ### Go-to-Definition
 - [x] Create DefinitionProvider class

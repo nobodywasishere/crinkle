@@ -145,6 +145,24 @@ module Crinkle
       end
     end
 
+    # Schema for a custom tag
+    struct TagSchema
+      include JSON::Serializable
+
+      getter name : String
+      getter doc : String?
+      getter? has_body : Bool
+      getter end_tag : String?
+
+      def initialize(
+        @name : String,
+        @doc : String? = nil,
+        @has_body : Bool = false,
+        @end_tag : String? = nil,
+      ) : Nil
+      end
+    end
+
     # The full schema containing all registered items
     class Registry
       include JSON::Serializable
@@ -157,6 +175,7 @@ module Crinkle
       getter functions : Hash(String, FunctionSchema)
       getter callables : Hash(String, CallableSchema)
       getter templates : Hash(String, TemplateContextSchema)
+      getter tags : Hash(String, TagSchema)
 
       def initialize : Nil
         @filters = Hash(String, FilterSchema).new
@@ -164,6 +183,7 @@ module Crinkle
         @functions = Hash(String, FunctionSchema).new
         @callables = Hash(String, CallableSchema).new
         @templates = Hash(String, TemplateContextSchema).new
+        @tags = Hash(String, TagSchema).new
       end
 
       def register_filter(schema : FilterSchema) : Nil
@@ -184,6 +204,10 @@ module Crinkle
 
       def register_template(schema : TemplateContextSchema) : Nil
         @templates[schema.path] = schema
+      end
+
+      def register_tag(schema : TagSchema) : Nil
+        @tags[schema.name] = schema
       end
     end
 

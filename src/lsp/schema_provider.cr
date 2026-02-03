@@ -59,6 +59,11 @@ module Crinkle::LSP
       schema.callables
     end
 
+    # Get all custom tags with their schemas
+    def tags : Hash(String, Schema::TagSchema)
+      schema.tags
+    end
+
     # Get template context schema
     def template_context(path : String) : Hash(String, String)?
       schema.templates[path]?.try(&.context)
