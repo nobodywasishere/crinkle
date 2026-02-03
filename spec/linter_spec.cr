@@ -91,6 +91,73 @@ describe Crinkle::Linter do
       issue.message.should contain("nonexistent")
     end
 
+    it "does not flag locally-defined macros as unknown functions" do
+      schema = Crinkle::Schema::Registry.new
+
+      source = <<-JINJA
+        {% macro render_card(item) %}
+          <div>{{ item }}</div>
+        {% endmacro %}
+        {{ render_card(x) }}
+        JINJA
+      lexer = Crinkle::Lexer.new(source)
+      tokens = lexer.lex_all
+      parser = Crinkle::Parser.new(tokens)
+      template = parser.parse
+
+      ruleset = Crinkle::Linter::RuleSet.new
+      ruleset.add(Crinkle::Linter::Rules::UnknownFunction.new(schema))
+
+      runner = Crinkle::Linter::Runner.new(ruleset, schema)
+      issues = runner.lint(template, source)
+
+      issues.should be_empty
+    end
+
+    it "does not flag imported macros as unknown functions" do
+      schema = Crinkle::Schema::Registry.new
+
+      source = <<-JINJA
+        {% from "macros.j2" import render_card, format_date %}
+        {{ render_card(item) }}
+        {{ format_date(today) }}
+        JINJA
+      lexer = Crinkle::Lexer.new(source)
+      tokens = lexer.lex_all
+      parser = Crinkle::Parser.new(tokens)
+      template = parser.parse
+
+      ruleset = Crinkle::Linter::RuleSet.new
+      ruleset.add(Crinkle::Linter::Rules::UnknownFunction.new(schema))
+
+      runner = Crinkle::Linter::Runner.new(ruleset, schema)
+      issues = runner.lint(template, source)
+
+      issues.should be_empty
+    end
+
+    it "does not flag imported macros with aliases as unknown functions" do
+      schema = Crinkle::Schema::Registry.new
+
+      source = <<-JINJA
+        {% from "macros.j2" import render_card as card, format_date as fmt %}
+        {{ card(item) }}
+        {{ fmt(today) }}
+        JINJA
+      lexer = Crinkle::Lexer.new(source)
+      tokens = lexer.lex_all
+      parser = Crinkle::Parser.new(tokens)
+      template = parser.parse
+
+      ruleset = Crinkle::Linter::RuleSet.new
+      ruleset.add(Crinkle::Linter::Rules::UnknownFunction.new(schema))
+
+      runner = Crinkle::Linter::Runner.new(ruleset, schema)
+      issues = runner.lint(template, source)
+
+      issues.should be_empty
+    end
+
     it "detects wrong argument count for filter" do
       schema = Crinkle::Schema::Registry.new
       filter_schema = Crinkle::Schema::FilterSchema.new(

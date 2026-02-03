@@ -420,23 +420,46 @@ module Crinkle
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
 
+          # First, collect all macro names defined in this template
+          local_macros = collect_macro_names(context.template.body)
+
           ASTWalker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
-              collect_function_issues(node.expr, issues)
+              collect_function_issues(node.expr, issues, local_macros)
             when AST::If
-              collect_function_issues(node.test, issues)
+              collect_function_issues(node.test, issues, local_macros)
             when AST::For
-              collect_function_issues(node.iter, issues)
+              collect_function_issues(node.iter, issues, local_macros)
             when AST::Set
-              collect_function_issues(node.value, issues)
+              collect_function_issues(node.value, issues, local_macros)
             end
           end
 
           issues
         end
 
-        private def collect_function_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
+        # Collect all macro names defined or imported in the template
+        private def collect_macro_names(nodes : Array(AST::Node)) : Set(String)
+          macros = Set(String).new
+          ASTWalker.walk_nodes(nodes) do |node|
+            case node
+            when AST::Macro
+              # Locally defined macro
+              macros << node.name
+            when AST::FromImport
+              # {% from "x.j2" import foo, bar as baz %}
+              # Imports are available as foo() and baz()
+              node.names.each do |import_name|
+                # Use alias if present, otherwise use original name
+                macros << (import_name.alias || import_name.name)
+              end
+            end
+          end
+          macros
+        end
+
+        private def collect_function_issues(expr : AST::Expr, issues : Array(Issue), local_macros : Set(String)) : Nil
           ASTWalker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Call)
 
@@ -444,9 +467,11 @@ module Crinkle
             callee = inner.callee
             next unless callee.is_a?(AST::Name)
 
-            unless @schema.functions.has_key?(callee.value)
-              issues << issue(inner.span, "Unknown function '#{callee.value}'.")
-            end
+            # Skip if it's a schema function or a locally-defined macro
+            next if @schema.functions.has_key?(callee.value)
+            next if local_macros.includes?(callee.value)
+
+            issues << issue(inner.span, "Unknown function '#{callee.value}'.")
           end
         end
       end

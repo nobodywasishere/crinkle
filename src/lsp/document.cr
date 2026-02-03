@@ -1,3 +1,6 @@
+require "../lexer/lexer"
+require "../parser"
+
 module Crinkle::LSP
   # Represents an open text document in the LSP server.
   class Document
@@ -6,13 +9,55 @@ module Crinkle::LSP
     property text : String
     property version : Int32
 
+    # Cached parse results (lazily computed, invalidated on update)
+    @cached_tokens : Array(Token)?
+    @cached_ast : AST::Template?
+    @cached_diagnostics : Array(::Crinkle::Diagnostic)?
+
     def initialize(@uri : String, @language_id : String, @text : String, @version : Int32) : Nil
+      @cached_tokens = nil
+      @cached_ast = nil
+      @cached_diagnostics = nil
     end
 
     # Update the document content (full sync).
     def update(text : String, version : Int32) : Nil
       @text = text
       @version = version
+      # Invalidate cache on update
+      @cached_tokens = nil
+      @cached_ast = nil
+      @cached_diagnostics = nil
+    end
+
+    # Get cached tokens, lexing if needed
+    def tokens : Array(Token)
+      @cached_tokens ||= begin
+        lexer = Lexer.new(@text)
+        lexer.lex_all
+      end
+    end
+
+    # Get cached AST, parsing if needed
+    # Returns the AST and any diagnostics from parsing
+    def ast : AST::Template
+      if cached = @cached_ast
+        return cached
+      end
+
+      toks = tokens
+      parser = Parser.new(toks)
+      result = parser.parse
+      @cached_ast = result
+      @cached_diagnostics = parser.diagnostics
+      result
+    end
+
+    # Get cached diagnostics from parsing (raw Crinkle::Diagnostic, not LSP format)
+    def parse_diagnostics : Array(::Crinkle::Diagnostic)
+      # Ensure AST is parsed first (which also caches diagnostics)
+      ast
+      @cached_diagnostics || Array(::Crinkle::Diagnostic).new
     end
 
     # Get the number of lines in the document.

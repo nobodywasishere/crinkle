@@ -13,6 +13,8 @@ require "./hover"
 require "./signature_help"
 require "./definition"
 require "./references"
+require "./symbols"
+require "./folding"
 
 module Crinkle::LSP
   # LSP server for Jinja2/Crinkle templates.
@@ -40,6 +42,8 @@ module Crinkle::LSP
     @signature_help_provider : SignatureHelpProvider?
     @definition_provider : DefinitionProvider?
     @references_provider : ReferencesProvider?
+    @symbol_provider : SymbolProvider?
+    @folding_provider : FoldingProvider?
 
     def initialize(
       @transport : Transport,
@@ -61,6 +65,8 @@ module Crinkle::LSP
       @signature_help_provider = nil
       @definition_provider = nil
       @references_provider = nil
+      @symbol_provider = nil
+      @folding_provider = nil
     end
 
     # Main run loop - read and handle messages until exit.
@@ -131,6 +137,10 @@ module Crinkle::LSP
           handle_definition(id, params)
         when "textDocument/references"
           handle_references(id, params)
+        when "textDocument/documentSymbol"
+          handle_document_symbol(id, params)
+        when "textDocument/foldingRange"
+          handle_folding_range(id, params)
         else
           log(MessageType::Log, "<<< Error: Method not found: #{method}")
           send_error(id, ErrorCodes::MethodNotFound, "Method not found: #{method}")
@@ -206,6 +216,8 @@ module Crinkle::LSP
             @signature_help_provider = SignatureHelpProvider.new(schema_provider)
             @definition_provider = DefinitionProvider.new(inference, root_path)
             @references_provider = ReferencesProvider.new(inference, @documents)
+            @symbol_provider = SymbolProvider.new
+            @folding_provider = FoldingProvider.new
 
             # Recreate analyzer with schema for schema-aware linting and typo detection
             custom_schema = schema_provider.custom_schema
@@ -231,7 +243,9 @@ module Crinkle::LSP
           trigger_characters: ["(", ","]
         ),
         definition_provider: true,
-        references_provider: true
+        references_provider: true,
+        document_symbol_provider: false, # temp workaround
+        folding_range_provider: true
       )
 
       result = InitializeResult.new(
@@ -493,6 +507,68 @@ module Crinkle::LSP
       rescue ex
         log(MessageType::Error, "Failed to provide references: #{ex.message}")
         send_error(id, ErrorCodes::InternalError, "References error: #{ex.message}")
+      end
+    end
+
+    # textDocument/documentSymbol handler - document outline
+    private def handle_document_symbol(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        symbol_params = DocumentSymbolParams.from_json(params.to_json)
+        uri = symbol_params.text_document.uri
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        if provider = @symbol_provider
+          symbols = provider.document_symbols(doc)
+          log(MessageType::Log, "<<< Response: documentSymbol (#{symbols.size} symbols)")
+          send_response(id, JSON.parse(symbols.to_json))
+        else
+          log(MessageType::Log, "<<< Response: documentSymbol (no provider)")
+          send_response(id, JSON.parse("[]"))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide document symbols: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Document symbol error: #{ex.message}")
+      end
+    end
+
+    # textDocument/foldingRange handler - code folding
+    private def handle_folding_range(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        folding_params = FoldingRangeParams.from_json(params.to_json)
+        uri = folding_params.text_document.uri
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        if provider = @folding_provider
+          ranges = provider.folding_ranges(doc)
+          log(MessageType::Log, "<<< Response: foldingRange (#{ranges.size} ranges)")
+          send_response(id, JSON.parse(ranges.to_json))
+        else
+          log(MessageType::Log, "<<< Response: foldingRange (no provider)")
+          send_response(id, JSON.parse("[]"))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide folding ranges: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Folding range error: #{ex.message}")
       end
     end
 

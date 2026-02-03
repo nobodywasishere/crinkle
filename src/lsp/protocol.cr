@@ -260,6 +260,10 @@ module Crinkle::LSP
     property definition_provider : Bool?
     @[JSON::Field(key: "referencesProvider")]
     property references_provider : Bool?
+    @[JSON::Field(key: "documentSymbolProvider")]
+    property document_symbol_provider : Bool?
+    @[JSON::Field(key: "foldingRangeProvider")]
+    property folding_range_provider : Bool?
 
     def initialize(
       @text_document_sync : TextDocumentSyncOptions? = nil,
@@ -269,6 +273,8 @@ module Crinkle::LSP
       @signature_help_provider : SignatureHelpOptions? = nil,
       @definition_provider : Bool? = nil,
       @references_provider : Bool? = nil,
+      @document_symbol_provider : Bool? = nil,
+      @folding_range_provider : Bool? = nil,
     ) : Nil
     end
   end
@@ -703,6 +709,120 @@ module Crinkle::LSP
     property changes : Array(FileEvent)
 
     def initialize(@changes : Array(FileEvent)) : Nil
+    end
+  end
+
+  # Symbol kind for document symbols
+  enum SymbolKind
+    File          =  1
+    Module        =  2
+    Namespace     =  3
+    Package       =  4
+    Class         =  5
+    Method        =  6
+    Property      =  7
+    Field         =  8
+    Constructor   =  9
+    Enum          = 10
+    Interface     = 11
+    Function      = 12
+    Variable      = 13
+    Constant      = 14
+    String        = 15
+    Number        = 16
+    Boolean       = 17
+    Array         = 18
+    Object        = 19
+    Key           = 20
+    Null          = 21
+    EnumMember    = 22
+    Struct        = 23
+    Event         = 24
+    Operator      = 25
+    TypeParameter = 26
+
+    def to_json(json : JSON::Builder) : Nil
+      json.number(value)
+    end
+  end
+
+  # Document symbol (hierarchical)
+  struct DocumentSymbol
+    include JSON::Serializable
+
+    property name : String
+    property kind : SymbolKind
+    property range : Range
+    @[JSON::Field(key: "selectionRange")]
+    property selection_range : Range
+    property detail : String?
+    property children : Array(DocumentSymbol)?
+
+    def initialize(
+      @name : String,
+      @kind : SymbolKind,
+      @range : Range,
+      @selection_range : Range,
+      @detail : String? = nil,
+      @children : Array(DocumentSymbol)? = nil,
+    ) : Nil
+    end
+  end
+
+  # Document symbol params
+  struct DocumentSymbolParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+
+    def initialize(@text_document : TextDocumentIdentifier) : Nil
+    end
+  end
+
+  # Folding range kind
+  enum FoldingRangeKind
+    Comment
+    Imports
+    Region
+
+    def to_json(json : JSON::Builder) : Nil
+      json.string(to_s.downcase)
+    end
+  end
+
+  # Folding range
+  struct FoldingRange
+    include JSON::Serializable
+
+    @[JSON::Field(key: "startLine")]
+    property start_line : Int32
+    @[JSON::Field(key: "startCharacter")]
+    property start_character : Int32?
+    @[JSON::Field(key: "endLine")]
+    property end_line : Int32
+    @[JSON::Field(key: "endCharacter")]
+    property end_character : Int32?
+    property kind : FoldingRangeKind?
+
+    def initialize(
+      @start_line : Int32,
+      @end_line : Int32,
+      @start_character : Int32? = nil,
+      @end_character : Int32? = nil,
+      @kind : FoldingRangeKind? = nil,
+    ) : Nil
+    end
+  end
+
+  # Folding range params
+  struct FoldingRangeParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+
+    def initialize(@text_document : TextDocumentIdentifier) : Nil
     end
   end
 end

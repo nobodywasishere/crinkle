@@ -3,7 +3,6 @@
 ## Objectives
 - Provide document outline for navigation.
 - Enable code folding for template structures.
-- Implement semantic token highlighting.
 
 ## Priority
 **LOW**
@@ -11,7 +10,6 @@
 ## Scope (Phase 24)
 - Implement `textDocument/documentSymbol`.
 - Implement `textDocument/foldingRange`.
-- Implement `textDocument/semanticTokens`.
 
 ## Features
 
@@ -31,21 +29,6 @@ Code folding for:
 - Control structures (`{% if %}`, `{% for %}`, etc.)
 - Comments (`{# ... #}`)
 - Raw blocks (`{% raw %}...{% endraw %}`)
-
-### Semantic Tokens (`textDocument/semanticTokens`)
-Syntax highlighting with token types:
-- `keyword` — `if`, `for`, `block`, etc.
-- `variable` — Variable names
-- `string` — String literals
-- `number` — Numeric literals
-- `operator` — `+`, `-`, `|`, etc.
-- `comment` — Comment content
-- `function` — Filter/function names
-
-Token modifiers:
-- `definition` — Variable/macro definitions
-- `readonly` — Loop variables
-- `deprecated` — Deprecated constructs
 
 ## API Design
 
@@ -152,13 +135,23 @@ end
 - All features work in VS Code and other editors.
 
 ## Checklist
-- [ ] Implement `textDocument/documentSymbol` request handler
-- [ ] Build symbol tree from AST
-- [ ] Implement `textDocument/foldingRange` request handler
-- [ ] Calculate folding ranges from AST node spans
-- [ ] Implement `textDocument/semanticTokens/full` request handler
-- [ ] Define semantic token legend (types and modifiers)
-- [ ] Map AST nodes to semantic tokens
+- [x] Implement `textDocument/documentSymbol` request handler
+- [x] Build symbol tree from AST
+- [x] Implement `textDocument/foldingRange` request handler
+- [x] Calculate folding ranges from AST node spans
+- [x] Add AST/token caching to Document class
+- [x] Add recursion depth guard to expr_preview
 - [ ] Test document outline in editor
 - [ ] Test code folding in editor
-- [ ] Test semantic highlighting in editor
+
+## Implementation Notes
+
+### Performance Optimizations
+- Added AST and token caching to `Document` class
+- Cache is invalidated on document update, shared across multiple LSP requests
+- Added depth limit (10) to `expr_preview` to prevent deep recursion
+
+### Current Status
+- **Folding ranges**: Enabled and working
+- **Document symbols**: Implemented but disabled (`document_symbol_provider: false`) - needs investigation
+- **Semantic tokens**: Removed - editors typically ignore LSP semantic tokens in favor of TextMate grammars for syntax highlighting
