@@ -179,16 +179,18 @@ module Crinkle::LSP
       variables.select do |var|
         var.name.starts_with?(prefix)
       end.map do |var|
-        detail = case var.source
+        source_desc = case var.source
                  when .for_loop?    then "loop variable"
                  when .set?         then "assigned variable"
                  when .set_block?   then "block assigned"
                  when .macro_param? then "macro parameter"
                  else                    "context variable"
                  end
-        if type = types[var.name]?
-          detail = "#{detail}: #{type}"
-        end
+        detail = if type = types[var.name]?
+                   "#{var.name} : #{type} (#{source_desc})"
+                 else
+                   "#{var.name} (#{source_desc})"
+                 end
         priority = types[var.name]?.try { |var_type| var_type.name == "Any" } ? "1" : "0"
         CompletionItem.new(
           label: var.name,

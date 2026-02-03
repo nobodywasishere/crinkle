@@ -158,6 +158,11 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** LOW
 → [PHASE-25a.md](PHASE-25a.md)
 
+### Phase 25d — Type Inference & Type-Aware UX ✅
+**Outcome:** Shared type inference, type-aware hover/inlay/linting, ranked completions, inference snapshots.
+**Priority:** LOW
+→ [PHASE-25d.md](PHASE-25d.md)
+
 ### Phase 26 — MCP Foundation
 **Outcome:** Basic MCP server with JSON-RPC and stdio transport.
 **Priority:** MEDIUM

@@ -7,9 +7,22 @@ module Crinkle
       def initialize(@name : String, @args : Array(TypeRef) = Array(TypeRef).new) : Nil
       end
 
+      def to_s(io : IO) : Nil
+        if args.empty?
+          io << name
+          return
+        end
+
+        io << name << '['
+        args.each_with_index do |arg, index|
+          io << ", " unless index == 0
+          arg.to_s(io)
+        end
+        io << ']'
+      end
+
       def to_s : String
-        return name if args.empty?
-        "#{name}[#{args.map(&.to_s).join(", ")}]"
+        String.build { |io| to_s(io) }
       end
     end
 

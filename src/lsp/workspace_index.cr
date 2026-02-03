@@ -124,21 +124,24 @@ module Crinkle::LSP
       AST::Walker.walk_nodes(nodes) do |node|
         next unless node.is_a?(AST::Macro)
 
-        params = node.params.map(&.name)
+        params = node.params.map { |param| pooled_name(param.name) }
         defaults = Hash(String, String).new
         node.params.each do |param|
           if default = param.default_value
-            defaults[param.name] = expr_to_string(default)
+            name = pooled_name(param.name)
+            defaults[name] = expr_to_string(default)
           end
         end
-        macros << MacroInfo.new(node.name, params, defaults, node.span)
+        name = pooled_name(node.name)
+        macros << MacroInfo.new(name, params, defaults, node.span)
       end
     end
 
     private def extract_blocks(nodes : Array(AST::Node), blocks : Array(BlockInfo), uri : String) : Nil
       AST::Walker.walk_nodes(nodes) do |node|
         next unless node.is_a?(AST::Block)
-        blocks << BlockInfo.new(node.name, node.span, uri)
+        name = pooled_name(node.name)
+        blocks << BlockInfo.new(name, node.span, uri)
       end
     end
 
@@ -153,7 +156,9 @@ module Crinkle::LSP
           collect_target_variables(node.target, VariableSource::SetBlock, "block assigned", node.span, vars)
         when AST::Macro
           node.params.each do |param|
-            vars << VariableInfo.new(param.name, VariableSource::MacroParam, "macro #{node.name}", param.span)
+            name = pooled_name(param.name)
+            macro_name = pooled_name(node.name)
+            vars << VariableInfo.new(name, VariableSource::MacroParam, "macro #{macro_name}", param.span)
           end
         end
       end
@@ -162,11 +167,13 @@ module Crinkle::LSP
     private def collect_target_variables(target : AST::Target, source : VariableSource, detail : String, span : Span, vars : Array(VariableInfo)) : Nil
       case target
       when AST::Name
-        vars << VariableInfo.new(target.value, source, detail, span)
+        name = pooled_name(target.value)
+        vars << VariableInfo.new(name, source, detail, span)
       when AST::TupleLiteral
         target.items.each do |item|
           if item.is_a?(AST::Name)
-            vars << VariableInfo.new(item.value, source, detail, span)
+            name = pooled_name(item.value)
+            vars << VariableInfo.new(name, source, detail, span)
           end
         end
       end
@@ -212,6 +219,11 @@ module Crinkle::LSP
       else
         "..."
       end
+    end
+
+    private def pooled_name(name : String) : String
+      return name if name.empty?
+      Crinkle.string_pool.get(name)
     end
 
     private def path_to_uri(path : String) : String
