@@ -246,7 +246,6 @@ module Crinkle::LSP
             inference = InferenceEngine.new(@config, root_path, schema_provider.custom_schema || Schema.registry)
             @inference = inference
 
-
             @workspace_index = WorkspaceIndex.new(@config, root_path)
             @workspace_index.try(&.rebuild)
             @completion_provider = CompletionProvider.new(schema_provider, inference, root_path, @workspace_index)
@@ -877,7 +876,6 @@ module Crinkle::LSP
         open_params = DidOpenTextDocumentParams.from_json(params.to_json)
         doc = open_params.text_document
         @documents.open(doc.uri, doc.language_id, doc.text, doc.version)
-        log(MessageType::Info, "Opened: #{doc.uri} (version #{doc.version})")
 
         # Run inference analysis
         @inference.try(&.analyze(doc.uri, doc.text))
@@ -938,8 +936,6 @@ module Crinkle::LSP
         # Other open files may depend on macros/blocks from this file.
         # The data will be refreshed on the next didOpen if needed.
 
-        log(MessageType::Info, "Closed: #{uri}")
-
         # Clear diagnostics for closed document
         clear_params = PublishDiagnosticsParams.new(uri: uri, diagnostics: Array(Diagnostic).new)
         send_notification("textDocument/publishDiagnostics", JSON.parse(clear_params.to_json))
@@ -967,8 +963,6 @@ module Crinkle::LSP
             log(MessageType::Info, "Schema file changed: #{path}")
             reload_schema
           when path.ends_with?(".j2") || path.ends_with?(".jinja2") || path.ends_with?(".jinja")
-            log(MessageType::Info, "Template changed: #{path}")
-
             # Update workspace index for template changes
             if index = @workspace_index
               if change.type == FileChangeType::Deleted
