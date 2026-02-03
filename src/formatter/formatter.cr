@@ -189,8 +189,24 @@ module Crinkle
     end
 
     private def format_nodes(nodes : Array(AST::Node)) : Nil
-      nodes.each do |node|
-        format_node(node)
+      visitor = FormatterVisitor.new(->(node : AST::Node) : Nil { format_node(node) })
+      visitor.visit_nodes(nodes)
+    end
+
+    private class FormatterVisitor < AST::Visitor
+      def initialize(@format_node : Proc(AST::Node, Nil)) : Nil
+      end
+
+      protected def enter_node(node : AST::Node) : Nil
+        @format_node.call(node)
+      end
+
+      protected def visit_node_children(node : AST::Node) : Nil
+        # Formatter handles traversal explicitly.
+      end
+
+      def visit_expr(expr : AST::Expr) : Nil
+        # Formatter handles expression traversal explicitly.
       end
     end
 

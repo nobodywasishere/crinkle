@@ -1,5 +1,6 @@
 require "./protocol"
 require "./document"
+require "../ast/visitor"
 
 module Crinkle::LSP
   # Provides folding ranges for textDocument/foldingRange
@@ -7,7 +8,8 @@ module Crinkle::LSP
     # Get folding ranges from a Document (uses cached AST)
     def folding_ranges(doc : Document) : Array(FoldingRange)
       ranges = Array(FoldingRange).new
-      collect_folding_ranges(doc.ast.body, ranges)
+      visitor = FoldingVisitor.new(ranges)
+      visitor.visit_nodes(doc.ast.body)
       ranges
     rescue
       # Parse error - return empty
@@ -21,71 +23,62 @@ module Crinkle::LSP
       parser = Parser.new(tokens)
       ast = parser.parse
       ranges = Array(FoldingRange).new
-      collect_folding_ranges(ast.body, ranges)
+      visitor = FoldingVisitor.new(ranges)
+      visitor.visit_nodes(ast.body)
       ranges
     rescue
       Array(FoldingRange).new
     end
 
-    # Collect folding ranges from AST nodes
-    private def collect_folding_ranges(nodes : Array(AST::Node), ranges : Array(FoldingRange)) : Nil
-      nodes.each do |node|
+    private class FoldingVisitor < AST::Visitor
+      def initialize(@ranges : Array(FoldingRange)) : Nil
+      end
+
+      protected def enter_node(node : AST::Node) : Nil
         case node
         when AST::Block
-          add_region_range(node.span, ranges)
-          collect_folding_ranges(node.body, ranges)
+          add_region_range(node.span)
         when AST::Macro
-          add_region_range(node.span, ranges)
-          collect_folding_ranges(node.body, ranges)
+          add_region_range(node.span)
         when AST::For
-          add_region_range(node.span, ranges)
-          collect_folding_ranges(node.body, ranges)
-          collect_folding_ranges(node.else_body, ranges)
+          add_region_range(node.span)
         when AST::If
-          add_region_range(node.span, ranges)
-          collect_folding_ranges(node.body, ranges)
-          collect_folding_ranges(node.else_body, ranges)
+          add_region_range(node.span)
         when AST::SetBlock
-          add_region_range(node.span, ranges)
-          collect_folding_ranges(node.body, ranges)
+          add_region_range(node.span)
         when AST::CallBlock
-          add_region_range(node.span, ranges)
-          collect_folding_ranges(node.body, ranges)
+          add_region_range(node.span)
         when AST::Raw
-          add_region_range(node.span, ranges)
+          add_region_range(node.span)
         when AST::Comment
-          # Multi-line comments are foldable
           if node.span.start_pos.line != node.span.end_pos.line
-            add_comment_range(node.span, ranges)
+            add_comment_range(node.span)
           end
         when AST::CustomTag
           unless node.body.empty?
-            add_region_range(node.span, ranges)
-            collect_folding_ranges(node.body, ranges)
+            add_region_range(node.span)
           end
         end
       end
-    end
 
-    # Add a region folding range (for block tags)
-    private def add_region_range(span : Span, ranges : Array(FoldingRange)) : Nil
-      # Only add if it spans multiple lines
-      return if span.start_pos.line == span.end_pos.line
+      private def add_region_range(span : Span) : Nil
+        # Only add if it spans multiple lines
+        return if span.start_pos.line == span.end_pos.line
 
-      ranges << FoldingRange.new(
-        start_line: span.start_pos.line - 1,
-        end_line: span.end_pos.line - 1,
-        kind: FoldingRangeKind::Region
-      )
-    end
+        @ranges << FoldingRange.new(
+          start_line: span.start_pos.line - 1,
+          end_line: span.end_pos.line - 1,
+          kind: FoldingRangeKind::Region
+        )
+      end
 
-    # Add a comment folding range
-    private def add_comment_range(span : Span, ranges : Array(FoldingRange)) : Nil
-      ranges << FoldingRange.new(
-        start_line: span.start_pos.line - 1,
-        end_line: span.end_pos.line - 1,
-        kind: FoldingRangeKind::Comment
-      )
+      private def add_comment_range(span : Span) : Nil
+        @ranges << FoldingRange.new(
+          start_line: span.start_pos.line - 1,
+          end_line: span.end_pos.line - 1,
+          kind: FoldingRangeKind::Comment
+        )
+      end
     end
   end
 end

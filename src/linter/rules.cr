@@ -57,7 +57,7 @@ module Crinkle
           seen = Hash(String, Span).new
           issues = Array(Issue).new
 
-          ASTWalker.walk_nodes(template.body) do |node|
+          AST::Walker.walk_nodes(template.body) do |node|
             next unless node.is_a?(AST::Block)
 
             name = node.name
@@ -81,7 +81,7 @@ module Crinkle
           seen = Hash(String, Span).new
           issues = Array(Issue).new
 
-          ASTWalker.walk_nodes(template.body) do |node|
+          AST::Walker.walk_nodes(template.body) do |node|
             next unless node.is_a?(AST::Macro)
 
             name = node.name
@@ -105,13 +105,13 @@ module Crinkle
           macros = Hash(String, Span).new
           used = Set(String).new
 
-          ASTWalker.walk_nodes(template.body) do |node|
+          AST::Walker.walk_nodes(template.body) do |node|
             if node.is_a?(AST::Macro)
               macros[node.name] ||= node.span
             end
           end
 
-          ASTWalker.walk_nodes(template.body) do |node|
+          AST::Walker.walk_nodes(template.body) do |node|
             case node
             when AST::Output
               collect_macro_calls(node.expr, used)
@@ -205,7 +205,7 @@ module Crinkle
         end
 
         private def collect_macro_calls(expr : AST::Expr, used : Set(String)) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Call)
 
             callee = inner.callee
@@ -350,7 +350,7 @@ module Crinkle
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_filter_issues(node.expr, issues)
@@ -367,7 +367,7 @@ module Crinkle
         end
 
         private def collect_filter_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Filter)
 
             unless @schema.filters.has_key?(inner.name)
@@ -386,7 +386,7 @@ module Crinkle
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::If
               collect_test_issues(node.test, issues)
@@ -401,7 +401,7 @@ module Crinkle
         end
 
         private def collect_test_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Test)
 
             unless @schema.tests.has_key?(inner.name)
@@ -426,7 +426,7 @@ module Crinkle
           # Merge local macros with any extra known functions (e.g., from imports)
           known_functions = local_macros | context.extra_known_functions
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_function_issues(node.expr, issues, known_functions)
@@ -445,7 +445,7 @@ module Crinkle
         # Collect all macro names defined or imported in the template
         private def collect_macro_names(nodes : Array(AST::Node)) : Set(String)
           macros = Set(String).new
-          ASTWalker.walk_nodes(nodes) do |node|
+          AST::Walker.walk_nodes(nodes) do |node|
             case node
             when AST::Macro
               # Locally defined macro
@@ -463,7 +463,7 @@ module Crinkle
         end
 
         private def collect_function_issues(expr : AST::Expr, issues : Array(Issue), known_functions : Set(String)) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Call)
 
             # Check if callee is a simple name (function call)
@@ -487,7 +487,7 @@ module Crinkle
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_arg_count_issues(node.expr, issues)
@@ -504,7 +504,7 @@ module Crinkle
         end
 
         private def collect_arg_count_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             case inner
             when AST::Filter
               check_filter_args(inner, issues)
@@ -579,7 +579,7 @@ module Crinkle
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_kwarg_issues(node.expr, issues)
@@ -596,7 +596,7 @@ module Crinkle
         end
 
         private def collect_kwarg_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             case inner
             when AST::Filter
               check_filter_kwargs(inner, issues)
@@ -674,7 +674,7 @@ module Crinkle
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_missing_arg_issues(node.expr, issues)
@@ -691,7 +691,7 @@ module Crinkle
         end
 
         private def collect_missing_arg_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             case inner
             when AST::Filter
               check_filter_required(inner, issues)
@@ -788,7 +788,7 @@ module Crinkle
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_deprecated_issues(node.expr, issues)
@@ -805,7 +805,7 @@ module Crinkle
         end
 
         private def collect_deprecated_issues(expr : AST::Expr, issues : Array(Issue)) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             case inner
             when AST::Filter
               schema = @schema.filters[inner.name]?
@@ -843,7 +843,7 @@ module Crinkle
           template_context = find_template_context(@template_path)
           return issues unless template_context
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_not_callable_issues(node.expr, template_context, issues)
@@ -869,7 +869,7 @@ module Crinkle
           template_context : Schema::TemplateContextSchema,
           issues : Array(Issue),
         ) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Call)
 
             # Check if it's a direct call to a variable (not a function or method)
@@ -912,7 +912,7 @@ module Crinkle
           template_context = find_template_context(@template_path)
           return issues unless template_context
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_default_call_issues(node.expr, template_context, issues)
@@ -938,7 +938,7 @@ module Crinkle
           template_context : Schema::TemplateContextSchema,
           issues : Array(Issue),
         ) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Call)
 
             callee = inner.callee
@@ -1016,7 +1016,7 @@ module Crinkle
           template_context = find_template_context(@template_path)
           return issues unless template_context
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_unknown_method_issues(node.expr, template_context, issues)
@@ -1042,7 +1042,7 @@ module Crinkle
           template_context : Schema::TemplateContextSchema,
           issues : Array(Issue),
         ) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Call)
 
             # Check if it's a method call (GetAttr as callee)
@@ -1091,7 +1091,7 @@ module Crinkle
           tokenizer = HTML::Tokenizer.new
 
           # Walk through AST and extract text nodes for HTML parsing
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             next unless node.is_a?(AST::Text)
 
             text = node.value
@@ -1179,7 +1179,7 @@ module Crinkle
           template_context = find_template_context(@template_path)
           return issues unless template_context
 
-          ASTWalker.walk_nodes(context.template.body) do |node|
+          AST::Walker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
               collect_method_kwarg_issues(node.expr, template_context, issues)
@@ -1205,7 +1205,7 @@ module Crinkle
           template_context : Schema::TemplateContextSchema,
           issues : Array(Issue),
         ) : Nil
-          ASTWalker.walk_expr(expr) do |inner|
+          AST::Walker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Call)
 
             # Check if it's a method call (GetAttr as callee)
@@ -1303,91 +1303,6 @@ module Crinkle
 
         dist = Levenshtein.distance(unknown, best_match)
         dist <= max_distance ? best_match : nil
-      end
-    end
-
-    module ASTWalker
-      def self.walk_nodes(nodes : Array(AST::Node), & : AST::Node ->) : Nil
-        stack = nodes.reverse
-        until stack.empty?
-          node = stack.pop
-          yield node
-          # Push children in reverse order so they're popped in document order
-          children_for(node).reverse_each { |child| stack << child }
-        end
-      end
-
-      private def self.children_for(node : AST::Node) : Array(AST::Node)
-        case node
-        when AST::If
-          node.body + node.else_body
-        when AST::For
-          node.body + node.else_body
-        when AST::SetBlock
-          node.body
-        when AST::Block
-          node.body
-        when AST::Macro
-          node.body
-        when AST::CallBlock
-          node.body
-        when AST::CustomTag
-          node.body
-        else
-          Array(AST::Node).new
-        end
-      end
-
-      def self.walk_expr(expr : AST::Expr, & : AST::Expr ->) : Nil
-        stack = [expr] of AST::Expr
-        until stack.empty?
-          current = stack.pop
-          yield current
-          expr_children(current).each { |child| stack << child }
-        end
-      end
-
-      private def self.expr_children(expr : AST::Expr) : Array(AST::Expr)
-        case expr
-        when AST::Binary
-          [expr.left, expr.right]
-        when AST::Unary
-          [expr.expr]
-        when AST::Group
-          [expr.expr]
-        when AST::Call
-          children = [expr.callee] of AST::Expr
-          expr.args.each { |arg| children << arg }
-          expr.kwargs.each { |arg| children << arg.value }
-          children
-        when AST::Filter
-          children = [expr.expr] of AST::Expr
-          expr.args.each { |arg| children << arg }
-          expr.kwargs.each { |arg| children << arg.value }
-          children
-        when AST::Test
-          children = [expr.expr] of AST::Expr
-          expr.args.each { |arg| children << arg }
-          expr.kwargs.each { |arg| children << arg.value }
-          children
-        when AST::GetAttr
-          [expr.target]
-        when AST::GetItem
-          [expr.target, expr.index]
-        when AST::ListLiteral
-          expr.items
-        when AST::TupleLiteral
-          expr.items
-        when AST::DictLiteral
-          children = Array(AST::Expr).new
-          expr.pairs.each do |pair|
-            children << pair.key
-            children << pair.value
-          end
-          children
-        else
-          Array(AST::Expr).new
-        end
       end
     end
   end

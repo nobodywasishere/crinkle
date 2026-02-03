@@ -607,48 +607,18 @@ module Crinkle
 
     private def collect_macros(nodes : Array(AST::Node)) : Hash(String, AST::Macro)
       macros = Hash(String, AST::Macro).new
-      nodes.each do |node|
-        case node
-        when AST::Macro
-          macros[node.name] = node
-        when AST::If
-          macros.merge!(collect_macros(node.body))
-          macros.merge!(collect_macros(node.else_body))
-        when AST::For
-          macros.merge!(collect_macros(node.body))
-          macros.merge!(collect_macros(node.else_body))
-        when AST::SetBlock
-          macros.merge!(collect_macros(node.body))
-        when AST::Block
-          macros.merge!(collect_macros(node.body))
-        when AST::CallBlock
-          macros.merge!(collect_macros(node.body))
-        when AST::CustomTag
-          macros.merge!(collect_macros(node.body))
-        end
+      AST::Walker.walk_nodes(nodes) do |node|
+        next unless node.is_a?(AST::Macro)
+        macros[node.name] = node
       end
       macros
     end
 
     private def collect_blocks(nodes : Array(AST::Node)) : Hash(String, Array(AST::Node))
       blocks = Hash(String, Array(AST::Node)).new
-      nodes.each do |node|
-        case node
-        when AST::Block
-          blocks[node.name] = node.body
-        when AST::If
-          blocks.merge!(collect_blocks(node.body))
-          blocks.merge!(collect_blocks(node.else_body))
-        when AST::For
-          blocks.merge!(collect_blocks(node.body))
-          blocks.merge!(collect_blocks(node.else_body))
-        when AST::SetBlock
-          blocks.merge!(collect_blocks(node.body))
-        when AST::CallBlock
-          blocks.merge!(collect_blocks(node.body))
-        when AST::CustomTag
-          blocks.merge!(collect_blocks(node.body))
-        end
+      AST::Walker.walk_nodes(nodes) do |node|
+        next unless node.is_a?(AST::Block)
+        blocks[node.name] = node.body
       end
       blocks
     end

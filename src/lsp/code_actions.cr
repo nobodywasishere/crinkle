@@ -4,6 +4,7 @@ require "./workspace_index"
 require "../lexer/lexer"
 require "../parser/parser"
 require "../ast/nodes"
+require "../ast/visitor"
 
 module Crinkle::LSP
   # Provides code actions (quick fixes) for diagnostics
@@ -296,7 +297,7 @@ module Crinkle::LSP
     private def already_imported?(text : String, import_path : String, macro_name : String) : Bool
       ast = parse(text)
       found = false
-      walk_nodes(ast.body) do |node|
+      AST::Walker.walk_nodes(ast.body) do |node|
         next unless node.is_a?(AST::FromImport)
 
         if path = extract_string_value(node.template)
@@ -324,7 +325,7 @@ module Crinkle::LSP
         ast = parse(text)
         used_names = collect_used_macro_names(ast.body)
 
-        walk_nodes(ast.body) do |node|
+        AST::Walker.walk_nodes(ast.body) do |node|
           next unless node.is_a?(AST::FromImport)
 
           node.names.each_with_index do |import_name, idx|
@@ -401,7 +402,7 @@ module Crinkle::LSP
 
     private def collect_used_macro_names(nodes : Array(AST::Node)) : Set(String)
       used = Set(String).new
-      walk_nodes(nodes) do |node|
+      AST::Walker.walk_nodes(nodes) do |node|
         case node
         when AST::Output
           collect_macro_calls(node.expr, used)
@@ -446,7 +447,7 @@ module Crinkle::LSP
     end
 
     private def collect_macro_calls(expr : AST::Expr, used : Set(String)) : Nil
-      walk_expr(expr) do |inner|
+      AST::Walker.walk_expr(expr) do |inner|
         case inner
         when AST::Call
           callee = inner.callee
@@ -545,69 +546,6 @@ module Crinkle::LSP
       end
 
       Position.new(line, character)
-    end
-
-    private def walk_nodes(nodes : Array(AST::Node), &block : AST::Node ->) : Nil
-      nodes.each do |node|
-        block.call(node)
-        case node
-        when AST::If
-          walk_nodes(node.body, &block)
-          walk_nodes(node.else_body, &block)
-        when AST::For
-          walk_nodes(node.body, &block)
-          walk_nodes(node.else_body, &block)
-        when AST::Block
-          walk_nodes(node.body, &block)
-        when AST::Macro
-          walk_nodes(node.body, &block)
-        when AST::SetBlock
-          walk_nodes(node.body, &block)
-        when AST::CallBlock
-          walk_nodes(node.body, &block)
-        when AST::CustomTag
-          walk_nodes(node.body, &block)
-        end
-      end
-    end
-
-    private def walk_expr(expr : AST::Expr, &block : AST::Expr ->) : Nil
-      block.call(expr)
-      case expr
-      when AST::Binary
-        walk_expr(expr.left, &block)
-        walk_expr(expr.right, &block)
-      when AST::Unary
-        walk_expr(expr.expr, &block)
-      when AST::Group
-        walk_expr(expr.expr, &block)
-      when AST::Filter
-        walk_expr(expr.expr, &block)
-        expr.args.each { |arg| walk_expr(arg, &block) }
-        expr.kwargs.each { |kwarg| walk_expr(kwarg.value, &block) }
-      when AST::Test
-        walk_expr(expr.expr, &block)
-        expr.args.each { |arg| walk_expr(arg, &block) }
-        expr.kwargs.each { |kwarg| walk_expr(kwarg.value, &block) }
-      when AST::Call
-        walk_expr(expr.callee, &block)
-        expr.args.each { |arg| walk_expr(arg, &block) }
-        expr.kwargs.each { |kwarg| walk_expr(kwarg.value, &block) }
-      when AST::GetAttr
-        walk_expr(expr.target, &block)
-      when AST::GetItem
-        walk_expr(expr.target, &block)
-        walk_expr(expr.index, &block)
-      when AST::ListLiteral
-        expr.items.each { |item| walk_expr(item, &block) }
-      when AST::DictLiteral
-        expr.pairs.each do |pair|
-          walk_expr(pair.key, &block)
-          walk_expr(pair.value, &block)
-        end
-      when AST::TupleLiteral
-        expr.items.each { |item| walk_expr(item, &block) }
-      end
     end
   end
 end

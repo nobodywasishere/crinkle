@@ -5,6 +5,7 @@ require "./workspace_index"
 require "../lexer/lexer"
 require "../parser/parser"
 require "../ast/nodes"
+require "../ast/visitor"
 
 module Crinkle::LSP
   # Rename context types
@@ -100,7 +101,8 @@ module Crinkle::LSP
 
       begin
         ast = parse(text)
-        collect_variable_edits(ast.body, old_name, new_name, edits)
+        visitor = VariableRenameVisitor.new(old_name, new_name, edits, ->(span : Span) : Range { span_to_range(span) })
+        visitor.visit_nodes(ast.body)
       rescue
         return
       end
@@ -120,7 +122,17 @@ module Crinkle::LSP
         begin
           ast = parse(doc_text)
           edits = Array(TextEdit).new
-          collect_macro_edits(ast.body, old_name, new_name, edits, include_definition: true)
+          visitor = MacroRenameVisitor.new(
+            old_name,
+            new_name,
+            edits,
+            include_definition: true,
+            name_range_proc: ->(node : AST::Macro) : Range? { find_macro_name_range(node) },
+            call_range_proc: ->(expr : AST::Expr) : Range? { find_call_name_range(expr) },
+            import_name_range_proc: ->(import_name : AST::ImportName) : Range { import_name_range(import_name) },
+            import_alias_range_proc: ->(import_name : AST::ImportName, alias_name : String) : Range { import_alias_range(import_name, alias_name) }
+          )
+          visitor.visit_nodes(ast.body)
           all_edits[doc_uri] = edits unless edits.empty?
         rescue
           # Parse error - skip
@@ -140,7 +152,14 @@ module Crinkle::LSP
         begin
           ast = parse(doc_text)
           edits = Array(TextEdit).new
-          collect_block_edits(ast.body, old_name, new_name, edits)
+          visitor = BlockRenameVisitor.new(
+            old_name,
+            new_name,
+            edits,
+            ->(span : Span) : Range { span_to_range(span) },
+            ->(node : AST::Block) : Range? { find_block_name_range(node) }
+          )
+          visitor.visit_nodes(ast.body)
           all_edits[doc_uri] = edits unless edits.empty?
         rescue
           # Parse error - skip
@@ -158,222 +177,6 @@ module Crinkle::LSP
       tokens = lexer.lex_all
       parser = Parser.new(tokens)
       parser.parse
-    end
-
-    # Collect variable rename edits
-    private def collect_variable_edits(nodes : Array(AST::Node), old_name : String, new_name : String, edits : Array(TextEdit)) : Nil
-      nodes.each do |node|
-        case node
-        when AST::Output
-          collect_variable_edits_in_expr(node.expr, old_name, new_name, edits)
-        when AST::If
-          collect_variable_edits_in_expr(node.test, old_name, new_name, edits)
-          collect_variable_edits(node.body, old_name, new_name, edits)
-          collect_variable_edits(node.else_body, old_name, new_name, edits)
-        when AST::For
-          collect_variable_edits_in_target(node.target, old_name, new_name, edits)
-          collect_variable_edits_in_expr(node.iter, old_name, new_name, edits)
-          collect_variable_edits(node.body, old_name, new_name, edits)
-          collect_variable_edits(node.else_body, old_name, new_name, edits)
-        when AST::Set
-          collect_variable_edits_in_target(node.target, old_name, new_name, edits)
-          collect_variable_edits_in_expr(node.value, old_name, new_name, edits)
-        when AST::SetBlock
-          collect_variable_edits_in_target(node.target, old_name, new_name, edits)
-          collect_variable_edits(node.body, old_name, new_name, edits)
-        when AST::Block
-          collect_variable_edits(node.body, old_name, new_name, edits)
-        when AST::Macro
-          node.params.each do |param|
-            if param.name == old_name
-              edits << TextEdit.new(range: span_to_range(param.span), new_text: new_name)
-            end
-            if default = param.default_value
-              collect_variable_edits_in_expr(default, old_name, new_name, edits)
-            end
-          end
-          collect_variable_edits(node.body, old_name, new_name, edits)
-        when AST::CallBlock
-          collect_variable_edits_in_expr(node.callee, old_name, new_name, edits)
-          node.args.each { |arg| collect_variable_edits_in_expr(arg, old_name, new_name, edits) }
-          node.kwargs.each { |kwarg| collect_variable_edits_in_expr(kwarg.value, old_name, new_name, edits) }
-          collect_variable_edits(node.body, old_name, new_name, edits)
-        when AST::Include
-          collect_variable_edits_in_expr(node.template, old_name, new_name, edits)
-        when AST::Import
-          collect_variable_edits_in_expr(node.template, old_name, new_name, edits)
-        when AST::FromImport
-          collect_variable_edits_in_expr(node.template, old_name, new_name, edits)
-        when AST::Extends
-          collect_variable_edits_in_expr(node.template, old_name, new_name, edits)
-        when AST::CustomTag
-          node.args.each { |arg| collect_variable_edits_in_expr(arg, old_name, new_name, edits) }
-          node.kwargs.each { |kwarg| collect_variable_edits_in_expr(kwarg.value, old_name, new_name, edits) }
-          collect_variable_edits(node.body, old_name, new_name, edits)
-        end
-      end
-    end
-
-    # Collect variable edits in target (for/set)
-    private def collect_variable_edits_in_target(target : AST::Target, old_name : String, new_name : String, edits : Array(TextEdit)) : Nil
-      case target
-      when AST::Name
-        if target.value == old_name
-          edits << TextEdit.new(range: span_to_range(target.span), new_text: new_name)
-        end
-      when AST::TupleLiteral
-        target.items.each do |item|
-          if item.is_a?(AST::Name) && item.value == old_name
-            edits << TextEdit.new(range: span_to_range(item.span), new_text: new_name)
-          end
-        end
-      when AST::GetAttr
-        collect_variable_edits_in_expr(target.target, old_name, new_name, edits)
-      when AST::GetItem
-        collect_variable_edits_in_expr(target.target, old_name, new_name, edits)
-        collect_variable_edits_in_expr(target.index, old_name, new_name, edits)
-      end
-    end
-
-    # Collect variable edits in expression
-    private def collect_variable_edits_in_expr(expr : AST::Expr, old_name : String, new_name : String, edits : Array(TextEdit)) : Nil
-      case expr
-      when AST::Name
-        if expr.value == old_name
-          edits << TextEdit.new(range: span_to_range(expr.span), new_text: new_name)
-        end
-      when AST::Binary
-        collect_variable_edits_in_expr(expr.left, old_name, new_name, edits)
-        collect_variable_edits_in_expr(expr.right, old_name, new_name, edits)
-      when AST::Unary
-        collect_variable_edits_in_expr(expr.expr, old_name, new_name, edits)
-      when AST::Group
-        collect_variable_edits_in_expr(expr.expr, old_name, new_name, edits)
-      when AST::Call
-        collect_variable_edits_in_expr(expr.callee, old_name, new_name, edits)
-        expr.args.each { |arg| collect_variable_edits_in_expr(arg, old_name, new_name, edits) }
-        expr.kwargs.each { |kwarg| collect_variable_edits_in_expr(kwarg.value, old_name, new_name, edits) }
-      when AST::Filter
-        collect_variable_edits_in_expr(expr.expr, old_name, new_name, edits)
-        expr.args.each { |arg| collect_variable_edits_in_expr(arg, old_name, new_name, edits) }
-        expr.kwargs.each { |kwarg| collect_variable_edits_in_expr(kwarg.value, old_name, new_name, edits) }
-      when AST::Test
-        collect_variable_edits_in_expr(expr.expr, old_name, new_name, edits)
-        expr.args.each { |arg| collect_variable_edits_in_expr(arg, old_name, new_name, edits) }
-        expr.kwargs.each { |kwarg| collect_variable_edits_in_expr(kwarg.value, old_name, new_name, edits) }
-      when AST::GetAttr
-        collect_variable_edits_in_expr(expr.target, old_name, new_name, edits)
-      when AST::GetItem
-        collect_variable_edits_in_expr(expr.target, old_name, new_name, edits)
-        collect_variable_edits_in_expr(expr.index, old_name, new_name, edits)
-      when AST::ListLiteral
-        expr.items.each { |item| collect_variable_edits_in_expr(item, old_name, new_name, edits) }
-      when AST::DictLiteral
-        expr.pairs.each do |pair|
-          collect_variable_edits_in_expr(pair.key, old_name, new_name, edits)
-          collect_variable_edits_in_expr(pair.value, old_name, new_name, edits)
-        end
-      when AST::TupleLiteral
-        expr.items.each { |item| collect_variable_edits_in_expr(item, old_name, new_name, edits) }
-      end
-    end
-
-    # Collect macro rename edits
-    private def collect_macro_edits(nodes : Array(AST::Node), old_name : String, new_name : String, edits : Array(TextEdit), include_definition : Bool = true) : Nil
-      nodes.each do |node|
-        case node
-        when AST::Macro
-          if node.name == old_name && include_definition
-            # Find the macro name position within the macro tag
-            if name_range = find_macro_name_range(node)
-              edits << TextEdit.new(range: name_range, new_text: new_name)
-            end
-          end
-          collect_macro_edits(node.body, old_name, new_name, edits, include_definition)
-        when AST::CallBlock
-          if callee_name = extract_callee_name(node.callee)
-            if callee_name == old_name
-              if name_range = find_call_name_range(node.callee)
-                edits << TextEdit.new(range: name_range, new_text: new_name)
-              end
-            end
-          end
-          collect_macro_edits(node.body, old_name, new_name, edits, include_definition)
-        when AST::Output
-          collect_macro_edits_in_expr(node.expr, old_name, new_name, edits)
-        when AST::If
-          collect_macro_edits_in_expr(node.test, old_name, new_name, edits)
-          collect_macro_edits(node.body, old_name, new_name, edits, include_definition)
-          collect_macro_edits(node.else_body, old_name, new_name, edits, include_definition)
-        when AST::For
-          collect_macro_edits_in_expr(node.iter, old_name, new_name, edits)
-          collect_macro_edits(node.body, old_name, new_name, edits, include_definition)
-          collect_macro_edits(node.else_body, old_name, new_name, edits, include_definition)
-        when AST::Set
-          collect_macro_edits_in_expr(node.value, old_name, new_name, edits)
-        when AST::SetBlock
-          collect_macro_edits(node.body, old_name, new_name, edits, include_definition)
-        when AST::Block
-          collect_macro_edits(node.body, old_name, new_name, edits, include_definition)
-        when AST::FromImport
-          node.names.each do |import_name|
-            if import_name.name == old_name
-              edits << TextEdit.new(range: import_name_range(import_name), new_text: new_name)
-            end
-            if alias_name = import_name.alias
-              if alias_name == old_name
-                edits << TextEdit.new(range: import_alias_range(import_name, alias_name), new_text: new_name)
-              end
-            end
-          end
-        end
-      end
-    end
-
-    # Collect macro call edits in expressions
-    private def collect_macro_edits_in_expr(expr : AST::Expr, old_name : String, new_name : String, edits : Array(TextEdit)) : Nil
-      case expr
-      when AST::Call
-        if callee_name = extract_callee_name(expr.callee)
-          if callee_name == old_name
-            if name_range = find_call_name_range(expr.callee)
-              edits << TextEdit.new(range: name_range, new_text: new_name)
-            end
-          end
-        end
-        collect_macro_edits_in_expr(expr.callee, old_name, new_name, edits)
-        expr.args.each { |arg| collect_macro_edits_in_expr(arg, old_name, new_name, edits) }
-        expr.kwargs.each { |kwarg| collect_macro_edits_in_expr(kwarg.value, old_name, new_name, edits) }
-      when AST::Binary
-        collect_macro_edits_in_expr(expr.left, old_name, new_name, edits)
-        collect_macro_edits_in_expr(expr.right, old_name, new_name, edits)
-      when AST::Unary
-        collect_macro_edits_in_expr(expr.expr, old_name, new_name, edits)
-      when AST::Group
-        collect_macro_edits_in_expr(expr.expr, old_name, new_name, edits)
-      when AST::Filter
-        collect_macro_edits_in_expr(expr.expr, old_name, new_name, edits)
-        expr.args.each { |arg| collect_macro_edits_in_expr(arg, old_name, new_name, edits) }
-        expr.kwargs.each { |kwarg| collect_macro_edits_in_expr(kwarg.value, old_name, new_name, edits) }
-      when AST::Test
-        collect_macro_edits_in_expr(expr.expr, old_name, new_name, edits)
-        expr.args.each { |arg| collect_macro_edits_in_expr(arg, old_name, new_name, edits) }
-        expr.kwargs.each { |kwarg| collect_macro_edits_in_expr(kwarg.value, old_name, new_name, edits) }
-      when AST::GetAttr
-        collect_macro_edits_in_expr(expr.target, old_name, new_name, edits)
-      when AST::GetItem
-        collect_macro_edits_in_expr(expr.target, old_name, new_name, edits)
-        collect_macro_edits_in_expr(expr.index, old_name, new_name, edits)
-      when AST::ListLiteral
-        expr.items.each { |item| collect_macro_edits_in_expr(item, old_name, new_name, edits) }
-      when AST::DictLiteral
-        expr.pairs.each do |pair|
-          collect_macro_edits_in_expr(pair.key, old_name, new_name, edits)
-          collect_macro_edits_in_expr(pair.value, old_name, new_name, edits)
-        end
-      when AST::TupleLiteral
-        expr.items.each { |item| collect_macro_edits_in_expr(item, old_name, new_name, edits) }
-      end
     end
 
     # Find the range of the macro name in a macro definition
@@ -444,25 +247,132 @@ module Crinkle::LSP
       end
     end
 
-    # Collect block rename edits
-    private def collect_block_edits(nodes : Array(AST::Node), old_name : String, new_name : String, edits : Array(TextEdit)) : Nil
-      nodes.each do |node|
-        case node
-        when AST::Block
-          if node.name == old_name
-            # Find the block name position
-            if name_range = find_block_name_range(node)
-              edits << TextEdit.new(range: name_range, new_text: new_name)
+    private class VariableRenameVisitor < AST::Visitor
+      def initialize(
+        @old_name : String,
+        @new_name : String,
+        @edits : Array(TextEdit),
+        @span_to_range : Proc(Span, Range),
+      ) : Nil
+      end
+
+      protected def enter_node(node : AST::Node) : Nil
+        return unless node.is_a?(AST::Macro)
+
+        node.params.each do |param|
+          if param.name == @old_name
+            @edits << TextEdit.new(range: @span_to_range.call(param.span), new_text: @new_name)
+          end
+        end
+      end
+
+      def visit_target(target : AST::Target) : Nil
+        case target
+        when AST::Name
+          if target.value == @old_name
+            @edits << TextEdit.new(range: @span_to_range.call(target.span), new_text: @new_name)
+          end
+          return
+        when AST::TupleLiteral
+          target.items.each do |item|
+            if item.is_a?(AST::Name) && item.value == @old_name
+              @edits << TextEdit.new(range: @span_to_range.call(item.span), new_text: @new_name)
             end
           end
-          collect_block_edits(node.body, old_name, new_name, edits)
-        when AST::If
-          collect_block_edits(node.body, old_name, new_name, edits)
-          collect_block_edits(node.else_body, old_name, new_name, edits)
-        when AST::For
-          collect_block_edits(node.body, old_name, new_name, edits)
+          return
+        end
+        super
+      end
+
+      protected def enter_expr(expr : AST::Expr) : Nil
+        return unless expr.is_a?(AST::Name)
+        return unless expr.value == @old_name
+
+        @edits << TextEdit.new(range: @span_to_range.call(expr.span), new_text: @new_name)
+      end
+    end
+
+    private class MacroRenameVisitor < AST::Visitor
+      def initialize(
+        @old_name : String,
+        @new_name : String,
+        @edits : Array(TextEdit),
+        @include_definition : Bool,
+        @name_range_proc : Proc(AST::Macro, Range?),
+        @call_range_proc : Proc(AST::Expr, Range?),
+        @import_name_range_proc : Proc(AST::ImportName, Range),
+        @import_alias_range_proc : Proc(AST::ImportName, String, Range),
+      ) : Nil
+      end
+
+      protected def enter_node(node : AST::Node) : Nil
+        case node
         when AST::Macro
-          collect_block_edits(node.body, old_name, new_name, edits)
+          if @include_definition && node.name == @old_name
+            if name_range = @name_range_proc.call(node)
+              @edits << TextEdit.new(range: name_range, new_text: @new_name)
+            end
+          end
+        when AST::CallBlock
+          if callee_name = extract_callee_name(node.callee)
+            if callee_name == @old_name
+              if name_range = @call_range_proc.call(node.callee)
+                @edits << TextEdit.new(range: name_range, new_text: @new_name)
+              end
+            end
+          end
+        when AST::FromImport
+          node.names.each do |import_name|
+            if import_name.name == @old_name
+              @edits << TextEdit.new(range: @import_name_range_proc.call(import_name), new_text: @new_name)
+            end
+            if alias_name = import_name.alias
+              if alias_name == @old_name
+                @edits << TextEdit.new(range: @import_alias_range_proc.call(import_name, alias_name), new_text: @new_name)
+              end
+            end
+          end
+        end
+      end
+
+      protected def enter_expr(expr : AST::Expr) : Nil
+        return unless expr.is_a?(AST::Call)
+
+        if callee_name = extract_callee_name(expr.callee)
+          if callee_name == @old_name
+            if name_range = @call_range_proc.call(expr.callee)
+              @edits << TextEdit.new(range: name_range, new_text: @new_name)
+            end
+          end
+        end
+      end
+
+      private def extract_callee_name(expr : AST::Expr) : String?
+        case expr
+        when AST::Name
+          expr.value
+        when AST::GetAttr
+          expr.name
+        end
+      end
+    end
+
+    private class BlockRenameVisitor < AST::Visitor
+      def initialize(
+        @old_name : String,
+        @new_name : String,
+        @edits : Array(TextEdit),
+        @span_to_range : Proc(Span, Range),
+        @name_range_proc : Proc(AST::Block, Range?),
+      ) : Nil
+      end
+
+      protected def enter_node(node : AST::Node) : Nil
+        return unless node.is_a?(AST::Block)
+        return unless node.name == @old_name
+
+        if name_range = @name_range_proc.call(node)
+          @edits << TextEdit.new(range: name_range, new_text: @new_name)
         end
       end
     end

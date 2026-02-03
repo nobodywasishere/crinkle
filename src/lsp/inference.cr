@@ -1,4 +1,5 @@
 require "../ast/nodes"
+require "../ast/visitor"
 require "../parser/parser"
 
 module Crinkle::LSP
@@ -247,33 +248,12 @@ module Crinkle::LSP
 
     # Extract extends/include/import relationships from nodes
     private def extract_relationships(nodes : Array(AST::Node), relationships : Set(String)) : Nil
-      nodes.each do |node|
+      AST::Walker.walk_nodes(nodes) do |node|
         case node
-        when AST::Extends
+        when AST::Extends, AST::Include, AST::Import, AST::FromImport
           if path = extract_template_path(node.template)
             relationships << path
           end
-        when AST::Include
-          if path = extract_template_path(node.template)
-            relationships << path
-          end
-        when AST::Import
-          if path = extract_template_path(node.template)
-            relationships << path
-          end
-        when AST::FromImport
-          if path = extract_template_path(node.template)
-            relationships << path
-          end
-        when AST::If
-          extract_relationships(node.body, relationships)
-          extract_relationships(node.else_body, relationships)
-        when AST::For
-          extract_relationships(node.body, relationships)
-        when AST::Block
-          extract_relationships(node.body, relationships)
-        when AST::Macro
-          extract_relationships(node.body, relationships)
         end
       end
     end
@@ -289,32 +269,22 @@ module Crinkle::LSP
 
     # Extract variables from AST nodes (for loops, set statements, macro params)
     private def extract_variables(nodes : Array(AST::Node), vars : Hash(String, VariableInfo), scope_prefix : String? = nil) : Nil
-      nodes.each do |node|
+      AST::Walker.walk_nodes(nodes) do |node|
         case node
         when AST::For
           # Extract for loop variable(s) with the for statement span
           extract_target_variables(node.target, vars, VariableSource::ForLoop, "loop variable", node.span)
-          extract_variables(node.body, vars, scope_prefix)
         when AST::Set
           # Extract set variable(s) with the set statement span
           extract_target_variables(node.target, vars, VariableSource::Set, "assigned", node.span)
         when AST::SetBlock
           # Extract set block variable(s) with the setblock span
           extract_target_variables(node.target, vars, VariableSource::SetBlock, "block assigned", node.span)
-          extract_variables(node.body, vars, scope_prefix)
         when AST::Macro
           # Extract macro parameters as variables (scoped to macro body)
           node.params.each do |param|
             vars[param.name] = VariableInfo.new(param.name, VariableSource::MacroParam, "macro #{node.name}", param.span)
           end
-          extract_variables(node.body, vars, scope_prefix)
-        when AST::If
-          extract_variables(node.body, vars, scope_prefix)
-          extract_variables(node.else_body, vars, scope_prefix)
-        when AST::Block
-          extract_variables(node.body, vars, scope_prefix)
-        when AST::CallBlock
-          extract_variables(node.body, vars, scope_prefix)
         end
       end
 
@@ -338,111 +308,51 @@ module Crinkle::LSP
 
     # Extract context variables from expression usage (variables accessed but not defined locally)
     private def extract_context_variables(nodes : Array(AST::Node), vars : Hash(String, VariableInfo)) : Nil
-      nodes.each do |node|
+      AST::Walker.walk_nodes(nodes) do |node|
         case node
         when AST::Output
           extract_context_from_expr(node.expr, vars)
         when AST::If
           extract_context_from_expr(node.test, vars)
-          extract_context_variables(node.body, vars)
-          extract_context_variables(node.else_body, vars)
         when AST::For
-          extract_context_from_expr(node.iter, vars) if node.iter
-          extract_context_variables(node.body, vars)
+          extract_context_from_expr(node.iter, vars)
         when AST::Set
-          extract_context_from_expr(node.value, vars) if node.value
-        when AST::SetBlock
-          extract_context_variables(node.body, vars)
-        when AST::Block
-          extract_context_variables(node.body, vars)
-        when AST::Macro
-          extract_context_variables(node.body, vars)
+          extract_context_from_expr(node.value, vars)
         when AST::CallBlock
           extract_context_from_expr(node.callee, vars)
-          extract_context_variables(node.body, vars)
         end
       end
     end
 
     # Extract context variables from an expression
     private def extract_context_from_expr(expr : AST::Expr, vars : Hash(String, VariableInfo)) : Nil
-      case expr
-      when AST::Name
+      AST::Walker.walk_expr(expr) do |inner|
+        next unless inner.is_a?(AST::Name)
         # Add as context variable if not already defined
-        vars[expr.value] ||= VariableInfo.new(expr.value, VariableSource::Context, "context")
-      when AST::GetAttr
-        extract_context_from_expr(expr.target, vars)
-      when AST::Binary
-        extract_context_from_expr(expr.left, vars)
-        extract_context_from_expr(expr.right, vars)
-      when AST::Unary
-        extract_context_from_expr(expr.expr, vars)
-      when AST::Filter
-        extract_context_from_expr(expr.expr, vars)
-        expr.args.each { |arg| extract_context_from_expr(arg, vars) }
-      when AST::Test
-        extract_context_from_expr(expr.expr, vars)
-        expr.args.each { |arg| extract_context_from_expr(arg, vars) }
-      when AST::Call
-        extract_context_from_expr(expr.callee, vars)
-        expr.args.each { |arg| extract_context_from_expr(arg, vars) }
-      when AST::GetItem
-        extract_context_from_expr(expr.target, vars)
-        extract_context_from_expr(expr.index, vars)
-      when AST::ListLiteral
-        expr.items.each { |item| extract_context_from_expr(item, vars) }
-      when AST::DictLiteral
-        expr.pairs.each do |pair|
-          extract_context_from_expr(pair.key, vars)
-          extract_context_from_expr(pair.value, vars)
-        end
-      when AST::TupleLiteral
-        expr.items.each { |item| extract_context_from_expr(item, vars) }
-      when AST::Group
-        extract_context_from_expr(expr.expr, vars)
+        vars[inner.value] ||= VariableInfo.new(inner.value, VariableSource::Context, "context")
       end
     end
 
     # Extract block definitions from AST nodes (with spans)
     private def extract_blocks(nodes : Array(AST::Node), blks : Hash(String, BlockInfo), uri : String) : Nil
-      nodes.each do |node|
-        case node
-        when AST::Block
-          blks[node.name] = BlockInfo.new(node.name, node.span, uri)
-          extract_blocks(node.body, blks, uri)
-        when AST::If
-          extract_blocks(node.body, blks, uri)
-          extract_blocks(node.else_body, blks, uri)
-        when AST::For
-          extract_blocks(node.body, blks, uri)
-        when AST::Macro
-          extract_blocks(node.body, blks, uri)
-        end
+      AST::Walker.walk_nodes(nodes) do |node|
+        next unless node.is_a?(AST::Block)
+        blks[node.name] = BlockInfo.new(node.name, node.span, uri)
       end
     end
 
     # Extract macro definitions from AST nodes
     private def extract_macros(nodes : Array(AST::Node), macs : Hash(String, MacroInfo)) : Nil
-      nodes.each do |node|
-        case node
-        when AST::Macro
-          params = node.params.map(&.name)
-          defaults = Hash(String, String).new
-          node.params.each do |param|
-            if default = param.default_value
-              defaults[param.name] = expr_to_string(default)
-            end
+      AST::Walker.walk_nodes(nodes) do |node|
+        next unless node.is_a?(AST::Macro)
+        params = node.params.map(&.name)
+        defaults = Hash(String, String).new
+        node.params.each do |param|
+          if default = param.default_value
+            defaults[param.name] = expr_to_string(default)
           end
-          macs[node.name] = MacroInfo.new(node.name, params, defaults, node.span)
-          extract_macros(node.body, macs)
-        when AST::If
-          extract_macros(node.body, macs)
-          extract_macros(node.else_body, macs)
-        when AST::For
-          extract_macros(node.body, macs)
-        when AST::Block
-          extract_macros(node.body, macs)
         end
+        macs[node.name] = MacroInfo.new(node.name, params, defaults, node.span)
       end
     end
 
@@ -472,75 +382,30 @@ module Crinkle::LSP
 
     # Extract properties from AST nodes recursively
     private def extract_properties(nodes : Array(AST::Node), properties : Hash(String, Set(String))) : Nil
-      nodes.each do |node|
-        extract_from_node(node, properties)
-      end
-    end
-
-    # Extract properties from a single node
-    private def extract_from_node(node : AST::Node, properties : Hash(String, Set(String))) : Nil
-      case node
-      when AST::Output
-        extract_from_expr(node.expr, properties)
-      when AST::If
-        extract_from_expr(node.test, properties)
-        extract_properties(node.body, properties)
-        extract_properties(node.else_body, properties)
-      when AST::For
-        extract_from_expr(node.iter, properties) if node.iter
-        extract_properties(node.body, properties)
-      when AST::Set
-        extract_from_expr(node.value, properties) if node.value
-      when AST::SetBlock
-        extract_properties(node.body, properties)
-      when AST::Block
-        extract_properties(node.body, properties)
-      when AST::Macro
-        extract_properties(node.body, properties)
-      when AST::CallBlock
-        extract_from_expr(node.callee, properties)
-        extract_properties(node.body, properties)
+      AST::Walker.walk_nodes(nodes) do |node|
+        case node
+        when AST::Output
+          extract_from_expr(node.expr, properties)
+        when AST::If
+          extract_from_expr(node.test, properties)
+        when AST::For
+          extract_from_expr(node.iter, properties)
+        when AST::Set
+          extract_from_expr(node.value, properties)
+        when AST::CallBlock
+          extract_from_expr(node.callee, properties)
+        end
       end
     end
 
     # Extract properties from an expression
     private def extract_from_expr(expr : AST::Expr, properties : Hash(String, Set(String))) : Nil
-      case expr
-      when AST::GetAttr
-        # Track variable.property access
-        if var_name = extract_variable_name(expr.target)
+      AST::Walker.walk_expr(expr) do |inner|
+        next unless inner.is_a?(AST::GetAttr)
+        if var_name = extract_variable_name(inner.target)
           properties[var_name] ||= Set(String).new
-          properties[var_name] << expr.name
+          properties[var_name] << inner.name
         end
-        extract_from_expr(expr.target, properties)
-      when AST::Binary
-        extract_from_expr(expr.left, properties)
-        extract_from_expr(expr.right, properties)
-      when AST::Unary
-        extract_from_expr(expr.expr, properties)
-      when AST::Filter
-        extract_from_expr(expr.expr, properties)
-        expr.args.each { |arg| extract_from_expr(arg, properties) }
-      when AST::Test
-        extract_from_expr(expr.expr, properties)
-        expr.args.each { |arg| extract_from_expr(arg, properties) }
-      when AST::Call
-        extract_from_expr(expr.callee, properties)
-        expr.args.each { |arg| extract_from_expr(arg, properties) }
-      when AST::GetItem
-        extract_from_expr(expr.target, properties)
-        extract_from_expr(expr.index, properties)
-      when AST::ListLiteral
-        expr.items.each { |item| extract_from_expr(item, properties) }
-      when AST::DictLiteral
-        expr.pairs.each do |pair|
-          extract_from_expr(pair.key, properties)
-          extract_from_expr(pair.value, properties)
-        end
-      when AST::TupleLiteral
-        expr.items.each { |item| extract_from_expr(item, properties) }
-      when AST::Group
-        extract_from_expr(expr.expr, properties)
       end
     end
 

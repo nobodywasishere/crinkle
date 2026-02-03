@@ -4,6 +4,7 @@ require "./schema_provider"
 require "../lexer/lexer"
 require "../parser/parser"
 require "../ast/nodes"
+require "../ast/visitor"
 
 module Crinkle::LSP
   # Provides inlay hints (parameter names for macro calls, filters, tests,
@@ -25,7 +26,14 @@ module Crinkle::LSP
         parser = Parser.new(tokens)
         ast = parser.parse
 
-        collect_hints(ast.body, uri, range, hints)
+        visitor = HintVisitor.new(
+          ->(node : AST::Set) : Nil { collect_set_type_hints(node, uri, range, hints) },
+          ->(node : AST::CallBlock) : Nil { collect_call_block_hints(node, uri, range, hints) },
+          ->(expr : AST::Call) : Nil { collect_call_hints(expr, uri, range, hints) },
+          ->(expr : AST::Filter) : Nil { collect_filter_hints(expr, uri, range, hints) },
+          ->(expr : AST::Test) : Nil { collect_test_hints(expr, uri, range, hints) }
+        )
+        visitor.visit_nodes(ast.body)
       rescue
         # Parse error - return empty
       end
@@ -33,72 +41,34 @@ module Crinkle::LSP
       hints
     end
 
-    # Recursively collect inlay hints from nodes
-    private def collect_hints(nodes : Array(AST::Node), uri : String, range : Range, hints : Array(InlayHint)) : Nil
-      nodes.each do |node|
+    private class HintVisitor < AST::Visitor
+      def initialize(
+        @set_hint : Proc(AST::Set, Nil),
+        @call_block_hint : Proc(AST::CallBlock, Nil),
+        @call_hint : Proc(AST::Call, Nil),
+        @filter_hint : Proc(AST::Filter, Nil),
+        @test_hint : Proc(AST::Test, Nil),
+      ) : Nil
+      end
+
+      protected def enter_node(node : AST::Node) : Nil
         case node
-        when AST::Output
-          collect_hints_from_expr(node.expr, uri, range, hints)
-        when AST::If
-          collect_hints_from_expr(node.test, uri, range, hints)
-          collect_hints(node.body, uri, range, hints)
-          collect_hints(node.else_body, uri, range, hints)
-        when AST::For
-          collect_hints_from_expr(node.iter, uri, range, hints)
-          collect_hints(node.body, uri, range, hints)
-          collect_hints(node.else_body, uri, range, hints)
         when AST::Set
-          collect_set_type_hints(node, uri, range, hints)
-          collect_hints_from_expr(node.value, uri, range, hints)
-        when AST::SetBlock
-          collect_hints(node.body, uri, range, hints)
-        when AST::Block
-          collect_hints(node.body, uri, range, hints)
-        when AST::Macro
-          collect_hints(node.body, uri, range, hints)
+          @set_hint.call(node)
         when AST::CallBlock
-          collect_call_block_hints(node, uri, range, hints)
-          collect_hints(node.body, uri, range, hints)
-        when AST::CustomTag
-          collect_hints(node.body, uri, range, hints)
+          @call_block_hint.call(node)
         end
       end
-    end
 
-    # Collect hints from expressions (looking for Call nodes)
-    private def collect_hints_from_expr(expr : AST::Expr, uri : String, range : Range, hints : Array(InlayHint)) : Nil
-      case expr
-      when AST::Call
-        collect_call_hints(expr, uri, range, hints)
-      when AST::Binary
-        collect_hints_from_expr(expr.left, uri, range, hints)
-        collect_hints_from_expr(expr.right, uri, range, hints)
-      when AST::Unary
-        collect_hints_from_expr(expr.expr, uri, range, hints)
-      when AST::Group
-        collect_hints_from_expr(expr.expr, uri, range, hints)
-      when AST::Filter
-        collect_filter_hints(expr, uri, range, hints)
-        collect_hints_from_expr(expr.expr, uri, range, hints)
-        expr.args.each { |arg| collect_hints_from_expr(arg, uri, range, hints) }
-      when AST::Test
-        collect_test_hints(expr, uri, range, hints)
-        collect_hints_from_expr(expr.expr, uri, range, hints)
-        expr.args.each { |arg| collect_hints_from_expr(arg, uri, range, hints) }
-      when AST::GetAttr
-        collect_hints_from_expr(expr.target, uri, range, hints)
-      when AST::GetItem
-        collect_hints_from_expr(expr.target, uri, range, hints)
-        collect_hints_from_expr(expr.index, uri, range, hints)
-      when AST::ListLiteral
-        expr.items.each { |item| collect_hints_from_expr(item, uri, range, hints) }
-      when AST::DictLiteral
-        expr.pairs.each do |pair|
-          collect_hints_from_expr(pair.key, uri, range, hints)
-          collect_hints_from_expr(pair.value, uri, range, hints)
+      protected def enter_expr(expr : AST::Expr) : Nil
+        case expr
+        when AST::Call
+          @call_hint.call(expr)
+        when AST::Filter
+          @filter_hint.call(expr)
+        when AST::Test
+          @test_hint.call(expr)
         end
-      when AST::TupleLiteral
-        expr.items.each { |item| collect_hints_from_expr(item, uri, range, hints) }
       end
     end
 
@@ -145,9 +115,6 @@ module Crinkle::LSP
           padding_right: true
         )
       end
-
-      # Recurse into arguments
-      call.args.each { |arg| collect_hints_from_expr(arg, uri, range, hints) }
     end
 
     # Collect parameter hints for a call block
@@ -189,9 +156,6 @@ module Crinkle::LSP
           padding_right: true
         )
       end
-
-      # Recurse into arguments
-      call_block.args.each { |arg| collect_hints_from_expr(arg, uri, range, hints) }
     end
 
     # Collect parameter hints for a filter expression

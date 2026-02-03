@@ -1,6 +1,7 @@
 require "../lexer/lexer"
 require "../parser/parser"
 require "../ast/nodes"
+require "../ast/visitor"
 require "./inference"
 require "./config"
 
@@ -120,69 +121,40 @@ module Crinkle::LSP
     end
 
     private def extract_macros(nodes : Array(AST::Node), macros : Array(MacroInfo)) : Nil
-      nodes.each do |node|
-        case node
-        when AST::Macro
-          params = node.params.map(&.name)
-          defaults = Hash(String, String).new
-          node.params.each do |param|
-            if default = param.default_value
-              defaults[param.name] = expr_to_string(default)
-            end
+      AST::Walker.walk_nodes(nodes) do |node|
+        next unless node.is_a?(AST::Macro)
+
+        params = node.params.map(&.name)
+        defaults = Hash(String, String).new
+        node.params.each do |param|
+          if default = param.default_value
+            defaults[param.name] = expr_to_string(default)
           end
-          macros << MacroInfo.new(node.name, params, defaults, node.span)
-          extract_macros(node.body, macros)
-        when AST::If
-          extract_macros(node.body, macros)
-          extract_macros(node.else_body, macros)
-        when AST::For
-          extract_macros(node.body, macros)
-        when AST::Block
-          extract_macros(node.body, macros)
         end
+        macros << MacroInfo.new(node.name, params, defaults, node.span)
       end
     end
 
     private def extract_blocks(nodes : Array(AST::Node), blocks : Array(BlockInfo), uri : String) : Nil
-      nodes.each do |node|
-        case node
-        when AST::Block
-          blocks << BlockInfo.new(node.name, node.span, uri)
-          extract_blocks(node.body, blocks, uri)
-        when AST::If
-          extract_blocks(node.body, blocks, uri)
-          extract_blocks(node.else_body, blocks, uri)
-        when AST::For
-          extract_blocks(node.body, blocks, uri)
-        when AST::Macro
-          extract_blocks(node.body, blocks, uri)
-        end
+      AST::Walker.walk_nodes(nodes) do |node|
+        next unless node.is_a?(AST::Block)
+        blocks << BlockInfo.new(node.name, node.span, uri)
       end
     end
 
     private def extract_variables(nodes : Array(AST::Node), vars : Array(VariableInfo)) : Nil
-      nodes.each do |node|
+      AST::Walker.walk_nodes(nodes) do |node|
         case node
         when AST::For
           collect_target_variables(node.target, VariableSource::ForLoop, "loop variable", node.span, vars)
-          extract_variables(node.body, vars)
         when AST::Set
           collect_target_variables(node.target, VariableSource::Set, "assigned", node.span, vars)
         when AST::SetBlock
           collect_target_variables(node.target, VariableSource::SetBlock, "block assigned", node.span, vars)
-          extract_variables(node.body, vars)
         when AST::Macro
           node.params.each do |param|
             vars << VariableInfo.new(param.name, VariableSource::MacroParam, "macro #{node.name}", param.span)
           end
-          extract_variables(node.body, vars)
-        when AST::If
-          extract_variables(node.body, vars)
-          extract_variables(node.else_body, vars)
-        when AST::Block
-          extract_variables(node.body, vars)
-        when AST::CallBlock
-          extract_variables(node.body, vars)
         end
       end
     end
@@ -201,33 +173,12 @@ module Crinkle::LSP
     end
 
     private def extract_relationships(nodes : Array(AST::Node), relationships : Array(String)) : Nil
-      nodes.each do |node|
+      AST::Walker.walk_nodes(nodes) do |node|
         case node
-        when AST::Extends
+        when AST::Extends, AST::Include, AST::Import, AST::FromImport
           if path = extract_template_path(node.template)
             relationships << path
           end
-        when AST::Include
-          if path = extract_template_path(node.template)
-            relationships << path
-          end
-        when AST::Import
-          if path = extract_template_path(node.template)
-            relationships << path
-          end
-        when AST::FromImport
-          if path = extract_template_path(node.template)
-            relationships << path
-          end
-        when AST::If
-          extract_relationships(node.body, relationships)
-          extract_relationships(node.else_body, relationships)
-        when AST::For
-          extract_relationships(node.body, relationships)
-        when AST::Block
-          extract_relationships(node.body, relationships)
-        when AST::Macro
-          extract_relationships(node.body, relationships)
         end
       end
     end

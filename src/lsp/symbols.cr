@@ -1,13 +1,16 @@
 require "./protocol"
 require "./document"
 require "./workspace_index"
+require "../ast/visitor"
 
 module Crinkle::LSP
   # Provides document symbols (outline) for textDocument/documentSymbol
   class SymbolProvider
     # Get symbols from a Document (uses cached AST)
     def document_symbols(doc : Document) : Array(DocumentSymbol)
-      build_symbols(doc.ast.body)
+      visitor = SymbolVisitor.new
+      visitor.visit_nodes(doc.ast.body)
+      visitor.symbols
     rescue
       # Parse error - return empty
       Array(DocumentSymbol).new
@@ -19,7 +22,9 @@ module Crinkle::LSP
       tokens = lexer.lex_all
       parser = Parser.new(tokens)
       ast = parser.parse
-      build_symbols(ast.body)
+      visitor = SymbolVisitor.new
+      visitor.visit_nodes(ast.body)
+      visitor.symbols
     rescue
       Array(DocumentSymbol).new
     end
@@ -68,182 +73,234 @@ module Crinkle::LSP
       symbols
     end
 
-    # Build symbols from AST nodes
-    private def build_symbols(nodes : Array(AST::Node)) : Array(DocumentSymbol)
-      symbols = Array(DocumentSymbol).new
+    private class SymbolVisitor < AST::Visitor
+      getter symbols : Array(DocumentSymbol)
 
-      nodes.each do |node|
+      def initialize : Nil
+        @symbols = Array(DocumentSymbol).new
+        @stack = Array(Array(DocumentSymbol)).new
+        @node_stack = Array(AST::Node).new
+      end
+
+      protected def enter_node(node : AST::Node) : Nil
         case node
         when AST::Block
-          symbols << build_block_symbol(node)
+          add_container(symbol_for_block(node), node)
         when AST::Macro
-          symbols << build_macro_symbol(node)
+          add_container(symbol_for_macro(node), node)
         when AST::Set
-          symbols << build_set_symbol(node)
+          add_leaf(symbol_for_set(node))
         when AST::SetBlock
-          symbols << build_set_block_symbol(node)
+          add_container(symbol_for_set_block(node), node)
         when AST::For
-          symbols << build_for_symbol(node)
+          add_container(symbol_for_for(node), node)
         when AST::If
-          symbols << build_if_symbol(node)
+          add_container(symbol_for_if(node), node)
         when AST::CustomTag
-          # Only include custom tags with bodies as they have structure
           unless node.body.empty?
-            symbols << build_custom_tag_symbol(node)
+            add_container(symbol_for_custom_tag(node), node)
           end
         end
       end
 
-      symbols
-    end
-
-    # Build symbol for a block
-    private def build_block_symbol(node : AST::Block) : DocumentSymbol
-      children = build_symbols(node.body)
-      DocumentSymbol.new(
-        name: node.name,
-        kind: SymbolKind::Class,
-        range: span_to_range(node.span),
-        selection_range: name_selection_range(node.span, "block ".size, node.name.size),
-        detail: "block",
-        children: children.empty? ? nil : children
-      )
-    end
-
-    # Build symbol for a macro
-    private def build_macro_symbol(node : AST::Macro) : DocumentSymbol
-      param_str = node.params.map(&.name).join(", ")
-      children = build_symbols(node.body)
-      DocumentSymbol.new(
-        name: "#{node.name}(#{param_str})",
-        kind: SymbolKind::Method,
-        range: span_to_range(node.span),
-        selection_range: name_selection_range(node.span, "macro ".size, node.name.size),
-        detail: "macro",
-        children: children.empty? ? nil : children
-      )
-    end
-
-    # Build symbol for a set statement
-    private def build_set_symbol(node : AST::Set) : DocumentSymbol
-      name = target_name(node.target)
-      DocumentSymbol.new(
-        name: name,
-        kind: SymbolKind::Variable,
-        range: span_to_range(node.span),
-        selection_range: name_selection_range(node.span, "set ".size, name.size),
-        detail: "variable"
-      )
-    end
-
-    # Build symbol for a set block
-    private def build_set_block_symbol(node : AST::SetBlock) : DocumentSymbol
-      name = target_name(node.target)
-      children = build_symbols(node.body)
-      DocumentSymbol.new(
-        name: name,
-        kind: SymbolKind::Variable,
-        range: span_to_range(node.span),
-        selection_range: name_selection_range(node.span, "set ".size, name.size),
-        detail: "block variable",
-        children: children.empty? ? nil : children
-      )
-    end
-
-    # Build symbol for a for loop
-    private def build_for_symbol(node : AST::For) : DocumentSymbol
-      target = target_name(node.target)
-      iter = expr_preview(node.iter, 20)
-      children = build_symbols(node.body)
-      # Include else_body children too
-      else_children = build_symbols(node.else_body)
-      all_children = children + else_children
-
-      DocumentSymbol.new(
-        name: "for #{target} in #{iter}",
-        kind: SymbolKind::Struct,
-        range: span_to_range(node.span),
-        selection_range: name_selection_range(node.span, "for ".size, target.size),
-        detail: "loop",
-        children: all_children.empty? ? nil : all_children
-      )
-    end
-
-    # Build symbol for an if statement
-    private def build_if_symbol(node : AST::If) : DocumentSymbol
-      test = expr_preview(node.test, 30)
-      children = build_symbols(node.body)
-      # Include else_body children
-      else_children = build_symbols(node.else_body)
-      all_children = children + else_children
-
-      DocumentSymbol.new(
-        name: "if #{test}",
-        kind: SymbolKind::Boolean,
-        range: span_to_range(node.span),
-        selection_range: name_selection_range(node.span, "if ".size, test.size),
-        detail: "conditional",
-        children: all_children.empty? ? nil : all_children
-      )
-    end
-
-    # Build symbol for a custom tag
-    private def build_custom_tag_symbol(node : AST::CustomTag) : DocumentSymbol
-      children = build_symbols(node.body)
-      DocumentSymbol.new(
-        name: node.name,
-        kind: SymbolKind::Event,
-        range: span_to_range(node.span),
-        selection_range: name_selection_range(node.span, 0, node.name.size),
-        detail: "custom tag",
-        children: children.empty? ? nil : children
-      )
-    end
-
-    # Get name from target
-    private def target_name(target : AST::Target) : String
-      case target
-      when AST::Name
-        target.value
-      when AST::TupleLiteral
-        names = target.items.map do |item|
-          item.is_a?(AST::Name) ? item.value : "..."
-        end
-        "(#{names.join(", ")})"
-      else
-        "..."
+      protected def exit_node(node : AST::Node) : Nil
+        return if @node_stack.empty?
+        return unless @node_stack.last == node
+        @node_stack.pop
+        @stack.pop
       end
-    end
 
-    # Get preview of expression (truncated)
-    # max_depth prevents infinite recursion on deeply nested expressions
-    private def expr_preview(expr : AST::Expr, max_len : Int32, depth : Int32 = 0) : String
-      # Guard against deep recursion and negative max_len
-      return "..." if depth > 10 || max_len <= 3
+      private def add_container(symbol : DocumentSymbol, node : AST::Node) : Nil
+        add_symbol(symbol)
+        if children = symbol.children
+          @stack << children
+          @node_stack << node
+        end
+      end
 
-      preview = case expr
-                when AST::Name
-                  expr.value
-                when AST::Literal
-                  expr.value.inspect
-                when AST::GetAttr
-                  remaining = max_len - expr.name.size - 1
-                  "#{expr_preview(expr.target, remaining, depth + 1)}.#{expr.name}"
-                when AST::Call
-                  "#{expr_preview(expr.callee, max_len - 5, depth + 1)}(...)"
-                when AST::Filter
-                  remaining = max_len - expr.name.size - 1
-                  "#{expr_preview(expr.expr, remaining, depth + 1)}|#{expr.name}"
-                when AST::Binary
-                  "#{expr_preview(expr.left, 10, depth + 1)} #{expr.op} #{expr_preview(expr.right, 10, depth + 1)}"
-                when AST::ListLiteral
-                  "[...]"
-                when AST::DictLiteral
-                  "{...}"
-                else
-                  "..."
-                end
-      preview.size > max_len ? "#{preview[0, max_len - 3]}..." : preview
+      private def add_leaf(symbol : DocumentSymbol) : Nil
+        add_symbol(symbol)
+      end
+
+      private def add_symbol(symbol : DocumentSymbol) : Nil
+        if @stack.empty?
+          @symbols << symbol
+        else
+          @stack.last << symbol
+        end
+      end
+
+      private def symbol_for_block(node : AST::Block) : DocumentSymbol
+        children = Array(DocumentSymbol).new
+        DocumentSymbol.new(
+          name: node.name,
+          kind: SymbolKind::Class,
+          range: span_to_range(node.span),
+          selection_range: name_selection_range(node.span, "block ".size, node.name.size),
+          detail: "block",
+          children: children
+        )
+      end
+
+      private def symbol_for_macro(node : AST::Macro) : DocumentSymbol
+        param_str = node.params.map(&.name).join(", ")
+        children = Array(DocumentSymbol).new
+        DocumentSymbol.new(
+          name: "#{node.name}(#{param_str})",
+          kind: SymbolKind::Method,
+          range: span_to_range(node.span),
+          selection_range: name_selection_range(node.span, "macro ".size, node.name.size),
+          detail: "macro",
+          children: children
+        )
+      end
+
+      private def symbol_for_set(node : AST::Set) : DocumentSymbol
+        name = target_name(node.target)
+        DocumentSymbol.new(
+          name: name,
+          kind: SymbolKind::Variable,
+          range: span_to_range(node.span),
+          selection_range: name_selection_range(node.span, "set ".size, name.size),
+          detail: "variable"
+        )
+      end
+
+      private def symbol_for_set_block(node : AST::SetBlock) : DocumentSymbol
+        name = target_name(node.target)
+        children = Array(DocumentSymbol).new
+        DocumentSymbol.new(
+          name: name,
+          kind: SymbolKind::Variable,
+          range: span_to_range(node.span),
+          selection_range: name_selection_range(node.span, "set ".size, name.size),
+          detail: "block variable",
+          children: children
+        )
+      end
+
+      private def symbol_for_for(node : AST::For) : DocumentSymbol
+        target = target_name(node.target)
+        iter = expr_preview(node.iter, 20)
+        children = Array(DocumentSymbol).new
+        DocumentSymbol.new(
+          name: "for #{target} in #{iter}",
+          kind: SymbolKind::Struct,
+          range: span_to_range(node.span),
+          selection_range: name_selection_range(node.span, "for ".size, target.size),
+          detail: "loop",
+          children: children
+        )
+      end
+
+      private def symbol_for_if(node : AST::If) : DocumentSymbol
+        test = expr_preview(node.test, 30)
+        children = Array(DocumentSymbol).new
+        DocumentSymbol.new(
+          name: "if #{test}",
+          kind: SymbolKind::Boolean,
+          range: span_to_range(node.span),
+          selection_range: name_selection_range(node.span, "if ".size, test.size),
+          detail: "conditional",
+          children: children
+        )
+      end
+
+      private def symbol_for_custom_tag(node : AST::CustomTag) : DocumentSymbol
+        children = Array(DocumentSymbol).new
+        DocumentSymbol.new(
+          name: node.name,
+          kind: SymbolKind::Event,
+          range: span_to_range(node.span),
+          selection_range: name_selection_range(node.span, 0, node.name.size),
+          detail: "custom tag",
+          children: children
+        )
+      end
+
+      private def target_name(target : AST::Target) : String
+        case target
+        when AST::Name
+          target.value
+        when AST::TupleLiteral
+          names = target.items.map do |item|
+            item.is_a?(AST::Name) ? item.value : "..."
+          end
+          "(#{names.join(", ")})"
+        else
+          "..."
+        end
+      end
+
+      private def expr_preview(expr : AST::Expr, max_len : Int32, depth : Int32 = 0) : String
+        return "..." if depth > 5
+
+        result = case expr
+                 when AST::Name
+                   expr.value
+                 when AST::Literal
+                   value = expr.value
+                   case value
+                   when String
+                     %("#{value}")
+                   when nil
+                     "none"
+                   else
+                     value.to_s
+                   end
+                 when AST::Binary
+                   left = expr_preview(expr.left, max_len, depth + 1)
+                   right = expr_preview(expr.right, max_len, depth + 1)
+                   "#{left} #{expr.op} #{right}"
+                 when AST::Unary
+                   "#{expr.op}#{expr_preview(expr.expr, max_len, depth + 1)}"
+                 when AST::Group
+                   "(#{expr_preview(expr.expr, max_len, depth + 1)})"
+                 when AST::Call
+                   name = expr_preview(expr.callee, max_len, depth + 1)
+                   "#{name}(...)"
+                 when AST::Filter
+                   left = expr_preview(expr.expr, max_len, depth + 1)
+                   "#{left} | #{expr.name}"
+                 when AST::Test
+                   left = expr_preview(expr.expr, max_len, depth + 1)
+                   "#{left} is #{expr.name}"
+                 when AST::GetAttr
+                   target = expr_preview(expr.target, max_len, depth + 1)
+                   "#{target}.#{expr.name}"
+                 when AST::GetItem
+                   target = expr_preview(expr.target, max_len, depth + 1)
+                   "#{target}[...]"
+                 when AST::ListLiteral
+                   "[...]"
+                 when AST::DictLiteral
+                   "{...}"
+                 when AST::TupleLiteral
+                   "(...)"
+                 else
+                   "..."
+                 end
+
+        result.size > max_len ? result[0, max_len] + "..." : result
+      end
+
+      private def name_selection_range(span : Span, offset : Int32, name_size : Int32) : Range
+        start = Position.new(
+          line: span.start_pos.line - 1,
+          character: span.start_pos.column + offset
+        )
+        Range.new(
+          start: start,
+          end_pos: Position.new(line: start.line, character: start.character + name_size)
+        )
+      end
+
+      private def span_to_range(span : Span) : Range
+        Range.new(
+          start: Position.new(line: span.start_pos.line - 1, character: span.start_pos.column),
+          end_pos: Position.new(line: span.end_pos.line - 1, character: span.end_pos.column)
+        )
+      end
     end
 
     # Convert Span to LSP Range (1-based to 0-based)
@@ -251,18 +308,6 @@ module Crinkle::LSP
       Range.new(
         start: Position.new(line: span.start_pos.line - 1, character: span.start_pos.column),
         end_pos: Position.new(line: span.end_pos.line - 1, character: span.end_pos.column)
-      )
-    end
-
-    # Create a selection range for a named element
-    # offset: characters after the start of the tag to the name
-    # length: length of the name
-    private def name_selection_range(span : Span, offset : Int32, length : Int32) : Range
-      # Start after {% and whitespace, plus the offset
-      start_char = span.start_pos.column + 3 + offset
-      Range.new(
-        start: Position.new(line: span.start_pos.line - 1, character: start_char),
-        end_pos: Position.new(line: span.start_pos.line - 1, character: start_char + length)
       )
     end
   end
