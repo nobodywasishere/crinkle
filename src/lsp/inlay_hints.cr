@@ -228,9 +228,11 @@ module Crinkle::LSP
           character: arg.span.start_pos.column - 1
         )
 
+        label = "#{"*" if param.variadic?}#{param.name}:"
+
         hints << InlayHint.new(
           position: arg_pos,
-          label: "#{param.name}:",
+          label: label,
           kind: InlayHintKind::Parameter,
           padding_right: true
         )
@@ -271,9 +273,11 @@ module Crinkle::LSP
           character: arg.span.start_pos.column - 1
         )
 
+        label = "#{"*" if param.variadic?}#{param.name}:"
+
         hints << InlayHint.new(
           position: arg_pos,
-          label: "#{param.name}:",
+          label: label,
           kind: InlayHintKind::Parameter,
           padding_right: true
         )

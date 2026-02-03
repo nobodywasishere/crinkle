@@ -3,20 +3,23 @@ require "./schema"
 module Crinkle
   PRIMITIVES = ["String", "Int64", "Float64", "Bool"]
 
-  macro define_filter(name, params = nil, defaults = nil, returns = nil, doc = nil, deprecated = false, examples = nil, &block)
+  macro define_filter(name, params = nil, defaults = nil, returns = nil, doc = nil, deprecated = false, examples = nil, variadic = nil, &block)
     {% filter_name = name.is_a?(SymbolLiteral) ? name.id.stringify : name %}
 
     ::Crinkle::Schema.registry.register_filter(::Crinkle::Schema::FilterSchema.new(
       name: {{ filter_name }},
       params: {% if params %}[
+        {% variadic_keys = variadic && variadic.map(&.id) %}
         {% for key, type in params %}
           {% has_default = defaults && defaults.keys.includes?(key) %}
           {% dv = defaults && defaults[key] %}
+          {% is_variadic = variadic_keys && variadic_keys.includes?(key.id) %}
           ::Crinkle::Schema::ParamSchema.new(
             name: {{ key.id.stringify }},
             type: {{ type.id.stringify }},
             required: {{ !has_default }},
-            default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}
+            default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }},
+            variadic: {{ is_variadic ? true : false }}
           ),
         {% end %}
       ]{% else %}[] of ::Crinkle::Schema::ParamSchema{% end %},
@@ -115,20 +118,23 @@ module Crinkle
     end
   end
 
-  macro define_test(name, params = nil, defaults = nil, doc = nil, deprecated = false, &block)
+  macro define_test(name, params = nil, defaults = nil, doc = nil, deprecated = false, variadic = nil, &block)
     {% test_name = name.is_a?(SymbolLiteral) ? name.id.stringify : name %}
 
     ::Crinkle::Schema.registry.register_test(::Crinkle::Schema::TestSchema.new(
       name: {{ test_name }},
       params: {% if params %}[
+        {% variadic_keys = variadic && variadic.map(&.id) %}
         {% for key, type in params %}
           {% has_default = defaults && defaults.keys.includes?(key) %}
           {% dv = defaults && defaults[key] %}
+          {% is_variadic = variadic_keys && variadic_keys.includes?(key.id) %}
           ::Crinkle::Schema::ParamSchema.new(
             name: {{ key.id.stringify }},
             type: {{ type.id.stringify }},
             required: {{ !has_default }},
-            default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}
+            default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }},
+            variadic: {{ is_variadic ? true : false }}
           ),
         {% end %}
       ]{% else %}[] of ::Crinkle::Schema::ParamSchema{% end %},
@@ -223,20 +229,23 @@ module Crinkle
     end
   end
 
-  macro define_function(name, params = nil, defaults = nil, returns = nil, doc = nil, deprecated = false, &block)
+  macro define_function(name, params = nil, defaults = nil, returns = nil, doc = nil, deprecated = false, variadic = nil, &block)
     {% func_name = name.is_a?(SymbolLiteral) ? name.id.stringify : name %}
 
     ::Crinkle::Schema.registry.register_function(::Crinkle::Schema::FunctionSchema.new(
       name: {{ func_name }},
       params: {% if params %}[
+        {% variadic_keys = variadic && variadic.map(&.id) %}
         {% for key, type in params %}
           {% has_default = defaults && defaults.keys.includes?(key) %}
           {% dv = defaults && defaults[key] %}
+          {% is_variadic = variadic_keys && variadic_keys.includes?(key.id) %}
           ::Crinkle::Schema::ParamSchema.new(
             name: {{ key.id.stringify }},
             type: {{ type.id.stringify }},
             required: {{ !has_default }},
-            default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}
+            default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }},
+            variadic: {{ is_variadic ? true : false }}
           ),
         {% end %}
       ]{% else %}[] of ::Crinkle::Schema::ParamSchema{% end %},
@@ -354,14 +363,14 @@ module Crinkle
               class_name: {{ @type.name.stringify }},
               default_call: {% if dc_ann %}::Crinkle::Schema::MethodSchema.new(
                 name: "__call__",
-                params: [{% for key, type in dc_ann[:params] || {} of Nil => Nil %}{% has_default = dc_ann[:defaults] && dc_ann[:defaults].keys.includes?(key) %}{% dv = dc_ann[:defaults] && dc_ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !has_default }}, default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}), {% end %}],
+                params: [{% variadic_keys = dc_ann[:variadic] && dc_ann[:variadic].map(&.id) %}{% for key, type in dc_ann[:params] || {} of Nil => Nil %}{% has_default = dc_ann[:defaults] && dc_ann[:defaults].keys.includes?(key) %}{% dv = dc_ann[:defaults] && dc_ann[:defaults][key] %}{% is_variadic = variadic_keys && variadic_keys.includes?(key.id) %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !has_default }}, default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}, variadic: {{ is_variadic ? true : false }}), {% end %}],
                 returns: {{ dc_ann[:returns] ? dc_ann[:returns].id.stringify : "Value" }},
                 doc: {{ dc_ann[:doc] }}
               ){% else %}nil{% end %},
               methods: {
                 {% for method in @type.methods %}{% ann = method.annotation(::Crinkle::Method) %}{% if ann %}{% method_name = (ann[:name] || method.name).id.stringify %}{{ method_name }} => ::Crinkle::Schema::MethodSchema.new(
                   name: {{ method_name }},
-                  params: [{% for key, type in ann[:params] || {} of Nil => Nil %}{% has_default = ann[:defaults] && ann[:defaults].keys.includes?(key) %}{% dv = ann[:defaults] && ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !has_default }}, default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}), {% end %}],
+                  params: [{% variadic_keys = ann[:variadic] && ann[:variadic].map(&.id) %}{% for key, type in ann[:params] || {} of Nil => Nil %}{% has_default = ann[:defaults] && ann[:defaults].keys.includes?(key) %}{% dv = ann[:defaults] && ann[:defaults][key] %}{% is_variadic = variadic_keys && variadic_keys.includes?(key.id) %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !has_default }}, default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}, variadic: {{ is_variadic ? true : false }}), {% end %}],
                   returns: {{ ann[:returns] ? ann[:returns].id.stringify : "Value" }},
                   doc: {{ ann[:doc] }}
                 ), {% end %}{% end %}

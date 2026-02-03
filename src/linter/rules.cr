@@ -520,6 +520,8 @@ module Crinkle
           schema = @schema.filters[node.name]?
           return unless schema
 
+          return if schema.params.any?(&.variadic?)
+
           # Count positional args (first param is the value being filtered)
           provided_positional = node.args.size
           max_positional = schema.params.size - 1 # Exclude first param (the value)
@@ -535,6 +537,7 @@ module Crinkle
         private def check_test_args(node : AST::Test, issues : Array(Issue)) : Nil
           schema = @schema.tests[node.name]?
           return unless schema
+          return if schema.params.any?(&.variadic?)
 
           # Count positional args (first param is the value being tested)
           provided_positional = node.args.size
@@ -554,6 +557,7 @@ module Crinkle
 
           schema = @schema.functions[callee.value]?
           return unless schema
+          return if schema.params.any?(&.variadic?)
 
           provided_positional = node.args.size
           max_positional = schema.params.size
@@ -607,6 +611,7 @@ module Crinkle
         private def check_filter_kwargs(node : AST::Filter, issues : Array(Issue)) : Nil
           schema = @schema.filters[node.name]?
           return unless schema
+          return if schema.params.any?(&.variadic?)
 
           known_params = schema.params.map(&.name)
 
@@ -624,6 +629,7 @@ module Crinkle
         private def check_test_kwargs(node : AST::Test, issues : Array(Issue)) : Nil
           schema = @schema.tests[node.name]?
           return unless schema
+          return if schema.params.any?(&.variadic?)
 
           known_params = schema.params.map(&.name)
 
@@ -644,6 +650,7 @@ module Crinkle
 
           schema = @schema.functions[callee.value]?
           return unless schema
+          return if schema.params.any?(&.variadic?)
 
           known_params = schema.params.map(&.name)
 
