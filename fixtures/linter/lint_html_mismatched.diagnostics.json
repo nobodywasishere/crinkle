@@ -8,13 +8,13 @@
       "message": "Unexpected HTML end tag 'span'.",
       "span": {
         "start": {
-          "offset": 0,
-          "line": 1,
+          "offset": 28,
+          "line": 3,
           "column": 1
         },
         "end": {
-          "offset": 7,
-          "line": 1,
+          "offset": 35,
+          "line": 3,
           "column": 8
         }
       }
@@ -45,13 +45,13 @@
       "message": "Unexpected HTML end tag 'span'.",
       "span": {
         "start": {
-          "offset": 0,
-          "line": 1,
+          "offset": 28,
+          "line": 3,
           "column": 1
         },
         "end": {
-          "offset": 7,
-          "line": 1,
+          "offset": 35,
+          "line": 3,
           "column": 8
         }
       }

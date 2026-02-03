@@ -1,0 +1,60 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [
+    {
+      "id": "E_HTML_UNEXPECTED_END_TAG",
+      "severity": "warning",
+      "message": "Unexpected HTML end tag 'body'.",
+      "span": {
+        "start": {
+          "offset": 66,
+          "line": 5,
+          "column": 1
+        },
+        "end": {
+          "offset": 73,
+          "line": 5,
+          "column": 8
+        }
+      }
+    },
+    {
+      "id": "E_HTML_UNEXPECTED_END_TAG",
+      "severity": "warning",
+      "message": "Unexpected HTML end tag 'html'.",
+      "span": {
+        "start": {
+          "offset": 74,
+          "line": 6,
+          "column": 1
+        },
+        "end": {
+          "offset": 81,
+          "line": 6,
+          "column": 8
+        }
+      }
+    }
+  ],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'show_toasts'.",
+      "span": {
+        "start": {
+          "offset": 39,
+          "line": 1,
+          "column": 40
+        },
+        "end": {
+          "offset": 50,
+          "line": 1,
+          "column": 51
+        }
+      }
+    }
+  ],
+  "linter": []
+}

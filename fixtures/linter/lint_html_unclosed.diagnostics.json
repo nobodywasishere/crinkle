@@ -25,14 +25,14 @@
       "message": "Unclosed HTML tag 'span'.",
       "span": {
         "start": {
-          "offset": 0,
+          "offset": 2,
           "line": 1,
-          "column": 1
+          "column": 3
         },
         "end": {
-          "offset": 6,
+          "offset": 8,
           "line": 1,
-          "column": 7
+          "column": 9
         }
       }
     }
@@ -62,14 +62,14 @@
       "message": "Unclosed HTML tag 'span'.",
       "span": {
         "start": {
-          "offset": 0,
+          "offset": 2,
           "line": 1,
-          "column": 1
+          "column": 3
         },
         "end": {
-          "offset": 6,
+          "offset": 8,
           "line": 1,
-          "column": 7
+          "column": 9
         }
       }
     }

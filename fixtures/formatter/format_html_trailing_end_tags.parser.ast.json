@@ -1,0 +1,31 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<div class=\"toast_box "
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "--show"
+        },
+        "name": "if",
+        "args": [
+          {
+            "type": "Name",
+            "value": "show_toasts"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\">\n</div>\n\n\n</body>\n</html>\n"
+    }
+  ]
+}

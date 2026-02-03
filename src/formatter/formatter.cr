@@ -106,7 +106,7 @@ module Crinkle
       end
 
       def newline : Nil
-        line_value = @current_line.to_s
+        line_value = @current_line.to_s.rstrip
         unless whitespace_line?(line_value)
           @buffer << line_value
         end
@@ -126,7 +126,7 @@ module Crinkle
 
       def to_s : String
         result = @buffer.to_s
-        trailing = @current_line.to_s
+        trailing = @current_line.to_s.rstrip
         if trailing.empty? || whitespace_line?(trailing)
           result
         else
@@ -156,6 +156,12 @@ module Crinkle
       )
       @html_tokenizer = HTML::Tokenizer.new
       @source_lines = @source.split('\n', remove_empty: false)
+      @line_offsets = Array(Int32).new(@source_lines.size)
+      offset = 0
+      @source_lines.each do |line|
+        @line_offsets << offset
+        offset += line.bytesize + 1
+      end
       @crinkle_indent = 0
       @html_open_buffer = ""
       @preformatted_indent = nil
@@ -269,7 +275,7 @@ module Crinkle
           @printer.write_raw(attr_output) unless attr_output.empty?
           update_html_attribute_state(attr_output) unless attr_output.empty?
           process_html_opening_with_buffer(line)
-          process_html_closing(line)
+          process_html_closing(line, base_line + i + 1, @line_offsets[base_line + i]? || 0)
           next
         end
 
@@ -294,7 +300,7 @@ module Crinkle
           @printer.write_raw(preformatted_output) unless preformatted_output.empty?
           update_html_attribute_state(preformatted_output) unless preformatted_output.empty?
           update_preformatted_last_indent(preformatted_output)
-          process_html_closing(line)
+          process_html_closing(line, base_line + i + 1, @line_offsets[base_line + i]? || 0)
           process_html_opening_with_buffer(line)
           unless @html_engine.in_preformatted?
             @preformatted_indent = nil
@@ -311,8 +317,8 @@ module Crinkle
         inline_source = source_line ? source_line.lstrip : stripped
         inline_pair = inline_tag_pair?(inline_source)
 
-        # Process closing tags first to dedent before writing
-        process_html_closing(stripped) unless inline_pair
+        # Process closing tags first to dedent before writing (use original line for spans)
+        process_html_closing(line, base_line + i + 1, @line_offsets[base_line + i]? || 0) unless inline_pair
         sync_indent
 
         unless stripped.empty?
@@ -321,13 +327,17 @@ module Crinkle
         end
 
         # Process opening tags after writing to affect following lines
-        process_html_opening_with_buffer(stripped) unless inline_pair
+        process_html_opening_with_buffer(line) unless inline_pair
       end
     end
 
-    private def process_html_closing(text : String) : Nil
+    private def process_html_closing(text : String, line : Int32? = nil, offset : Int32? = nil) : Nil
       return unless @options.html_aware?
-      @html_engine.process_closing(text)
+      if line && offset
+        @html_engine.process_closing(text, line, offset)
+      else
+        @html_engine.process_closing(text)
+      end
     end
 
     private def process_html_opening_with_buffer(text : String) : Nil

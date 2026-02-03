@@ -27,8 +27,20 @@ module Crinkle
         sync_state
       end
 
+      def process_closing(text : String, base_line : Int32, base_offset : Int32) : Nil
+        tokens = offset_tokens(@tokenizer.tokens(text), base_line, base_offset)
+        @parser.apply_closing(tokens)
+        sync_state
+      end
+
       def process_opening(text : String) : Nil
         tokens = @tokenizer.tokens(text)
+        @parser.apply_opening(tokens)
+        sync_state
+      end
+
+      def process_opening(text : String, base_line : Int32, base_offset : Int32) : Nil
+        tokens = offset_tokens(@tokenizer.tokens(text), base_line, base_offset)
         @parser.apply_opening(tokens)
         sync_state
       end
@@ -95,6 +107,26 @@ module Crinkle
       private def sync_state : Nil
         @indent_level = @parser.indent_level
         @in_preformatted = @parser.in_preformatted?
+      end
+
+      private def offset_tokens(tokens : Array(Token), base_line : Int32, base_offset : Int32) : Array(Token)
+        tokens.map do |token|
+          span = token.span
+          start = span.start_pos
+          finish = span.end_pos
+
+          start_pos = Position.new(
+            base_offset + start.offset,
+            base_line + start.line - 1,
+            start.column,
+          )
+          end_pos = Position.new(
+            base_offset + finish.offset,
+            base_line + finish.line - 1,
+            finish.column,
+          )
+          Token.new(token.kind, token.name, token.lexeme, Span.new(start_pos, end_pos))
+        end
       end
 
       private def starts_multiline_tag?(text : String) : Bool

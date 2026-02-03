@@ -8,13 +8,13 @@
       "message": "Unexpected HTML end tag 'script'.",
       "span": {
         "start": {
-          "offset": 24,
-          "line": 1,
+          "offset": 110,
+          "line": 3,
           "column": 25
         },
         "end": {
-          "offset": 33,
-          "line": 1,
+          "offset": 119,
+          "line": 3,
           "column": 34
         }
       }

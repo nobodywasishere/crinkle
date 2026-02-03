@@ -8,13 +8,13 @@
       "message": "Mismatched HTML end tag 'section'.",
       "span": {
         "start": {
-          "offset": 0,
-          "line": 1,
+          "offset": 169,
+          "line": 10,
           "column": 1
         },
         "end": {
-          "offset": 10,
-          "line": 1,
+          "offset": 179,
+          "line": 10,
           "column": 11
         }
       }
@@ -25,13 +25,13 @@
       "message": "Unexpected HTML end tag 'div'.",
       "span": {
         "start": {
-          "offset": 0,
-          "line": 1,
+          "offset": 180,
+          "line": 11,
           "column": 1
         },
         "end": {
-          "offset": 6,
-          "line": 1,
+          "offset": 186,
+          "line": 11,
           "column": 7
         }
       }
