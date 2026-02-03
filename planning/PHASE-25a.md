@@ -444,10 +444,10 @@ end
 ## Open Questions
 
 1. **Rename scope**: Should macro rename update imports in unopened files?
-   - Proposal: Only rename in files currently in inference engine cache
+   - Proposal: Rename in every file, not just opened ones
 
 2. **Inlay hint verbosity**: Parameter hints can be noisy. Enable by default?
-   - Proposal: Off by default, configurable via settings
+   - Proposal: On by default, configurable via settings
 
 3. **Code action priority**: How to order multiple available fixes?
    - Proposal: Typo fixes first, then imports, then syntax fixes

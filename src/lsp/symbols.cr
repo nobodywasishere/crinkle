@@ -1,5 +1,6 @@
 require "./protocol"
 require "./document"
+require "./workspace_index"
 
 module Crinkle::LSP
   # Provides document symbols (outline) for textDocument/documentSymbol
@@ -21,6 +22,50 @@ module Crinkle::LSP
       build_symbols(ast.body)
     rescue
       Array(DocumentSymbol).new
+    end
+
+    # Get symbols from a workspace index entry (for unopened files).
+    def document_symbols(entry : WorkspaceIndex::Entry) : Array(DocumentSymbol)
+      symbols = Array(DocumentSymbol).new
+
+      entry.macros.each do |macro_info|
+        if span = macro_info.definition_span
+          symbols << DocumentSymbol.new(
+            name: "#{macro_info.name}(#{macro_info.params.join(", ")})",
+            kind: SymbolKind::Method,
+            range: span_to_range(span),
+            selection_range: span_to_range(span),
+            detail: "macro"
+          )
+        end
+      end
+
+      entry.blocks.each do |block_info|
+        if span = block_info.definition_span
+          symbols << DocumentSymbol.new(
+            name: block_info.name,
+            kind: SymbolKind::Class,
+            range: span_to_range(span),
+            selection_range: span_to_range(span),
+            detail: "block"
+          )
+        end
+      end
+
+      entry.variables.each do |var_info|
+        next unless var_info.source.set? || var_info.source.set_block?
+        if span = var_info.definition_span
+          symbols << DocumentSymbol.new(
+            name: var_info.name,
+            kind: SymbolKind::Variable,
+            range: span_to_range(span),
+            selection_range: span_to_range(span),
+            detail: "variable"
+          )
+        end
+      end
+
+      symbols
     end
 
     # Build symbols from AST nodes

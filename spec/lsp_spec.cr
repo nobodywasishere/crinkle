@@ -2142,6 +2142,44 @@ describe Crinkle::LSP do
         end
       end
     end
+
+    it "renames macros across unopened files using workspace index" do
+      tmp_dir = File.join(Dir.tempdir, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Process.pid}")
+      templates_dir = File.join(tmp_dir, "templates")
+      FileUtils.mkdir_p(templates_dir)
+
+      begin
+        macro_path = File.join(templates_dir, "macros.html.j2")
+        page_path = File.join(templates_dir, "page.html.j2")
+        File.write(macro_path, "{% macro button() %}ok{% endmacro %}")
+        File.write(page_path, "{{ button() }}")
+
+        config = Crinkle::LSP::Config.new(template_paths: ["templates"])
+        inference = Crinkle::LSP::InferenceEngine.new(config, tmp_dir)
+        documents = Crinkle::LSP::DocumentStore.new
+        index = Crinkle::LSP::WorkspaceIndex.new(config, tmp_dir)
+        index.rebuild
+
+        page_uri = "file://#{page_path}"
+        documents.open(page_uri, "jinja2", File.read(page_path), 1)
+
+        provider = Crinkle::LSP::RenameProvider.new(inference, documents, index, tmp_dir)
+
+        edit = provider.rename(page_uri, File.read(page_path), Crinkle::LSP::Position.new(0, 3), "primary_button")
+
+        edit.should_not be_nil
+        if e = edit
+          changes = e.changes
+          changes.should_not be_nil
+          if c = changes
+            c.keys.should contain page_uri
+            c.keys.should contain "file://#{macro_path}"
+          end
+        end
+      ensure
+        FileUtils.rm_r(tmp_dir) if Dir.exists?(tmp_dir)
+      end
+    end
   end
 
   describe Crinkle::LSP::CodeActionProvider do
@@ -2213,6 +2251,44 @@ describe Crinkle::LSP do
       actions[0].title.should eq "Import 'button' from \"templates/macros.html.j2\""
     end
 
+    it "suggests auto-imports from workspace index" do
+      tmp_dir = File.join(Dir.tempdir, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Process.pid}")
+      templates_dir = File.join(tmp_dir, "templates")
+      FileUtils.mkdir_p(templates_dir)
+
+      begin
+        macro_path = File.join(templates_dir, "macros.html.j2")
+        File.write(macro_path, "{% macro button(text) %}{{ text }}{% endmacro %}")
+
+        config = Crinkle::LSP::Config.new(template_paths: ["templates"])
+        inference = Crinkle::LSP::InferenceEngine.new(config)
+        index = Crinkle::LSP::WorkspaceIndex.new(config, tmp_dir)
+        index.rebuild
+
+        provider = Crinkle::LSP::CodeActionProvider.new(inference, tmp_dir, index)
+
+        template = %({{ button("Click") }})
+        uri = "file://#{File.join(templates_dir, "page.html.j2")}"
+
+        diagnostic = Crinkle::LSP::Diagnostic.new(
+          range: Crinkle::LSP::Range.new(
+            Crinkle::LSP::Position.new(0, 3),
+            Crinkle::LSP::Position.new(0, 9)
+          ),
+          message: "Unknown function 'button'.",
+          code: "Lint/UnknownFunction"
+        )
+
+        context = Crinkle::LSP::CodeActionContext.new(diagnostics: [diagnostic])
+        actions = provider.code_actions(uri, diagnostic.range, context, template)
+
+        actions.size.should eq 1
+        actions[0].title.should eq "Import 'button' from \"templates/macros.html.j2\""
+      ensure
+        FileUtils.rm_r(tmp_dir) if Dir.exists?(tmp_dir)
+      end
+    end
+
     it "suggests removing unused import names" do
       config = Crinkle::LSP::Config.new
       inference = Crinkle::LSP::InferenceEngine.new(config)
@@ -2225,7 +2301,7 @@ describe Crinkle::LSP do
         Crinkle::LSP::Position.new(0, 35),
         Crinkle::LSP::Position.new(0, 40)
       )
-      context = Crinkle::LSP::CodeActionContext.new(diagnostics: [] of Crinkle::LSP::Diagnostic)
+      context = Crinkle::LSP::CodeActionContext.new(diagnostics: Array(Crinkle::LSP::Diagnostic).new)
       actions = provider.code_actions(uri, range, context, template)
 
       actions.size.should eq 1

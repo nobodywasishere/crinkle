@@ -1,23 +1,23 @@
 require "./protocol"
 require "./inference"
+require "./workspace_index"
 
 module Crinkle::LSP
   # Provides workspace-wide symbol search.
-  # Note: Currently only searches templates that have been opened/analyzed.
-  # A full workspace indexer would be needed to search all template files.
+  # Uses workspace index if available, otherwise falls back to inference cache.
   class WorkspaceSymbolProvider
     @inference : InferenceEngine
+    @index : WorkspaceIndex?
 
-    def initialize(@inference : InferenceEngine) : Nil
+    def initialize(@inference : InferenceEngine, @index : WorkspaceIndex? = nil) : Nil
     end
 
-    # Search for symbols across all analyzed templates.
-    # Limitation: Only includes symbols from templates that have been opened.
+    # Search for symbols across all known templates.
     def symbols(query : String) : Array(SymbolInformation)
       results = Array(SymbolInformation).new
 
       # Search macros
-      @inference.all_macros.each do |uri, macros|
+      macro_source.each do |uri, macros|
         macros.each do |macro_info|
           if fuzzy_match?(macro_info.name, query)
             if span = macro_info.definition_span
@@ -33,7 +33,7 @@ module Crinkle::LSP
       end
 
       # Search blocks
-      @inference.all_blocks.each do |uri, blocks|
+      block_source.each do |uri, blocks|
         blocks.each do |block_info|
           if fuzzy_match?(block_info.name, query)
             if span = block_info.definition_span
@@ -49,7 +49,7 @@ module Crinkle::LSP
       end
 
       # Search set variables (top-level)
-      @inference.all_variables.each do |uri, variables|
+      variable_source.each do |uri, variables|
         variables.each do |var_info|
           # Only include set/set_block variables (not loop vars or params)
           next unless var_info.source.set? || var_info.source.set_block?
@@ -69,6 +69,30 @@ module Crinkle::LSP
       # Sort by relevance (exact matches first, then by score)
       results.sort_by! { |symbol| -match_score(symbol.name, query) }
       results
+    end
+
+    private def macro_source : Hash(String, Array(MacroInfo))
+      if index = @index
+        index.all_macros
+      else
+        @inference.all_macros
+      end
+    end
+
+    private def block_source : Hash(String, Array(BlockInfo))
+      if index = @index
+        index.all_blocks
+      else
+        @inference.all_blocks
+      end
+    end
+
+    private def variable_source : Hash(String, Array(VariableInfo))
+      if index = @index
+        index.all_variables
+      else
+        @inference.all_variables
+      end
     end
 
     # Fuzzy match a name against a query

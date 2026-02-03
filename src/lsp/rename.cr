@@ -1,6 +1,7 @@
 require "./protocol"
 require "./inference"
 require "./document"
+require "./workspace_index"
 require "../lexer/lexer"
 require "../parser/parser"
 require "../ast/nodes"
@@ -28,6 +29,8 @@ module Crinkle::LSP
   class RenameProvider
     @inference : InferenceEngine
     @documents : DocumentStore
+    @index : WorkspaceIndex?
+    @root_path : String?
 
     # Keywords and reserved names that cannot be renamed to
     RESERVED_NAMES = %w[
@@ -47,7 +50,7 @@ module Crinkle::LSP
       loop self super caller varargs kwargs
     ]
 
-    def initialize(@inference : InferenceEngine, @documents : DocumentStore) : Nil
+    def initialize(@inference : InferenceEngine, @documents : DocumentStore, @index : WorkspaceIndex? = nil, @root_path : String? = nil) : Nil
     end
 
     # Prepare rename - validate that the symbol can be renamed
@@ -113,28 +116,14 @@ module Crinkle::LSP
     private def rename_macro(uri : String, text : String, old_name : String, new_name : String) : WorkspaceEdit?
       all_edits = Hash(String, Array(TextEdit)).new
 
-      # Collect edits in current file
-      begin
-        ast = parse(text)
-        edits = Array(TextEdit).new
-        collect_macro_edits(ast.body, old_name, new_name, edits)
-        all_edits[uri] = edits unless edits.empty?
-      rescue
-        # Parse error
-      end
-
-      # Also check other open documents for macro calls
-      @documents.uris.each do |doc_uri|
-        next if doc_uri == uri
-        if doc = @documents.get(doc_uri)
-          begin
-            ast = parse(doc.text)
-            edits = Array(TextEdit).new
-            collect_macro_edits(ast.body, old_name, new_name, edits, include_definition: false)
-            all_edits[doc_uri] = edits unless edits.empty?
-          rescue
-            # Parse error - skip
-          end
+      each_workspace_uri do |doc_uri, doc_text|
+        begin
+          ast = parse(doc_text)
+          edits = Array(TextEdit).new
+          collect_macro_edits(ast.body, old_name, new_name, edits, include_definition: true)
+          all_edits[doc_uri] = edits unless edits.empty?
+        rescue
+          # Parse error - skip
         end
       end
 
@@ -147,17 +136,14 @@ module Crinkle::LSP
     private def rename_block(uri : String, text : String, old_name : String, new_name : String) : WorkspaceEdit?
       all_edits = Hash(String, Array(TextEdit)).new
 
-      # Search all open documents for block definitions
-      @documents.uris.each do |doc_uri|
-        if doc = @documents.get(doc_uri)
-          begin
-            ast = parse(doc.text)
-            edits = Array(TextEdit).new
-            collect_block_edits(ast.body, old_name, new_name, edits)
-            all_edits[doc_uri] = edits unless edits.empty?
-          rescue
-            # Parse error - skip
-          end
+      each_workspace_uri do |doc_uri, doc_text|
+        begin
+          ast = parse(doc_text)
+          edits = Array(TextEdit).new
+          collect_block_edits(ast.body, old_name, new_name, edits)
+          all_edits[doc_uri] = edits unless edits.empty?
+        rescue
+          # Parse error - skip
         end
       end
 
@@ -329,6 +315,17 @@ module Crinkle::LSP
           collect_macro_edits(node.body, old_name, new_name, edits, include_definition)
         when AST::Block
           collect_macro_edits(node.body, old_name, new_name, edits, include_definition)
+        when AST::FromImport
+          node.names.each do |import_name|
+            if import_name.name == old_name
+              edits << TextEdit.new(range: import_name_range(import_name), new_text: new_name)
+            end
+            if alias_name = import_name.alias
+              if alias_name == old_name
+                edits << TextEdit.new(range: import_alias_range(import_name, alias_name), new_text: new_name)
+              end
+            end
+          end
         end
       end
     end
@@ -407,6 +404,34 @@ module Crinkle::LSP
         # For now, use the whole GetAttr span
         span_to_range(expr.span)
       end
+    end
+
+    private def import_name_range(import_name : AST::ImportName) : Range
+      span = import_name.span
+      start = Position.new(
+        line: span.start_pos.line - 1,
+        character: span.start_pos.column
+      )
+      end_pos = Position.new(
+        line: span.start_pos.line - 1,
+        character: span.start_pos.column + import_name.name.size
+      )
+      Range.new(start: start, end_pos: end_pos)
+    end
+
+    private def import_alias_range(import_name : AST::ImportName, alias_name : String) : Range
+      span = import_name.span
+      end_col = span.end_pos.column
+      start_col = end_col - alias_name.size
+      start = Position.new(
+        line: span.end_pos.line - 1,
+        character: start_col
+      )
+      end_pos = Position.new(
+        line: span.end_pos.line - 1,
+        character: end_col
+      )
+      Range.new(start: start, end_pos: end_pos)
     end
 
     # Extract callee name from expression
@@ -646,6 +671,38 @@ module Crinkle::LSP
         start: Position.new(line: span.start_pos.line - 1, character: span.start_pos.column),
         end_pos: Position.new(line: span.end_pos.line - 1, character: span.end_pos.column)
       )
+    end
+
+    private def each_workspace_uri(& : String, String ->) : Nil
+      seen = Set(String).new
+
+      # Open documents first
+      @documents.uris.each do |doc_uri|
+        if doc = @documents.get(doc_uri)
+          seen << doc_uri
+          yield doc_uri, doc.text
+        end
+      end
+
+      # Workspace index for unopened files
+      if index = @index
+        index.entries.each_key do |uri|
+          next if seen.includes?(uri)
+          if text = load_text_from_uri(uri)
+            seen << uri
+            yield uri, text
+          end
+        end
+      end
+    end
+
+    private def load_text_from_uri(uri : String) : String?
+      return unless uri.starts_with?("file://")
+      path = uri.sub(/^file:\/\//, "")
+      return unless File.exists?(path)
+      File.read(path)
+    rescue
+      nil
     end
   end
 end

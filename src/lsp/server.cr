@@ -18,6 +18,7 @@ require "./folding"
 require "./highlights"
 require "./links"
 require "./workspace_symbols"
+require "./workspace_index"
 require "./rename"
 require "./code_actions"
 require "./inlay_hints"
@@ -71,6 +72,7 @@ module Crinkle::LSP
     @highlight_provider : DocumentHighlightProvider?
     @link_provider : DocumentLinkProvider?
     @workspace_symbol_provider : WorkspaceSymbolProvider?
+    @workspace_index : WorkspaceIndex?
     @rename_provider : RenameProvider?
     @code_action_provider : CodeActionProvider?
     @inlay_hint_provider : InlayHintProvider?
@@ -101,6 +103,7 @@ module Crinkle::LSP
       @references_provider = nil
       @symbol_provider = nil
       @folding_provider = nil
+      @workspace_index = nil
       @highlight_provider = nil
       @link_provider = nil
       @workspace_symbol_provider = nil
@@ -281,9 +284,11 @@ module Crinkle::LSP
             @folding_provider = FoldingProvider.new
             @highlight_provider = DocumentHighlightProvider.new(inference)
             @link_provider = DocumentLinkProvider.new(root_path)
-            @workspace_symbol_provider = WorkspaceSymbolProvider.new(inference)
-            @rename_provider = RenameProvider.new(inference, @documents)
-            @code_action_provider = CodeActionProvider.new(inference, root_path)
+            @workspace_index = WorkspaceIndex.new(@config, root_path)
+            @workspace_index.try(&.rebuild)
+            @workspace_symbol_provider = WorkspaceSymbolProvider.new(inference, @workspace_index)
+            @rename_provider = RenameProvider.new(inference, @documents, @workspace_index, root_path)
+            @code_action_provider = CodeActionProvider.new(inference, root_path, @workspace_index)
             @inlay_hint_provider = InlayHintProvider.new(inference, schema_provider)
 
             # Recreate analyzer with schema for schema-aware linting and typo detection
@@ -311,7 +316,7 @@ module Crinkle::LSP
         ),
         definition_provider: true,
         references_provider: true,
-        document_symbol_provider: false, # temp workaround
+        document_symbol_provider: true,
         folding_range_provider: true,
         document_highlight_provider: true,
         document_link_provider: true,
@@ -594,14 +599,24 @@ module Crinkle::LSP
         symbol_params = DocumentSymbolParams.from_json(params.to_json)
         uri = symbol_params.text_document.uri
 
-        doc = @documents.get(uri)
-        unless doc
-          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
-          return
-        end
-
         if provider = @symbol_provider
-          symbols = provider.document_symbols(doc)
+          symbols = if doc = @documents.get(uri)
+                      provider.document_symbols(doc)
+                    elsif index = @workspace_index
+                      if entry = index.entry_for(uri)
+                        provider.document_symbols(entry)
+                      else
+                        # Fall back to on-demand parse if file exists
+                        path = uri_to_path(uri)
+                        if File.exists?(path)
+                          provider.document_symbols(File.read(path))
+                        else
+                          Array(DocumentSymbol).new
+                        end
+                      end
+                    else
+                      Array(DocumentSymbol).new
+                    end
           log(MessageType::Log, "<<< Response: documentSymbol (#{symbols.size} symbols)")
           send_response(id, JSON.parse(symbols.to_json))
         else
@@ -980,9 +995,19 @@ module Crinkle::LSP
             log(MessageType::Info, "Schema file changed: #{path}")
             reload_schema
           when path.ends_with?(".j2") || path.ends_with?(".jinja2") || path.ends_with?(".jinja")
+            log(MessageType::Info, "Template changed: #{path}")
+
+            # Update workspace index for template changes
+            if index = @workspace_index
+              if change.type == FileChangeType::Deleted
+                index.update_path(path)
+              else
+                index.update_path(path)
+              end
+            end
+
             # Re-run inference for template changes (only if file is open)
             if doc = @documents.get(uri)
-              log(MessageType::Info, "Template changed: #{path}")
               @inference.try(&.analyze(uri, doc.text))
             end
           end

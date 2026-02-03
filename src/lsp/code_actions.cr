@@ -1,5 +1,6 @@
 require "./protocol"
 require "./inference"
+require "./workspace_index"
 require "../lexer/lexer"
 require "../parser/parser"
 require "../ast/nodes"
@@ -9,8 +10,9 @@ module Crinkle::LSP
   class CodeActionProvider
     @inference : InferenceEngine
     @root_path : String?
+    @index : WorkspaceIndex?
 
-    def initialize(@inference : InferenceEngine, @root_path : String? = nil) : Nil
+    def initialize(@inference : InferenceEngine, @root_path : String? = nil, @index : WorkspaceIndex? = nil) : Nil
     end
 
     # Get code actions for the given range and diagnostics
@@ -140,15 +142,12 @@ module Crinkle::LSP
       macro_name = extract_unknown_function_name(diagnostic.message)
       return actions unless macro_name
 
-      @inference.all_macros.each do |macro_uri, macros|
-        next if macro_uri == uri
+      candidates = macro_candidates(macro_name, uri)
+      candidates.each do |candidate|
+        next if candidate.uri == uri
 
-        match = macros.find { |macro_info| macro_info.name == macro_name }
-        next unless match
-
-        import_path = template_path_for_uri(macro_uri)
+        import_path = template_path_for_uri(candidate.uri)
         next unless import_path
-
         next if already_imported?(text, import_path, macro_name)
 
         if edit = build_import_edit(uri, text, macro_name, import_path)
@@ -162,6 +161,94 @@ module Crinkle::LSP
       end
 
       actions
+    end
+
+    private struct MacroCandidate
+      getter uri : String
+      getter info : MacroInfo
+      getter score : Int32
+
+      def initialize(@uri : String, @info : MacroInfo, @score : Int32) : Nil
+      end
+    end
+
+    private def macro_candidates(macro_name : String, uri : String) : Array(MacroCandidate)
+      candidates = Array(MacroCandidate).new
+      source = if index = @index
+                 index.all_macros
+               else
+                 @inference.all_macros
+               end
+
+      source.each do |macro_uri, macros|
+        macros.each do |macro_info|
+          next unless macro_info.name == macro_name
+          score = macro_candidate_score(uri, macro_uri, macro_name)
+          candidates << MacroCandidate.new(macro_uri, macro_info, score)
+        end
+      end
+
+      candidates.sort_by! do |candidate|
+        import_path = template_path_for_uri(candidate.uri) || candidate.uri
+        {-candidate.score, import_path}
+      end
+      candidates
+    end
+
+    private def macro_candidate_score(request_uri : String, macro_uri : String, macro_name : String) : Int32
+      score = 0
+      score += name_similarity_score(macro_name, macro_name)
+      score += path_proximity_score(request_uri, macro_uri)
+      score
+    end
+
+    private def name_similarity_score(name : String, query : String) : Int32
+      name_lower = name.downcase
+      query_lower = query.downcase
+      return 80 if name_lower == query_lower
+      return 60 if name_lower.starts_with?(query_lower)
+      return 40 if name_lower.includes?(query_lower)
+      10
+    end
+
+    private def path_proximity_score(request_uri : String, macro_uri : String) : Int32
+      request_path = path_for_uri(request_uri)
+      macro_path = path_for_uri(macro_uri)
+      return 0 unless request_path && macro_path
+
+      request_rel = relative_path(request_path)
+      macro_rel = relative_path(macro_path)
+
+      request_dir = File.dirname(request_rel)
+      macro_dir = File.dirname(macro_rel)
+
+      return 50 if request_dir == macro_dir
+
+      request_parts = request_dir.split("/", remove_empty: true)
+      macro_parts = macro_dir.split("/", remove_empty: true)
+
+      common = 0
+      request_parts.each_with_index do |part, idx|
+        break if idx >= macro_parts.size
+        break unless macro_parts[idx] == part
+        common += 1
+      end
+
+      depth_diff = (request_parts.size - macro_parts.size).abs
+      (common * 10) - (depth_diff * 3)
+    end
+
+    private def path_for_uri(uri : String) : String?
+      return unless uri.starts_with?("file://")
+      uri.sub(/^file:\/\//, "")
+    end
+
+    private def relative_path(path : String) : String
+      if root = @root_path
+        root = root.rstrip('/')
+        return path[root.size..].lstrip('/') if path.starts_with?(root)
+      end
+      path
     end
 
     private def extract_unknown_function_name(message : String) : String?
@@ -329,7 +416,7 @@ module Crinkle::LSP
         when AST::CallBlock
           collect_macro_calls(node.callee, used)
           node.args.each { |arg| collect_macro_calls(arg, used) }
-          node.kwargs.each { |kw| collect_macro_calls(kw.value, used) }
+          node.kwargs.each { |kwarg| collect_macro_calls(kwarg.value, used) }
         end
       end
       used
@@ -353,7 +440,7 @@ module Crinkle::LSP
       when AST::CallBlock
         collect_macro_calls(node.callee, used)
         node.args.each { |arg| collect_macro_calls(arg, used) }
-        node.kwargs.each { |kw| collect_macro_calls(kw.value, used) }
+        node.kwargs.each { |kwarg| collect_macro_calls(kwarg.value, used) }
         node.body.each { |child| collect_macro_calls_in_node(child, used) }
       end
     end
@@ -497,15 +584,15 @@ module Crinkle::LSP
       when AST::Filter
         walk_expr(expr.expr, &block)
         expr.args.each { |arg| walk_expr(arg, &block) }
-        expr.kwargs.each { |kw| walk_expr(kw.value, &block) }
+        expr.kwargs.each { |kwarg| walk_expr(kwarg.value, &block) }
       when AST::Test
         walk_expr(expr.expr, &block)
         expr.args.each { |arg| walk_expr(arg, &block) }
-        expr.kwargs.each { |kw| walk_expr(kw.value, &block) }
+        expr.kwargs.each { |kwarg| walk_expr(kwarg.value, &block) }
       when AST::Call
         walk_expr(expr.callee, &block)
         expr.args.each { |arg| walk_expr(arg, &block) }
-        expr.kwargs.each { |kw| walk_expr(kw.value, &block) }
+        expr.kwargs.each { |kwarg| walk_expr(kwarg.value, &block) }
       when AST::GetAttr
         walk_expr(expr.target, &block)
       when AST::GetItem
