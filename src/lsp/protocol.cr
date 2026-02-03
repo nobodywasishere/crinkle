@@ -939,11 +939,16 @@ module Crinkle::LSP
     @[JSON::Field(key: "typoDetection")]
     property? typo_detection : Bool = true
 
+    # Enable/disable inlay hints
+    @[JSON::Field(key: "inlayHints")]
+    property? inlay_hints_enabled : Bool = true
+
     def initialize(
       @lint_enabled : Bool = true,
       @max_file_size : Int32 = 1_000_000,
       @debounce_ms : Int32 = 150,
       @typo_detection : Bool = true,
+      @inlay_hints_enabled : Bool = true,
     ) : Nil
     end
   end

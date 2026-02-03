@@ -347,7 +347,7 @@ end
 
 ### Code Actions
 - [x] Typo quick fix works from diagnostic
-- [ ] Auto-import suggests macros from other templates
+- [x] Auto-import suggests macros from other templates
 - [x] Close tag fix adds missing `%}` or tag name
 - [x] Code actions appear in editor lightbulb menu
 
@@ -376,7 +376,7 @@ end
 
 ### Inlay Hints
 - [x] Parameter name hints for macro calls
-- [ ] Hints configurable (on/off)
+- [x] Hints configurable (on/off)
 - [x] Inferred type hints for `set` variables
 
 ## Checklist
@@ -384,9 +384,9 @@ end
 ### Code Actions
 - [x] Create `CodeActionProvider` class
 - [x] Implement typo quick fix
-- [ ] Implement auto-import for macros
+- [x] Implement auto-import for macros
 - [x] Implement close unclosed tag
-- [ ] Implement remove unused import
+- [x] Implement remove unused import
 - [x] Wire up `textDocument/codeAction` handler
 - [x] Add `codeActionProvider` to server capabilities
 
@@ -425,7 +425,7 @@ end
 ### Inlay Hints
 - [x] Create `InlayHintProvider` class
 - [x] Implement parameter name hints
-- [ ] Add configuration option to enable/disable
+- [x] Add configuration option to enable/disable
 - [x] Wire up `textDocument/inlayHint` handler
 - [x] Add `inlayHintProvider` to server capabilities
 - [x] Add inferred type hints for `set` variables

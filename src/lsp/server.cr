@@ -283,7 +283,7 @@ module Crinkle::LSP
             @link_provider = DocumentLinkProvider.new(root_path)
             @workspace_symbol_provider = WorkspaceSymbolProvider.new(inference)
             @rename_provider = RenameProvider.new(inference, @documents)
-            @code_action_provider = CodeActionProvider.new(inference)
+            @code_action_provider = CodeActionProvider.new(inference, root_path)
             @inlay_hint_provider = InlayHintProvider.new(inference, schema_provider)
 
             # Recreate analyzer with schema for schema-aware linting and typo detection
@@ -819,8 +819,14 @@ module Crinkle::LSP
         range = action_params.range
         context = action_params.context
 
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
         if provider = @code_action_provider
-          actions = provider.code_actions(uri, range, context)
+          actions = provider.code_actions(uri, range, context, doc.text)
           log(MessageType::Log, "<<< Response: codeAction (#{actions.size} actions)")
           send_response(id, JSON.parse(actions.to_json))
         else
@@ -848,6 +854,12 @@ module Crinkle::LSP
         doc = @documents.get(uri)
         unless doc
           send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        if !@lsp_settings.inlay_hints_enabled?
+          log(MessageType::Log, "<<< Response: inlayHint (disabled)")
+          send_response(id, JSON.parse("[]"))
           return
         end
 
@@ -993,7 +1005,7 @@ module Crinkle::LSP
         crinkle_settings = settings["crinkle"]? || settings
 
         @lsp_settings = CrinkleLspSettings.from_json(crinkle_settings.to_json)
-        log(MessageType::Info, "LSP settings updated: lint=#{@lsp_settings.lint_enabled?}, maxFileSize=#{@lsp_settings.max_file_size}, debounceMs=#{@lsp_settings.debounce_ms}")
+        log(MessageType::Info, "LSP settings updated: lint=#{@lsp_settings.lint_enabled?}, maxFileSize=#{@lsp_settings.max_file_size}, debounceMs=#{@lsp_settings.debounce_ms}, inlayHints=#{@lsp_settings.inlay_hints_enabled?}")
 
         # Re-analyze all open documents with new settings
         reanalyze_open_documents

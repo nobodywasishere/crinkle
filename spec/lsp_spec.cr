@@ -2184,6 +2184,53 @@ describe Crinkle::LSP do
 
       actions.should be_empty
     end
+
+    it "suggests auto-import for unknown macros" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::CodeActionProvider.new(inference, "/project")
+
+      macro_template = %({% macro button(text) %}{{ text }}{% endmacro %})
+      macro_uri = "file:///project/templates/macros.html.j2"
+      inference.analyze(macro_uri, macro_template)
+
+      template = %({{ button("Click") }})
+      uri = "file:///project/templates/page.html.j2"
+
+      diagnostic = Crinkle::LSP::Diagnostic.new(
+        range: Crinkle::LSP::Range.new(
+          Crinkle::LSP::Position.new(0, 3),
+          Crinkle::LSP::Position.new(0, 9)
+        ),
+        message: "Unknown function 'button'.",
+        code: "Lint/UnknownFunction"
+      )
+
+      context = Crinkle::LSP::CodeActionContext.new(diagnostics: [diagnostic])
+      actions = provider.code_actions(uri, diagnostic.range, context, template)
+
+      actions.size.should eq 1
+      actions[0].title.should eq "Import 'button' from \"templates/macros.html.j2\""
+    end
+
+    it "suggests removing unused import names" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::CodeActionProvider.new(inference, ".")
+
+      template = %({% from "macros.html.j2" import button, icon %}{{ button("ok") }})
+      uri = "file:///test.j2"
+
+      range = Crinkle::LSP::Range.new(
+        Crinkle::LSP::Position.new(0, 35),
+        Crinkle::LSP::Position.new(0, 40)
+      )
+      context = Crinkle::LSP::CodeActionContext.new(diagnostics: [] of Crinkle::LSP::Diagnostic)
+      actions = provider.code_actions(uri, range, context, template)
+
+      actions.size.should eq 1
+      actions[0].title.should eq "Remove unused import 'icon'"
+    end
   end
 
   describe Crinkle::LSP::InlayHintProvider do
