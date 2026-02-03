@@ -1,7 +1,3 @@
-require "json"
-require "./value"
-require "./object"
-
 module Crinkle
   def self.value(any : JSON::Any) : Value
     value(any.raw)

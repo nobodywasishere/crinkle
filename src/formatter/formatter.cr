@@ -1,6 +1,3 @@
-require "./html/tokenizer"
-require "./html/indent_engine"
-
 module Crinkle
   class Formatter
     @preformatted_indent : String?

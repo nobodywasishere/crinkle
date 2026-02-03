@@ -1,5 +1,3 @@
-require "./schema"
-
 module Crinkle
   PRIMITIVES = ["String", "Int64", "Float64", "Bool"]
 

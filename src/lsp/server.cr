@@ -1,28 +1,3 @@
-require "json"
-require "uri"
-require "../lexer/lexer"
-require "../parser/parser"
-require "../linter/linter"
-require "../linter/rules"
-require "../formatter/formatter"
-require "./config"
-require "./schema_provider"
-require "./inference"
-require "./completion"
-require "./hover"
-require "./signature_help"
-require "./definition"
-require "./references"
-require "./symbols"
-require "./folding"
-require "./highlights"
-require "./links"
-require "./workspace_symbols"
-require "./workspace_index"
-require "./rename"
-require "./code_actions"
-require "./inlay_hints"
-
 module Crinkle::LSP
   # Cancellation token for long-running operations.
   # Allows analysis to be cancelled when document changes.

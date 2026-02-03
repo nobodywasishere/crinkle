@@ -1,5 +1,3 @@
-require "html"
-
 module Crinkle
   struct SafeString
     def initialize(@string : String, @plain_value : Bool = false) : Nil

@@ -1,6 +1,3 @@
-require "./protocol"
-require "./schema_provider"
-
 module Crinkle::LSP
   # Signature context types
   enum SignatureContextType

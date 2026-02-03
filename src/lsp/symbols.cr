@@ -1,8 +1,3 @@
-require "./protocol"
-require "./document"
-require "./workspace_index"
-require "../ast/visitor"
-
 module Crinkle::LSP
   # Provides document symbols (outline) for textDocument/documentSymbol
   class SymbolProvider

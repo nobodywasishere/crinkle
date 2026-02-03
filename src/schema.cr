@@ -1,5 +1,3 @@
-require "json"
-
 module Crinkle
   module Schema
     VERSION = 1

@@ -1,5 +1,3 @@
-require "json"
-
 module Crinkle
   module AST
     module Serializer

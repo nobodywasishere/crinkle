@@ -1,6 +1,3 @@
-require "../lexer/lexer"
-require "../parser"
-
 module Crinkle::LSP
   # Represents an open text document in the LSP server.
   class Document

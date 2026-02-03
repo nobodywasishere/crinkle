@@ -1,6 +1,4 @@
 require "../spec_helper"
-require "../../src/lsp/lsp"
-require "file_utils"
 
 describe Crinkle::LSP do
   describe Crinkle::LSP::ReferencesProvider do

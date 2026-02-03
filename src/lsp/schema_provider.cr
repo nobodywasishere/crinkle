@@ -1,6 +1,3 @@
-require "json"
-require "../schema"
-
 module Crinkle::LSP
   # Provides access to schema data for LSP semantic features.
   # Uses the built-in standard library schema by default, with optional

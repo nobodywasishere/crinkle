@@ -1,5 +1,3 @@
-require "levenshtein"
-
 module Crinkle
   module Linter
     module Rules

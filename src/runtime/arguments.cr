@@ -1,5 +1,3 @@
-require "./value"
-
 module Crinkle
   # Represents arguments passed to a callable object from a template.
   # Handles both positional arguments (varargs) and keyword arguments (kwargs),

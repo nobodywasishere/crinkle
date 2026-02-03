@@ -1,7 +1,3 @@
-require "yaml"
-require "./value"
-require "./object"
-
 module Crinkle
   def self.value(any : YAML::Any) : Value
     value(any.raw)

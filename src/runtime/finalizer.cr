@@ -1,5 +1,3 @@
-require "html"
-
 module Crinkle
   struct Finalizer
     def self.stringify(raw : Crinkle::Value, escape : Bool = false, in_struct : Bool = false) : String

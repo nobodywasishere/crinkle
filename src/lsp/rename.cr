@@ -1,12 +1,3 @@
-require "./protocol"
-require "./inference"
-require "./document"
-require "./workspace_index"
-require "../lexer/lexer"
-require "../parser/parser"
-require "../ast/nodes"
-require "../ast/visitor"
-
 module Crinkle::LSP
   # Rename context types
   enum RenameContextType

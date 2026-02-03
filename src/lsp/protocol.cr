@@ -1,5 +1,3 @@
-require "json"
-
 module Crinkle::LSP
   # JSON-RPC 2.0 message types
 

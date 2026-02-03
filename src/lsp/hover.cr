@@ -1,9 +1,3 @@
-require "./protocol"
-require "./schema_provider"
-require "./inference"
-require "../lexer/lexer"
-require "../std/tags"
-
 module Crinkle::LSP
   # Hover context types
   enum HoverContextType

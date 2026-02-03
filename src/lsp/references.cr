@@ -1,9 +1,3 @@
-require "./protocol"
-require "./inference"
-require "../lexer/lexer"
-require "../parser/parser"
-require "../ast/nodes"
-
 module Crinkle::LSP
   # Reference context types (reuse from definition for consistency)
   enum ReferenceContextType

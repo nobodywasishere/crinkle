@@ -1,6 +1,3 @@
-require "./tokenizer"
-require "./parser"
-
 module Crinkle
   module HTML
     class IndentEngine

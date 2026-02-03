@@ -1,9 +1,3 @@
-require "./protocol"
-require "./inference"
-require "../lexer/lexer"
-require "../parser/parser"
-require "../ast/nodes"
-
 module Crinkle::LSP
   # Highlight context types
   enum HighlightContextType

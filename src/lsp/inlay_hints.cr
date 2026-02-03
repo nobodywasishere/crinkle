@@ -1,11 +1,3 @@
-require "./protocol"
-require "./inference"
-require "./schema_provider"
-require "../lexer/lexer"
-require "../parser/parser"
-require "../ast/nodes"
-require "../ast/visitor"
-
 module Crinkle::LSP
   # Provides inlay hints (parameter names for macro calls, filters, tests,
   # and inferred types for set variables)

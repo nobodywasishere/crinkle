@@ -1,7 +1,3 @@
-require "./protocol"
-require "./inference"
-require "./workspace_index"
-
 module Crinkle::LSP
   # Provides workspace-wide symbol search.
   # Uses workspace index if available, otherwise falls back to inference cache.

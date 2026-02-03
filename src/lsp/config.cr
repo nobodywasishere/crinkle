@@ -1,5 +1,3 @@
-require "yaml"
-
 module Crinkle::LSP
   # Configuration for Crinkle LSP semantic features
   struct Config

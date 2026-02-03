@@ -1,7 +1,5 @@
-require "../crinkle"
-require "../lsp/lsp"
 require "option_parser"
-require "json"
+require "../crinkle"
 
 module Crinkle
   module CLI

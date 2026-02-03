@@ -1,7 +1,3 @@
-require "../ast/nodes"
-require "../ast/visitor"
-require "../parser/parser"
-
 module Crinkle::LSP
   # Source of a variable definition
   enum VariableSource

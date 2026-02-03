@@ -1,6 +1,3 @@
-require "./value"
-require "./callable"
-
 module Crinkle
   annotation Attribute
   end

@@ -1,11 +1,3 @@
-require "./protocol"
-require "./inference"
-require "./workspace_index"
-require "../lexer/lexer"
-require "../parser/parser"
-require "../ast/nodes"
-require "../ast/visitor"
-
 module Crinkle::LSP
   # Provides code actions (quick fixes) for diagnostics
   class CodeActionProvider

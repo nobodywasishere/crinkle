@@ -1,6 +1,3 @@
-require "./value"
-require "./arguments"
-
 module Crinkle
   # Type alias for callable procs that take Arguments and return a Value.
   # Objects can return these from `jinja_call` to expose callable methods.

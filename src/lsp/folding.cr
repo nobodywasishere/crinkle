@@ -1,7 +1,3 @@
-require "./protocol"
-require "./document"
-require "../ast/visitor"
-
 module Crinkle::LSP
   # Provides folding ranges for textDocument/foldingRange
   class FoldingProvider

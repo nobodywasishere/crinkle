@@ -1,7 +1,3 @@
-require "./protocol"
-require "./inference"
-require "../lexer/lexer"
-
 module Crinkle::LSP
   # Definition context types
   enum DefinitionContextType

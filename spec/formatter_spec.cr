@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../src/crinkle"
 
 describe Crinkle::Formatter do
   describe "idempotency" do

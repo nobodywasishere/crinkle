@@ -1,10 +1,3 @@
-require "../lexer/lexer"
-require "../parser/parser"
-require "../ast/nodes"
-require "../ast/visitor"
-require "./inference"
-require "./config"
-
 module Crinkle::LSP
   # Workspace-wide index of template symbols for unopened files.
   class WorkspaceIndex

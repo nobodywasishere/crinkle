@@ -1,10 +1,3 @@
-require "./protocol"
-require "./schema_provider"
-require "./inference"
-require "../lexer/lexer"
-require "../parser/parser"
-require "../std/tags"
-
 module Crinkle::LSP
   # Completion context types
   enum CompletionContextType

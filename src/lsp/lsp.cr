@@ -1,17 +1,3 @@
-require "../crinkle"
-require "./protocol"
-require "./logger"
-require "./transport"
-require "./document"
-require "./diagnostics"
-require "./config"
-require "./schema_provider"
-require "./inference"
-require "./completion"
-require "./hover"
-require "./signature_help"
-require "./server"
-
 module Crinkle::LSP
   def self.run(args : Array(String)) : Int32
     log_file : String? = nil

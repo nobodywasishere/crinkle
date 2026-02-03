@@ -1,5 +1,3 @@
-require "json"
-
 module Crinkle::LSP
   # Handles LSP message transport over stdio.
   # LSP uses Content-Length headers followed by JSON-RPC messages.

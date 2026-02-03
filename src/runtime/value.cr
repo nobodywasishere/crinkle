@@ -1,5 +1,3 @@
-require "./types"
-
 module Crinkle
   alias Number = Float64 | Int64 | Int32
 

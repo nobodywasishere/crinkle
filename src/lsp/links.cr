@@ -1,8 +1,3 @@
-require "./protocol"
-require "../lexer/lexer"
-require "../parser/parser"
-require "../ast/nodes"
-
 module Crinkle::LSP
   # Template reference found in the source
   private struct TemplateRef
