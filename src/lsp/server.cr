@@ -15,6 +15,12 @@ require "./definition"
 require "./references"
 require "./symbols"
 require "./folding"
+require "./highlights"
+require "./links"
+require "./workspace_symbols"
+require "./rename"
+require "./code_actions"
+require "./inlay_hints"
 
 module Crinkle::LSP
   # Cancellation token for long-running operations.
@@ -62,6 +68,12 @@ module Crinkle::LSP
     @references_provider : ReferencesProvider?
     @symbol_provider : SymbolProvider?
     @folding_provider : FoldingProvider?
+    @highlight_provider : DocumentHighlightProvider?
+    @link_provider : DocumentLinkProvider?
+    @workspace_symbol_provider : WorkspaceSymbolProvider?
+    @rename_provider : RenameProvider?
+    @code_action_provider : CodeActionProvider?
+    @inlay_hint_provider : InlayHintProvider?
 
     # Cancellation tokens for pending analysis per URI
     @cancellation_tokens : Hash(String, CancellationToken)
@@ -89,6 +101,12 @@ module Crinkle::LSP
       @references_provider = nil
       @symbol_provider = nil
       @folding_provider = nil
+      @highlight_provider = nil
+      @link_provider = nil
+      @workspace_symbol_provider = nil
+      @rename_provider = nil
+      @code_action_provider = nil
+      @inlay_hint_provider = nil
       @cancellation_tokens = Hash(String, CancellationToken).new
     end
 
@@ -164,6 +182,20 @@ module Crinkle::LSP
           handle_document_symbol(id, params)
         when "textDocument/foldingRange"
           handle_folding_range(id, params)
+        when "textDocument/documentHighlight"
+          handle_document_highlight(id, params)
+        when "textDocument/documentLink"
+          handle_document_link(id, params)
+        when "workspace/symbol"
+          handle_workspace_symbol(id, params)
+        when "textDocument/prepareRename"
+          handle_prepare_rename(id, params)
+        when "textDocument/rename"
+          handle_rename(id, params)
+        when "textDocument/codeAction"
+          handle_code_action(id, params)
+        when "textDocument/inlayHint"
+          handle_inlay_hint(id, params)
         else
           log(MessageType::Log, "<<< Error: Method not found: #{method}")
           send_error(id, ErrorCodes::MethodNotFound, "Method not found: #{method}")
@@ -247,6 +279,12 @@ module Crinkle::LSP
             @references_provider = ReferencesProvider.new(inference, @documents)
             @symbol_provider = SymbolProvider.new
             @folding_provider = FoldingProvider.new
+            @highlight_provider = DocumentHighlightProvider.new(inference)
+            @link_provider = DocumentLinkProvider.new(root_path)
+            @workspace_symbol_provider = WorkspaceSymbolProvider.new(inference)
+            @rename_provider = RenameProvider.new(inference, @documents)
+            @code_action_provider = CodeActionProvider.new(inference)
+            @inlay_hint_provider = InlayHintProvider.new(inference, schema_provider)
 
             # Recreate analyzer with schema for schema-aware linting and typo detection
             custom_schema = schema_provider.custom_schema
@@ -274,7 +312,13 @@ module Crinkle::LSP
         definition_provider: true,
         references_provider: true,
         document_symbol_provider: false, # temp workaround
-        folding_range_provider: true
+        folding_range_provider: true,
+        document_highlight_provider: true,
+        document_link_provider: true,
+        workspace_symbol_provider: true,
+        rename_provider: RenameOptions.new(prepare_provider: true),
+        code_action_provider: true,
+        inlay_hint_provider: true
       )
 
       result = InitializeResult.new(
@@ -598,6 +642,226 @@ module Crinkle::LSP
       rescue ex
         log(MessageType::Error, "Failed to provide folding ranges: #{ex.message}")
         send_error(id, ErrorCodes::InternalError, "Folding range error: #{ex.message}")
+      end
+    end
+
+    # textDocument/documentHighlight handler
+    private def handle_document_highlight(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        highlight_params = DocumentHighlightParams.from_json(params.to_json)
+        uri = highlight_params.text_document.uri
+        position = highlight_params.position
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        if provider = @highlight_provider
+          highlights = provider.highlights(uri, doc.text, position)
+          log(MessageType::Log, "<<< Response: documentHighlight (#{highlights.size} highlights)")
+          send_response(id, JSON.parse(highlights.to_json))
+        else
+          log(MessageType::Log, "<<< Response: documentHighlight (no provider)")
+          send_response(id, JSON.parse("[]"))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide document highlights: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Document highlight error: #{ex.message}")
+      end
+    end
+
+    # textDocument/documentLink handler
+    private def handle_document_link(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        link_params = DocumentLinkParams.from_json(params.to_json)
+        uri = link_params.text_document.uri
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        if provider = @link_provider
+          links = provider.links(uri, doc.text)
+          log(MessageType::Log, "<<< Response: documentLink (#{links.size} links)")
+          send_response(id, JSON.parse(links.to_json))
+        else
+          log(MessageType::Log, "<<< Response: documentLink (no provider)")
+          send_response(id, JSON.parse("[]"))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide document links: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Document link error: #{ex.message}")
+      end
+    end
+
+    # workspace/symbol handler
+    private def handle_workspace_symbol(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        symbol_params = WorkspaceSymbolParams.from_json(params.to_json)
+        query = symbol_params.query
+
+        if provider = @workspace_symbol_provider
+          symbols = provider.symbols(query)
+          log(MessageType::Log, "<<< Response: workspace/symbol (#{symbols.size} symbols)")
+          send_response(id, JSON.parse(symbols.to_json))
+        else
+          log(MessageType::Log, "<<< Response: workspace/symbol (no provider)")
+          send_response(id, JSON.parse("[]"))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide workspace symbols: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Workspace symbol error: #{ex.message}")
+      end
+    end
+
+    # textDocument/prepareRename handler
+    private def handle_prepare_rename(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        rename_params = PrepareRenameParams.from_json(params.to_json)
+        uri = rename_params.text_document.uri
+        position = rename_params.position
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        if provider = @rename_provider
+          if result = provider.prepare_rename(uri, doc.text, position)
+            log(MessageType::Log, "<<< Response: prepareRename (#{result.placeholder})")
+            send_response(id, JSON.parse(result.to_json))
+          else
+            log(MessageType::Log, "<<< Response: prepareRename (null)")
+            send_response(id, JSON::Any.new(nil))
+          end
+        else
+          log(MessageType::Log, "<<< Response: prepareRename (no provider)")
+          send_response(id, JSON::Any.new(nil))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to prepare rename: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Prepare rename error: #{ex.message}")
+      end
+    end
+
+    # textDocument/rename handler
+    private def handle_rename(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        rename_params = RenameParams.from_json(params.to_json)
+        uri = rename_params.text_document.uri
+        position = rename_params.position
+        new_name = rename_params.new_name
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        if provider = @rename_provider
+          if edit = provider.rename(uri, doc.text, position, new_name)
+            log(MessageType::Log, "<<< Response: rename (#{edit.changes.try(&.size) || 0} files)")
+            send_response(id, JSON.parse(edit.to_json))
+          else
+            log(MessageType::Log, "<<< Response: rename (null)")
+            send_response(id, JSON::Any.new(nil))
+          end
+        else
+          log(MessageType::Log, "<<< Response: rename (no provider)")
+          send_response(id, JSON::Any.new(nil))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to rename: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Rename error: #{ex.message}")
+      end
+    end
+
+    # textDocument/codeAction handler
+    private def handle_code_action(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        action_params = CodeActionParams.from_json(params.to_json)
+        uri = action_params.text_document.uri
+        range = action_params.range
+        context = action_params.context
+
+        if provider = @code_action_provider
+          actions = provider.code_actions(uri, range, context)
+          log(MessageType::Log, "<<< Response: codeAction (#{actions.size} actions)")
+          send_response(id, JSON.parse(actions.to_json))
+        else
+          log(MessageType::Log, "<<< Response: codeAction (no provider)")
+          send_response(id, JSON.parse("[]"))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide code actions: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Code action error: #{ex.message}")
+      end
+    end
+
+    # textDocument/inlayHint handler
+    private def handle_inlay_hint(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        hint_params = InlayHintParams.from_json(params.to_json)
+        uri = hint_params.text_document.uri
+        range = hint_params.range
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        if provider = @inlay_hint_provider
+          hints = provider.inlay_hints(uri, doc.text, range)
+          log(MessageType::Log, "<<< Response: inlayHint (#{hints.size} hints)")
+          send_response(id, JSON.parse(hints.to_json))
+        else
+          log(MessageType::Log, "<<< Response: inlayHint (no provider)")
+          send_response(id, JSON.parse("[]"))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide inlay hints: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Inlay hint error: #{ex.message}")
       end
     end
 

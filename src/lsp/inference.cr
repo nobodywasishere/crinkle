@@ -896,6 +896,33 @@ module Crinkle::LSP
       end
     end
 
+    # Get all macros across all analyzed templates (for workspace symbol search)
+    def all_macros : Hash(String, Array(MacroInfo))
+      result = Hash(String, Array(MacroInfo)).new
+      @macros.each do |uri, macs|
+        result[uri] = macs.values.to_a
+      end
+      result
+    end
+
+    # Get all blocks across all analyzed templates (for workspace symbol search)
+    def all_blocks : Hash(String, Array(BlockInfo))
+      result = Hash(String, Array(BlockInfo)).new
+      @blocks.each do |uri, blks|
+        result[uri] = blks.values.to_a
+      end
+      result
+    end
+
+    # Get all variables across all analyzed templates (for workspace symbol search)
+    def all_variables : Hash(String, Array(VariableInfo))
+      result = Hash(String, Array(VariableInfo)).new
+      @variables.each do |uri, vars|
+        result[uri] = vars.values.to_a
+      end
+      result
+    end
+
     # Get all template relationships for a URI (imports, extends, includes)
     def relationships_for(uri : String) : Array(String)
       @relationships[uri]?.try(&.to_a) || Array(String).new

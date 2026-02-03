@@ -159,6 +159,10 @@ module Crinkle::LSP
     Warning     = 2
     Information = 3
     Hint        = 4
+
+    def to_json(json : JSON::Builder) : Nil
+      json.number(value)
+    end
   end
 
   # Diagnostic message
@@ -166,6 +170,7 @@ module Crinkle::LSP
     include JSON::Serializable
 
     property range : Range
+    @[JSON::Field(converter: Enum::ValueConverter(Crinkle::LSP::DiagnosticSeverity))]
     property severity : DiagnosticSeverity?
     property code : (String | Int32)?
     property source : String?
@@ -264,6 +269,18 @@ module Crinkle::LSP
     property document_symbol_provider : Bool?
     @[JSON::Field(key: "foldingRangeProvider")]
     property folding_range_provider : Bool?
+    @[JSON::Field(key: "documentHighlightProvider")]
+    property document_highlight_provider : Bool?
+    @[JSON::Field(key: "documentLinkProvider")]
+    property document_link_provider : Bool?
+    @[JSON::Field(key: "workspaceSymbolProvider")]
+    property workspace_symbol_provider : Bool?
+    @[JSON::Field(key: "renameProvider")]
+    property rename_provider : RenameOptions?
+    @[JSON::Field(key: "codeActionProvider")]
+    property code_action_provider : Bool?
+    @[JSON::Field(key: "inlayHintProvider")]
+    property inlay_hint_provider : Bool?
     property workspace : WorkspaceServerCapabilities?
 
     def initialize(
@@ -276,8 +293,25 @@ module Crinkle::LSP
       @references_provider : Bool? = nil,
       @document_symbol_provider : Bool? = nil,
       @folding_range_provider : Bool? = nil,
+      @document_highlight_provider : Bool? = nil,
+      @document_link_provider : Bool? = nil,
+      @workspace_symbol_provider : Bool? = nil,
+      @rename_provider : RenameOptions? = nil,
+      @code_action_provider : Bool? = nil,
+      @inlay_hint_provider : Bool? = nil,
       @workspace : WorkspaceServerCapabilities? = nil,
     ) : Nil
+    end
+  end
+
+  # Rename options
+  struct RenameOptions
+    include JSON::Serializable
+
+    @[JSON::Field(key: "prepareProvider")]
+    property? prepare_provider : Bool?
+
+    def initialize(@prepare_provider : Bool? = nil) : Nil
     end
   end
 
@@ -910,6 +944,241 @@ module Crinkle::LSP
       @max_file_size : Int32 = 1_000_000,
       @debounce_ms : Int32 = 150,
       @typo_detection : Bool = true,
+    ) : Nil
+    end
+  end
+
+  # Document highlight kind
+  enum DocumentHighlightKind
+    Text  = 1
+    Read  = 2
+    Write = 3
+
+    def to_json(json : JSON::Builder) : Nil
+      json.number(value)
+    end
+  end
+
+  # Document highlight
+  struct DocumentHighlight
+    include JSON::Serializable
+
+    property range : Range
+    property kind : DocumentHighlightKind?
+
+    def initialize(@range : Range, @kind : DocumentHighlightKind? = nil) : Nil
+    end
+  end
+
+  # Document highlight params
+  struct DocumentHighlightParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property position : Position
+
+    def initialize(@text_document : TextDocumentIdentifier, @position : Position) : Nil
+    end
+  end
+
+  # Document link
+  struct DocumentLink
+    include JSON::Serializable
+
+    property range : Range
+    property target : String?
+    property tooltip : String?
+
+    def initialize(@range : Range, @target : String? = nil, @tooltip : String? = nil) : Nil
+    end
+  end
+
+  # Document link params
+  struct DocumentLinkParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+
+    def initialize(@text_document : TextDocumentIdentifier) : Nil
+    end
+  end
+
+  # Workspace symbol params
+  struct WorkspaceSymbolParams
+    include JSON::Serializable
+
+    property query : String
+
+    def initialize(@query : String) : Nil
+    end
+  end
+
+  # Symbol information (flat, for workspace symbols)
+  struct SymbolInformation
+    include JSON::Serializable
+
+    property name : String
+    property kind : SymbolKind
+    property location : Location
+    @[JSON::Field(key: "containerName")]
+    property container_name : String?
+
+    def initialize(
+      @name : String,
+      @kind : SymbolKind,
+      @location : Location,
+      @container_name : String? = nil,
+    ) : Nil
+    end
+  end
+
+  # Rename params
+  struct RenameParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property position : Position
+    @[JSON::Field(key: "newName")]
+    property new_name : String
+
+    def initialize(
+      @text_document : TextDocumentIdentifier,
+      @position : Position,
+      @new_name : String,
+    ) : Nil
+    end
+  end
+
+  # Prepare rename params (same as TextDocumentPositionParams)
+  struct PrepareRenameParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property position : Position
+
+    def initialize(@text_document : TextDocumentIdentifier, @position : Position) : Nil
+    end
+  end
+
+  # Prepare rename result
+  struct PrepareRenameResult
+    include JSON::Serializable
+
+    property range : Range
+    property placeholder : String
+
+    def initialize(@range : Range, @placeholder : String) : Nil
+    end
+  end
+
+  # Workspace edit (for rename)
+  struct WorkspaceEdit
+    include JSON::Serializable
+
+    property changes : Hash(String, Array(TextEdit))?
+
+    def initialize(@changes : Hash(String, Array(TextEdit))? = nil) : Nil
+    end
+  end
+
+  # Code action kind
+  module CodeActionKind
+    QuickFix       = "quickfix"
+    Refactor       = "refactor"
+    Source         = "source"
+    SourceOrganize = "source.organizeImports"
+  end
+
+  # Code action params
+  struct CodeActionParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property range : Range
+    property context : CodeActionContext
+
+    def initialize(
+      @text_document : TextDocumentIdentifier,
+      @range : Range,
+      @context : CodeActionContext,
+    ) : Nil
+    end
+  end
+
+  # Code action context
+  struct CodeActionContext
+    include JSON::Serializable
+
+    property diagnostics : Array(Diagnostic)
+    property only : Array(String)?
+
+    def initialize(@diagnostics : Array(Diagnostic), @only : Array(String)? = nil) : Nil
+    end
+  end
+
+  # Code action
+  struct CodeAction
+    include JSON::Serializable
+
+    property title : String
+    property kind : String?
+    property diagnostics : Array(Diagnostic)?
+    property edit : WorkspaceEdit?
+
+    def initialize(
+      @title : String,
+      @kind : String? = nil,
+      @diagnostics : Array(Diagnostic)? = nil,
+      @edit : WorkspaceEdit? = nil,
+    ) : Nil
+    end
+  end
+
+  # Inlay hint kind
+  enum InlayHintKind
+    Type      = 1
+    Parameter = 2
+
+    def to_json(json : JSON::Builder) : Nil
+      json.number(value)
+    end
+  end
+
+  # Inlay hint params
+  struct InlayHintParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property range : Range
+
+    def initialize(@text_document : TextDocumentIdentifier, @range : Range) : Nil
+    end
+  end
+
+  # Inlay hint
+  struct InlayHint
+    include JSON::Serializable
+
+    property position : Position
+    property label : String
+    property kind : InlayHintKind?
+    @[JSON::Field(key: "paddingLeft")]
+    property? padding_left : Bool?
+    @[JSON::Field(key: "paddingRight")]
+    property? padding_right : Bool?
+
+    def initialize(
+      @position : Position,
+      @label : String,
+      @kind : InlayHintKind? = nil,
+      @padding_left : Bool? = nil,
+      @padding_right : Bool? = nil,
     ) : Nil
     end
   end
