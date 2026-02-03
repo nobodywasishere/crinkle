@@ -16,6 +16,53 @@ private def register_extension_renderers(renderer : Crinkle::Renderer) : Nil
   end
 end
 
+private def collect_target_names(target : Crinkle::AST::Target) : Array(String)
+  case target
+  when Crinkle::AST::Name
+    [target.value]
+  when Crinkle::AST::TupleLiteral
+    target.items.compact_map do |item|
+      item.is_a?(Crinkle::AST::Name) ? item.value : nil
+    end
+  else
+    Array(String).new
+  end
+end
+
+private def type_inference_snapshot(template : Crinkle::AST::Template, schema : Crinkle::Schema::Registry) : JSON::Any
+  inferer = Crinkle::TypeInference::Inferer.new(schema)
+  env = Crinkle::TypeInference::Environment.new
+  types = Hash(String, String).new
+
+  Crinkle::AST::Walker.walk_nodes(template.body) do |node|
+    case node
+    when Crinkle::AST::Set
+      type = inferer.infer_expr_type(node.value, env)
+      next unless type
+      collect_target_names(node.target).each do |name|
+        types[name] = type.to_s
+        env.set(name, type)
+      end
+    when Crinkle::AST::SetBlock
+      type = Crinkle::TypeInference::TypeRef.new("String")
+      collect_target_names(node.target).each do |name|
+        types[name] = type.to_s
+        env.set(name, type)
+      end
+    when Crinkle::AST::Macro
+      node.params.each do |param|
+        default_value = param.default_value
+        next unless default_value
+        param_type = inferer.infer_expr_type(default_value, env)
+        next unless param_type
+        types["#{node.name}.#{param.name}"] = param_type.to_s
+      end
+    end
+  end
+
+  JSON.parse(types.to_json)
+end
+
 private def run_fixture(info : FixtureInfo, env : Crinkle::Environment, context : Hash(String, Crinkle::Value), &register_renderers : Crinkle::Renderer -> Nil) : Nil
   source = File.read(info.path)
   lexer = Crinkle::Lexer.new(source)
@@ -42,6 +89,13 @@ private def run_fixture(info : FixtureInfo, env : Crinkle::Environment, context 
   assert_json_fixture(info.name, "parser", "ast", JSON.parse(Crinkle::AST::Serializer.to_pretty_json(template)), info.base_dir)
   assert_text_fixture(info.name, "formatter", "output", formatter_output, info.template_ext, info.base_dir)
   assert_text_fixture(info.name, "renderer", "output", renderer_output, "txt", info.base_dir)
+  type_inference = type_inference_snapshot(template, Crinkle::Schema.registry)
+  type_inference_path = fixture_path(info.name, "type_inference", nil, "json", info.base_dir)
+  if type_inference.as_h.empty?
+    File.delete(type_inference_path) if File.exists?(type_inference_path)
+  else
+    assert_snapshot(type_inference_path, type_inference)
+  end
 
   diags = diagnostics_payload(lexer.diagnostics, parser.diagnostics, formatter.diagnostics, renderer.diagnostics, linter_issues)
   path = fixture_path(info.name, "diagnostics", nil, "json", info.base_dir)

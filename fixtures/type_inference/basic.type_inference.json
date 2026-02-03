@@ -1,0 +1,14 @@
+{
+  "count": "Int64",
+  "ratio": "Float64",
+  "title": "String",
+  "active": "Bool",
+  "names": "Array",
+  "data": "Hash",
+  "combo": "Float64",
+  "up": "String",
+  "ok": "Bool",
+  "items": "Array",
+  "greet.name": "String",
+  "greet.times": "Int64"
+}

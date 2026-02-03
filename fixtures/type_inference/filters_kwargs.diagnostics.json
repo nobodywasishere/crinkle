@@ -1,0 +1,25 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_VARIABLE",
+      "severity": "error",
+      "message": "Unknown variable 'True'.",
+      "span": {
+        "start": {
+          "offset": 137,
+          "line": 3,
+          "column": 46
+        },
+        "end": {
+          "offset": 141,
+          "line": 3,
+          "column": 50
+        }
+      }
+    }
+  ],
+  "linter": []
+}

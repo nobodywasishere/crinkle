@@ -125,5 +125,77 @@ describe Crinkle::LSP do
         Dir.delete(dir)
       end
     end
+
+    it "ranks completions using custom schema types" do
+      tmp_root = ENV["TMPDIR"]? || "/tmp"
+      dir = File.join(tmp_root, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Random.rand(1000)}")
+      Dir.mkdir(dir)
+
+      begin
+        schema_dir = File.join(dir, ".crinkle")
+        Dir.mkdir(schema_dir)
+        schema_path = File.join(schema_dir, "schema.json")
+
+        schema = Crinkle::Schema::Registry.new
+        schema.register_template(
+          Crinkle::Schema::TemplateContextSchema.new(
+            path: "page.j2",
+            context: {"user" => "User"}
+          )
+        )
+        schema.register_callable(
+          Crinkle::Schema::CallableSchema.new(
+            class_name: "User",
+            methods: {
+              "name" => Crinkle::Schema::MethodSchema.new(name: "name", returns: "String"),
+            }
+          )
+        )
+        File.write(schema_path, schema.to_json)
+
+        config = Crinkle::LSP::Config.new(template_paths: ["."])
+        schema_provider = Crinkle::LSP::SchemaProvider.new(config, dir)
+        inference = Crinkle::LSP::InferenceEngine.new(config, dir, schema_provider.custom_schema || Crinkle::Schema.registry)
+        provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference, dir)
+
+        uri = "file://#{File.join(dir, "page.j2")}"
+        inference.analyze(uri, "{{ user.name }}")
+
+        var_completions = provider.completions(uri, "{{ ", Crinkle::LSP::Position.new(0, 3))
+        user_item = var_completions.find(&.label.==("user"))
+        user_item.should_not be_nil
+        user_item = user_item.as(Crinkle::LSP::CompletionItem)
+        user_item.detail.should_not be_nil
+        user_item.detail.try(&.includes?("User")).should be_true
+        user_item.sort_text.should_not be_nil
+        user_item.sort_text.try(&.starts_with?("0")).should be_true
+
+        prop_completions = provider.completions(uri, "{{ user.", Crinkle::LSP::Position.new(0, 8))
+        name_item = prop_completions.find(&.label.==("name"))
+        name_item.should_not be_nil
+        name_item = name_item.as(Crinkle::LSP::CompletionItem)
+        name_item.detail.should_not be_nil
+        name_item.detail.try(&.includes?("method")).should be_true
+        name_item.detail.try(&.includes?("String")).should be_true
+        name_item.sort_text.should_not be_nil
+        name_item.sort_text.try(&.starts_with?("0")).should be_true
+      ensure
+        if Dir.exists?(dir)
+          Dir.each_child(dir) do |entry|
+            path = File.join(dir, entry)
+            if File.directory?(path)
+              Dir.each_child(path) do |child|
+                child_path = File.join(path, child)
+                File.delete(child_path) if File.file?(child_path)
+              end
+              Dir.delete(path)
+            else
+              File.delete(path) if File.file?(path)
+            end
+          end
+          Dir.delete(dir)
+        end
+      end
+    end
   end
 end

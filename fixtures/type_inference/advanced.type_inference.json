@@ -1,0 +1,14 @@
+{
+  "count": "Int64",
+  "ratio": "Float64",
+  "total": "Float64",
+  "label": "String",
+  "is_even": "Bool",
+  "items": "Array",
+  "pairs": "Tuple",
+  "mixed": "Array",
+  "data": "Hash",
+  "block_value": "String",
+  "card.title": "String",
+  "card.width": "Int64"
+}

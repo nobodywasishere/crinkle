@@ -199,9 +199,6 @@ module Crinkle::LSP
       if source_uri = target.source_uri
         importer_uris << source_uri
       end
-      Logger.stderr(Logger::Level::Debug).debug(
-        "Rename macro imports for #{target.template_path}: #{importer_uris.to_a.join(", ")}"
-      )
       importer_uris
     end
 

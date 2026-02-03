@@ -18,8 +18,14 @@ module Crinkle::LSP
     property type : CompletionContextType
     property prefix : String
     property variable : String?
+    property receiver : String?
 
-    def initialize(@type : CompletionContextType, @prefix : String, @variable : String? = nil) : Nil
+    def initialize(
+      @type : CompletionContextType,
+      @prefix : String,
+      @variable : String? = nil,
+      @receiver : String? = nil,
+    ) : Nil
     end
   end
 
@@ -45,9 +51,9 @@ module Crinkle::LSP
 
       case context.type
       when .filter?
-        filter_completions(context.prefix)
+        filter_completions(uri, context.prefix, context.receiver)
       when .test?
-        test_completions(context.prefix)
+        test_completions(uri, context.prefix, context.receiver)
       when .function?
         function_completions(context.prefix)
       when .property?
@@ -72,31 +78,35 @@ module Crinkle::LSP
     end
 
     # Get filter completions
-    private def filter_completions(prefix : String) : Array(CompletionItem)
+    private def filter_completions(uri : String, prefix : String, receiver : String?) : Array(CompletionItem)
+      expected_type = type_for_receiver(uri, receiver)
       @schema_provider.filters.values.select do |filter|
         filter.name.starts_with?(prefix)
       end.map do |filter|
+        compatible = filter_compatible?(expected_type, filter)
         CompletionItem.new(
           label: filter.name,
           kind: CompletionItemKind::Function,
           detail: @schema_provider.filter_args_signature(filter),
           documentation: filter.doc,
-          sort_text: filter.name
+          sort_text: "#{compatible ? "0" : "1"}#{filter.name}"
         )
       end
     end
 
     # Get test completions
-    private def test_completions(prefix : String) : Array(CompletionItem)
+    private def test_completions(uri : String, prefix : String, receiver : String?) : Array(CompletionItem)
+      expected_type = type_for_receiver(uri, receiver)
       @schema_provider.tests.values.select do |test|
         test.name.starts_with?(prefix)
       end.map do |test|
+        compatible = test_compatible?(expected_type, test)
         CompletionItem.new(
           label: test.name,
           kind: CompletionItemKind::Function,
           detail: @schema_provider.test_args_signature(test),
           documentation: test.doc,
-          sort_text: test.name
+          sort_text: "#{compatible ? "0" : "1"}#{test.name}"
         )
       end
     end
@@ -106,10 +116,13 @@ module Crinkle::LSP
       @schema_provider.functions.values.select do |func|
         func.name.starts_with?(prefix)
       end.map do |func|
+        return_type = func.returns
+        detail = @schema_provider.function_signature(func)
+        detail = "#{detail} -> #{return_type}" unless return_type == "Any"
         CompletionItem.new(
           label: func.name,
           kind: CompletionItemKind::Function,
-          detail: @schema_provider.function_signature(func),
+          detail: detail,
           documentation: func.doc,
           sort_text: func.name
         )
@@ -118,21 +131,50 @@ module Crinkle::LSP
 
     # Get property completions based on inference
     private def property_completions(uri : String, variable : String, prefix : String) : Array(CompletionItem)
+      items = Array(CompletionItem).new
+      type = types_for(uri)[variable]?
+      callable_methods = Hash(String, String).new
+      if type
+        schema = @schema_provider.custom_schema || Schema.registry
+        if callable = schema.callables[type.name]?
+          callable.methods.each do |method_name, method_schema|
+            callable_methods[method_name] = method_schema.returns
+          end
+        end
+      end
+
       properties = @inference.properties_for(uri, variable)
       properties.select do |prop|
         prop.starts_with?(prefix)
-      end.map do |prop|
-        CompletionItem.new(
+      end.each do |prop|
+        priority = callable_methods.has_key?(prop) ? "0" : "1"
+        detail = callable_methods.has_key?(prop) ? "method -> #{callable_methods[prop]}" : "property"
+        items << CompletionItem.new(
           label: prop,
           kind: CompletionItemKind::Property,
-          detail: "property",
-          sort_text: prop
+          detail: detail,
+          sort_text: "#{priority}#{prop}"
         )
       end
+
+      callable_methods.each do |method_name, return_type|
+        next unless method_name.starts_with?(prefix)
+        next if items.any? { |item| item.label == method_name }
+
+        items << CompletionItem.new(
+          label: method_name,
+          kind: CompletionItemKind::Method,
+          detail: "method -> #{return_type}",
+          sort_text: "0#{method_name}"
+        )
+      end
+
+      items
     end
 
     # Get variable completions based on inference
     private def variable_completions(uri : String, prefix : String) : Array(CompletionItem)
+      types = types_for(uri)
       variables = @inference.variables_for(uri)
       variables.select do |var|
         var.name.starts_with?(prefix)
@@ -144,12 +186,16 @@ module Crinkle::LSP
                  when .macro_param? then "macro parameter"
                  else                    "context variable"
                  end
+        if type = types[var.name]?
+          detail = "#{detail}: #{type}"
+        end
+        priority = types[var.name]?.try { |var_type| var_type.name == "Any" } ? "1" : "0"
         CompletionItem.new(
           label: var.name,
           kind: CompletionItemKind::Variable,
           detail: detail,
           documentation: var.detail,
-          sort_text: var.name
+          sort_text: "#{priority}#{var.name}"
         )
       end
     end
@@ -528,9 +574,11 @@ module Crinkle::LSP
           next_token = tokens[index + 1]?
           if next_token && next_token.type == TokenType::Identifier && cursor_offset <= next_token.span.end_pos.offset
             prefix = extract_prefix(next_token, cursor_offset)
-            return CompletionContext.new(CompletionContextType::Filter, prefix)
+            receiver = receiver_before_index(tokens, index)
+            return CompletionContext.new(CompletionContextType::Filter, prefix, receiver: receiver)
           end
-          return CompletionContext.new(CompletionContextType::Filter, "")
+          receiver = receiver_before_index(tokens, index)
+          return CompletionContext.new(CompletionContextType::Filter, "", receiver: receiver)
         end
       when TokenType::Punct
         if token.lexeme == "."
@@ -573,13 +621,15 @@ module Crinkle::LSP
       token = tokens[index]
 
       # Look back to find context
-      prev_significant = find_prev_significant(tokens, index)
+      prev_index = find_prev_significant_index(tokens, index)
+      prev_significant = prev_index ? tokens[prev_index] : nil
 
       if prev_token = prev_significant
         case prev_token.type
         when TokenType::Operator
           if prev_token.lexeme == "|"
-            return CompletionContext.new(CompletionContextType::Filter, prefix.empty? ? token.lexeme : prefix)
+            receiver = receiver_before_index(tokens, prev_index)
+            return CompletionContext.new(CompletionContextType::Filter, prefix.empty? ? token.lexeme : prefix, receiver: receiver)
           end
         when TokenType::Punct
           if prev_token.lexeme == "."
@@ -596,7 +646,8 @@ module Crinkle::LSP
           lexeme = prev_token.lexeme
           # "is" keyword -> test context
           if lexeme == "is"
-            return CompletionContext.new(CompletionContextType::Test, prefix.empty? ? token.lexeme : prefix)
+            receiver = receiver_before_index(tokens, prev_index)
+            return CompletionContext.new(CompletionContextType::Test, prefix.empty? ? token.lexeme : prefix, receiver: receiver)
           end
           # "block" keyword -> block name context
           if lexeme == "block"
@@ -659,14 +710,21 @@ module Crinkle::LSP
       end
 
       # Look back past whitespace for context
-      prev = find_prev_significant(tokens, ws_index)
+      prev_index = find_prev_significant_index(tokens, ws_index)
+      prev = prev_index ? tokens[prev_index] : nil
       return CompletionContext.new(CompletionContextType::None, "") unless prev
 
       case prev.type
       when TokenType::Operator
-        return CompletionContext.new(CompletionContextType::Filter, "") if prev.lexeme == "|"
+        if prev.lexeme == "|"
+          receiver = receiver_before_index(tokens, prev_index)
+          return CompletionContext.new(CompletionContextType::Filter, "", receiver: receiver)
+        end
       when TokenType::Identifier
-        return CompletionContext.new(CompletionContextType::Test, "") if prev.lexeme == "is"
+        if prev.lexeme == "is"
+          receiver = receiver_before_index(tokens, prev_index)
+          return CompletionContext.new(CompletionContextType::Test, "", receiver: receiver)
+        end
         return CompletionContext.new(CompletionContextType::Block, "") if prev.lexeme == "block"
         return CompletionContext.new(CompletionContextType::Macro, "") if prev.lexeme == "call"
         # After keywords like if, elif, for...in - variable context
@@ -697,9 +755,29 @@ module Crinkle::LSP
 
     # Find the previous non-whitespace token
     private def find_prev_significant(tokens : Array(Token), index : Int32) : Token?
+      if idx = find_prev_significant_index(tokens, index)
+        tokens[idx]
+      end
+    end
+
+    private def find_prev_significant_index(tokens : Array(Token), index : Int32) : Int32?
       i = index - 1
       while i >= 0
-        return tokens[i] unless tokens[i].type == TokenType::Whitespace
+        return i unless tokens[i].type == TokenType::Whitespace
+        i -= 1
+      end
+      nil
+    end
+
+    private def receiver_before_index(tokens : Array(Token), index : Int32?) : String?
+      return unless index
+      i = index - 1
+      while i >= 0
+        token = tokens[i]
+        next if token.type == TokenType::Whitespace
+        if token.type == TokenType::Identifier
+          return token.lexeme
+        end
         i -= 1
       end
       nil
@@ -759,6 +837,31 @@ module Crinkle::LSP
         break unless tokens[i].type == TokenType::Whitespace
       end
       tokens[i]? if i < tokens.size && tokens[i].type == TokenType::Identifier
+    end
+
+    private def types_for(uri : String) : Hash(String, TypeInference::TypeRef)
+      @inference.types_for(uri)
+    end
+
+    private def type_for_receiver(uri : String, receiver : String?) : TypeInference::TypeRef?
+      return unless receiver
+      types_for(uri)[receiver]?
+    end
+
+    private def filter_compatible?(expected : TypeInference::TypeRef?, filter : Schema::FilterSchema) : Bool
+      return true unless expected
+      param = filter.params.first?
+      return true unless param
+      expected_type = TypeInference::TypeRef.new(param.type)
+      TypeInference::TypeRules.compatible?(expected_type, expected)
+    end
+
+    private def test_compatible?(expected : TypeInference::TypeRef?, test : Schema::TestSchema) : Bool
+      return true unless expected
+      param = test.params.first?
+      return true unless param
+      expected_type = TypeInference::TypeRef.new(param.type)
+      TypeInference::TypeRules.compatible?(expected_type, expected)
     end
   end
 end

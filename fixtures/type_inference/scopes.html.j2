@@ -1,0 +1,14 @@
+{% set base = 10 %}
+
+{% for item in [1, 2, 3] %}
+  {% set inner = item + base %}
+  {{ inner }}
+{% endfor %}
+
+{% macro repeat(text="x", times=2) %}
+  {{ text }}
+{% endmacro %}
+
+{% set names = ["a", "b"] %}
+{% set title = names | first %}
+{{ title }}

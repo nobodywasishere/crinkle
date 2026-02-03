@@ -778,6 +778,173 @@ module Crinkle
         end
       end
 
+      class TypeMismatch < Rule
+        def initialize(@schema : Schema::Registry) : Nil
+          super("Lint/TypeMismatch", Severity::Error)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+          inferer = TypeInference::Inferer.new(@schema)
+          env = TypeInference::Environment.new
+
+          visitor = TypeCheckVisitor.new(@schema, inferer, env, issues, id)
+          visitor.visit_nodes(context.template.body)
+          issues
+        end
+
+        private class TypeCheckVisitor < AST::Visitor
+          def initialize(
+            @schema : Schema::Registry,
+            @inferer : TypeInference::Inferer,
+            @env : TypeInference::Environment,
+            @issues : Array(Issue),
+            @rule_id : String,
+          ) : Nil
+          end
+
+          protected def enter_node(node : AST::Node) : Nil
+            case node
+            when AST::Set
+              if type = @inferer.infer_expr_type(node.value, @env)
+                assign_target_types(node.target, type)
+              end
+            when AST::SetBlock
+              assign_target_types(node.target, TypeInference::TypeRef.new("String"))
+            when AST::For
+              @env.push
+              assign_target_types(node.target, TypeInference::TypeRef.new("Any"))
+            when AST::Macro
+              @env.push
+              node.params.each do |param|
+                param_type = param.default_value.try { |expr| @inferer.infer_expr_type(expr, @env) }
+                @env.set(param.name, param_type || TypeInference::TypeRef.new("Any"))
+              end
+            end
+          end
+
+          protected def exit_node(node : AST::Node) : Nil
+            case node
+            when AST::For, AST::Macro
+              @env.pop
+            end
+          end
+
+          protected def enter_expr(expr : AST::Expr) : Nil
+            case expr
+            when AST::Filter
+              check_filter_types(expr)
+            when AST::Test
+              check_test_types(expr)
+            when AST::Call
+              check_function_types(expr)
+            when AST::Binary
+              check_binary_types(expr)
+            end
+          end
+
+          private def assign_target_types(target : AST::Target, type : TypeInference::TypeRef) : Nil
+            case target
+            when AST::Name
+              @env.set(target.value, type)
+            when AST::TupleLiteral
+              target.items.each do |item|
+                next unless item.is_a?(AST::Name)
+                @env.set(item.value, type)
+              end
+            end
+          end
+
+          private def check_filter_types(node : AST::Filter) : Nil
+            schema = @schema.filters[node.name]?
+            return unless schema
+
+            value_type = @inferer.infer_expr_type(node.expr, @env)
+            check_param_type(schema.params[0]?, value_type, node.span)
+
+            node.args.each_with_index do |arg, idx|
+              param = schema.params[idx + 1]?
+              next unless param
+              actual = @inferer.infer_expr_type(arg, @env)
+              check_param_type(param, actual, arg.span)
+            end
+
+            node.kwargs.each do |kwarg|
+              param = schema.params.find { |param_schema| param_schema.name == kwarg.name }
+              next unless param
+              actual = @inferer.infer_expr_type(kwarg.value, @env)
+              check_param_type(param, actual, kwarg.span)
+            end
+          end
+
+          private def check_test_types(node : AST::Test) : Nil
+            schema = @schema.tests[node.name]?
+            return unless schema
+
+            value_type = @inferer.infer_expr_type(node.expr, @env)
+            check_param_type(schema.params[0]?, value_type, node.span)
+
+            node.args.each_with_index do |arg, idx|
+              param = schema.params[idx + 1]?
+              next unless param
+              actual = @inferer.infer_expr_type(arg, @env)
+              check_param_type(param, actual, arg.span)
+            end
+
+            node.kwargs.each do |kwarg|
+              param = schema.params.find { |param_schema| param_schema.name == kwarg.name }
+              next unless param
+              actual = @inferer.infer_expr_type(kwarg.value, @env)
+              check_param_type(param, actual, kwarg.span)
+            end
+          end
+
+          private def check_function_types(node : AST::Call) : Nil
+            callee = node.callee
+            return unless callee.is_a?(AST::Name)
+
+            schema = @schema.functions[callee.value]?
+            return unless schema
+
+            node.args.each_with_index do |arg, idx|
+              param = schema.params[idx]?
+              next unless param
+              actual = @inferer.infer_expr_type(arg, @env)
+              check_param_type(param, actual, arg.span)
+            end
+
+            node.kwargs.each do |kwarg|
+              param = schema.params.find { |param_schema| param_schema.name == kwarg.name }
+              next unless param
+              actual = @inferer.infer_expr_type(kwarg.value, @env)
+              check_param_type(param, actual, kwarg.span)
+            end
+          end
+
+          private def check_binary_types(node : AST::Binary) : Nil
+            return unless %w[+ - * / // % **].includes?(node.op)
+            left = @inferer.infer_expr_type(node.left, @env)
+            right = @inferer.infer_expr_type(node.right, @env)
+            return unless left && right
+
+            return if @inferer.numeric?(left) && @inferer.numeric?(right)
+
+            message = "Operator '#{node.op}' expects numeric operands, got #{left} and #{right}."
+            @issues << Issue.new(@rule_id, Severity::Error, message, node.span)
+          end
+
+          private def check_param_type(param : Schema::ParamSchema?, actual : TypeInference::TypeRef?, span : Span) : Nil
+            return unless param && actual
+
+            expected = @inferer.parse_type(param.type)
+            return if TypeInference::TypeRules.compatible?(expected, actual)
+
+            message = "Expected #{expected} for '#{param.name}', got #{actual}."
+            @issues << Issue.new(@rule_id, Severity::Error, message, span)
+          end
+        end
+      end
+
       class DeprecatedUsage < Rule
         def initialize(@schema : Schema::Registry) : Nil
           super("Lint/DeprecatedUsage", Severity::Warning)

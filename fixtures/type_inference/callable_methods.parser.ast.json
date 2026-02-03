@@ -1,0 +1,81 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "formatter"
+      },
+      "value": {
+        "type": "Literal",
+        "value": "example"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "formatted"
+      },
+      "value": {
+        "type": "Call",
+        "callee": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Name",
+            "value": "formatter"
+          },
+          "name": "format"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": "Hi"
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "name",
+            "value": {
+              "type": "Literal",
+              "value": "Ada"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "name"
+      },
+      "value": {
+        "type": "Call",
+        "callee": {
+          "type": "GetAttr",
+          "target": {
+            "type": "Name",
+            "value": "formatter"
+          },
+          "name": "name"
+        },
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

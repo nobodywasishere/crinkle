@@ -1,0 +1,251 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "count"
+      },
+      "value": {
+        "type": "Literal",
+        "value": 1
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "ratio"
+      },
+      "value": {
+        "type": "Literal",
+        "value": 1.5
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "title"
+      },
+      "value": {
+        "type": "Literal",
+        "value": "Hello"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "active"
+      },
+      "value": {
+        "type": "Literal",
+        "value": true
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "names"
+      },
+      "value": {
+        "type": "ListLiteral",
+        "items": [
+          {
+            "type": "Literal",
+            "value": "a"
+          },
+          {
+            "type": "Literal",
+            "value": "b"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "data"
+      },
+      "value": {
+        "type": "DictLiteral",
+        "pairs": [
+          {
+            "key": {
+              "type": "Literal",
+              "value": "a"
+            },
+            "value": {
+              "type": "Literal",
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "combo"
+      },
+      "value": {
+        "type": "Binary",
+        "op": "+",
+        "left": {
+          "type": "Name",
+          "value": "count"
+        },
+        "right": {
+          "type": "Name",
+          "value": "ratio"
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "up"
+      },
+      "value": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "title"
+        },
+        "name": "upper",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "ok"
+      },
+      "value": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "count"
+        },
+        "name": "even",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "items"
+      },
+      "value": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "range"
+        },
+        "args": [
+          {
+            "type": "Literal",
+            "value": 1
+          },
+          {
+            "type": "Literal",
+            "value": 3
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Macro",
+      "name": "greet",
+      "params": [
+        {
+          "name": "name",
+          "default": {
+            "type": "Literal",
+            "value": "World"
+          }
+        },
+        {
+          "name": "times",
+          "default": {
+            "type": "Literal",
+            "value": 2
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "name"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

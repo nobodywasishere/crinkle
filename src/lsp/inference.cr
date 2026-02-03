@@ -66,16 +66,24 @@ module Crinkle::LSP
     @blocks : Hash(String, Hash(String, BlockInfo))
     # Maps URI -> macro definitions
     @macros : Hash(String, Hash(String, MacroInfo))
+    # Maps URI -> inferred variable types
+    @types : Hash(String, Hash(String, TypeInference::TypeRef))
     @config : Config
     @root_path : String?
+    @schema : Schema::Registry
 
-    def initialize(@config : Config, @root_path : String? = nil) : Nil
+    def initialize(
+      @config : Config,
+      @root_path : String? = nil,
+      @schema : Schema::Registry = Schema.registry,
+    ) : Nil
       @usage = Hash(String, Hash(String, Set(String))).new
       @relationships = Hash(String, Set(String)).new
       @path_to_uri = Hash(String, String).new
       @variables = Hash(String, Hash(String, VariableInfo)).new
       @blocks = Hash(String, Hash(String, BlockInfo)).new
       @macros = Hash(String, Hash(String, MacroInfo)).new
+      @types = Hash(String, Hash(String, TypeInference::TypeRef)).new
     end
 
     # Set the root path for resolving template imports
@@ -119,6 +127,9 @@ module Crinkle::LSP
         macs = Hash(String, MacroInfo).new
         extract_macros(ast.body, macs)
         @macros[uri] = macs
+
+        # Infer variable types for this template
+        @types[uri] = infer_types(uri, ast)
 
         # Extract and track template relationships
         if @config.inference.cross_template?
@@ -350,6 +361,81 @@ module Crinkle::LSP
         end
         macs[node.name] = MacroInfo.new(node.name, params, defaults, node.span)
       end
+    end
+
+    private def infer_types(uri : String, template : AST::Template) : Hash(String, TypeInference::TypeRef)
+      inferer = TypeInference::Inferer.new(@schema)
+      env = TypeInference::Environment.new
+      types = Hash(String, TypeInference::TypeRef).new
+
+      AST::Walker.walk_nodes(template.body) do |node|
+        case node
+        when AST::Set
+          if type = inferer.infer_expr_type(node.value, env)
+            assign_target_types(node.target, type, env, types)
+          end
+        when AST::SetBlock
+          assign_target_types(node.target, TypeInference::TypeRef.new("String"), env, types)
+        when AST::Macro
+          node.params.each do |param|
+            default_value = param.default_value
+            next unless default_value
+            param_type = inferer.infer_expr_type(default_value, env)
+            next unless param_type
+            types["#{node.name}.#{param.name}"] = param_type
+          end
+        end
+      end
+
+      if template_ctx = template_context_for_uri(uri)
+        template_ctx.context.each do |name, type_str|
+          types[name] ||= inferer.parse_type(type_str)
+        end
+      end
+
+      types
+    rescue
+      Hash(String, TypeInference::TypeRef).new
+    end
+
+    private def assign_target_types(
+      target : AST::Target,
+      type : TypeInference::TypeRef,
+      env : TypeInference::Environment,
+      types : Hash(String, TypeInference::TypeRef),
+    ) : Nil
+      case target
+      when AST::Name
+        types[target.value] = type
+        env.set(target.value, type)
+      when AST::TupleLiteral
+        target.items.each do |item|
+          next unless item.is_a?(AST::Name)
+          types[item.value] = type
+          env.set(item.value, type)
+        end
+      end
+    end
+
+    private def template_context_for_uri(uri : String) : Schema::TemplateContextSchema?
+      path = template_path_for_uri(uri)
+      return unless path
+      @schema.templates[path]?
+    end
+
+    private def template_path_for_uri(uri : String) : String?
+      return unless uri.starts_with?("file://")
+      full_path = uri.sub(/^file:\/\//, "")
+
+      if root = @root_path
+        root = root.rstrip('/')
+        if full_path.starts_with?(root)
+          relative = full_path[root.size..]
+          return relative.lstrip('/')
+        end
+      end
+
+      File.basename(full_path)
     end
 
     # Convert an expression to a string representation (for default values)
@@ -721,6 +807,11 @@ module Crinkle::LSP
       end
 
       nil
+    end
+
+    # Get inferred types for variables in a template
+    def types_for(uri : String) : Hash(String, TypeInference::TypeRef)
+      @types[uri]? || Hash(String, TypeInference::TypeRef).new
     end
 
     # Find a macro in related templates

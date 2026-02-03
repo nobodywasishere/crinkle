@@ -148,6 +148,7 @@ module Crinkle
         ruleset.add(Rules::UnknownKwarg.new(schema))
         ruleset.add(Rules::MissingRequiredArgument.new(schema))
         ruleset.add(Rules::DeprecatedUsage.new(schema))
+        ruleset.add(Rules::TypeMismatch.new(schema))
       end
 
       ruleset
@@ -179,6 +180,8 @@ module Crinkle
       DiagnosticType::HtmlUnexpectedEndTag   => "Formatter/HtmlUnexpectedEndTag",
       DiagnosticType::HtmlMismatchedEndTag   => "Formatter/HtmlMismatchedEndTag",
       DiagnosticType::HtmlUnclosedTag        => "Formatter/HtmlUnclosedTag",
+      DiagnosticType::TypeMismatch           => "Lint/TypeMismatch",
+      DiagnosticType::MissingArgument        => "Lint/MissingRequiredArgument",
     } of DiagnosticType => String
 
     def self.map_diagnostics(diagnostics : Array(Diagnostic)) : Array(Issue)

@@ -1,0 +1,19 @@
+{% set count = 2 %}
+{% set ratio = 3.5 %}
+{% set total = count + ratio %}
+{% set label = ("hello" ~ " " ~ "world") | upper %}
+{% set is_even = total is even %}
+{% set items = range(1, 4) %}
+{% set pairs = (1, "two", 3.0) %}
+{% set mixed = [count, ratio, total] %}
+{% set data = {"count": count, "label": label} %}
+
+{% set block_value %}
+Block content
+{% endset %}
+
+{% macro card(title="Untitled", width=300) %}
+  {{ title }}
+{% endmacro %}
+
+{{ label }}

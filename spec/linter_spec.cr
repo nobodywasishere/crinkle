@@ -164,7 +164,7 @@ describe Crinkle::Linter do
         name: "truncate",
         params: [
           Crinkle::Schema::ParamSchema.new(name: "value", type: "String", required: true),
-          Crinkle::Schema::ParamSchema.new(name: "length", type: "Int32", required: false, default: "80"),
+          Crinkle::Schema::ParamSchema.new(name: "length", type: "Int64", required: false, default: "80"),
         ],
         returns: "String"
       )
@@ -277,6 +277,89 @@ describe Crinkle::Linter do
       issue.severity.should eq(Crinkle::Severity::Warning)
       issue.message.should contain("old_filter")
       issue.message.should contain("deprecated")
+    end
+
+    it "detects type mismatch for filter parameter" do
+      schema = Crinkle::Schema::Registry.new
+      filter_schema = Crinkle::Schema::FilterSchema.new(
+        name: "truncate",
+        params: [
+          Crinkle::Schema::ParamSchema.new(name: "value", type: "String", required: true),
+          Crinkle::Schema::ParamSchema.new(name: "length", type: "Int32", required: false, default: "80"),
+        ],
+        returns: "String"
+      )
+      schema.register_filter(filter_schema)
+
+      source = "{{ 1 | truncate(5) }}"
+      lexer = Crinkle::Lexer.new(source)
+      tokens = lexer.lex_all
+      parser = Crinkle::Parser.new(tokens)
+      template = parser.parse
+
+      ruleset = Crinkle::Linter::RuleSet.new
+      ruleset.add(Crinkle::Linter::Rules::TypeMismatch.new(schema))
+
+      runner = Crinkle::Linter::Runner.new(ruleset, schema)
+      issues = runner.lint(template, source)
+
+      issues.size.should be >= 1
+      issue = issues.find(&.message.includes?("value"))
+      issue.should_not be_nil
+      issue.try do |matched|
+        matched.id.should eq("Lint/TypeMismatch")
+        matched.message.should contain("String")
+        matched.message.should contain("Int64")
+      end
+    end
+
+    it "detects type mismatch for function parameters" do
+      schema = Crinkle::Schema::Registry.new
+      function_schema = Crinkle::Schema::FunctionSchema.new(
+        name: "format_price",
+        params: [
+          Crinkle::Schema::ParamSchema.new(name: "value", type: "Number", required: true),
+          Crinkle::Schema::ParamSchema.new(name: "currency", type: "String", required: true),
+        ],
+        returns: "String"
+      )
+      schema.register_function(function_schema)
+
+      source = "{{ format_price(\"x\", 1) }}"
+      lexer = Crinkle::Lexer.new(source)
+      tokens = lexer.lex_all
+      parser = Crinkle::Parser.new(tokens)
+      template = parser.parse
+
+      ruleset = Crinkle::Linter::RuleSet.new
+      ruleset.add(Crinkle::Linter::Rules::TypeMismatch.new(schema))
+
+      runner = Crinkle::Linter::Runner.new(ruleset, schema)
+      issues = runner.lint(template, source)
+
+      issues.size.should eq(2)
+      issues.first.id.should eq("Lint/TypeMismatch")
+    end
+
+    it "detects type mismatch for numeric operators" do
+      schema = Crinkle::Schema::Registry.new
+
+      source = "{{ \"a\" + 1 }}"
+      lexer = Crinkle::Lexer.new(source)
+      tokens = lexer.lex_all
+      parser = Crinkle::Parser.new(tokens)
+      template = parser.parse
+
+      ruleset = Crinkle::Linter::RuleSet.new
+      ruleset.add(Crinkle::Linter::Rules::TypeMismatch.new(schema))
+
+      runner = Crinkle::Linter::Runner.new(ruleset, schema)
+      issues = runner.lint(template, source)
+
+      issues.size.should eq(1)
+      issue = issues.first
+      issue.id.should eq("Lint/TypeMismatch")
+      issue.message.should contain("numeric")
     end
   end
 

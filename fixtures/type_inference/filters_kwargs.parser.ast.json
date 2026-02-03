@@ -1,0 +1,241 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "title"
+      },
+      "value": {
+        "type": "Literal",
+        "value": "Hello"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "joined"
+      },
+      "value": {
+        "type": "Filter",
+        "expr": {
+          "type": "ListLiteral",
+          "items": [
+            {
+              "type": "Literal",
+              "value": "a"
+            },
+            {
+              "type": "Literal",
+              "value": "b"
+            },
+            {
+              "type": "Literal",
+              "value": "c"
+            }
+          ]
+        },
+        "name": "join",
+        "args": [
+          {
+            "type": "Literal",
+            "value": ", "
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "attribute",
+            "value": {
+              "type": "Literal",
+              "value": "name"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "cropped"
+      },
+      "value": {
+        "type": "Filter",
+        "expr": {
+          "type": "Literal",
+          "value": "Hello world"
+        },
+        "name": "truncate",
+        "args": [
+          {
+            "type": "Literal",
+            "value": 5
+          },
+          {
+            "type": "Name",
+            "value": "True"
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "end",
+            "value": {
+              "type": "Literal",
+              "value": ".."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "decorated"
+      },
+      "value": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "title"
+        },
+        "name": "replace",
+        "args": [
+          {
+            "type": "Literal",
+            "value": "H"
+          },
+          {
+            "type": "Literal",
+            "value": "Y"
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "count",
+            "value": {
+              "type": "Literal",
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "ok"
+      },
+      "value": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "title"
+        },
+        "name": "equalto",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": "Hello"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "ok2"
+      },
+      "value": {
+        "type": "Test",
+        "expr": {
+          "type": "Name",
+          "value": "title"
+        },
+        "name": "string",
+        "negated": false,
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "total"
+      },
+      "value": {
+        "type": "Filter",
+        "expr": {
+          "type": "ListLiteral",
+          "items": [
+            {
+              "type": "Literal",
+              "value": 1
+            },
+            {
+              "type": "Literal",
+              "value": 2
+            },
+            {
+              "type": "Literal",
+              "value": 3
+            }
+          ]
+        },
+        "name": "sum",
+        "args": [],
+        "kwargs": [
+          {
+            "name": "attribute",
+            "value": {
+              "type": "Literal",
+              "value": "price"
+            }
+          },
+          {
+            "name": "start",
+            "value": {
+              "type": "Literal",
+              "value": 10
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Macro",
+      "name": "headline",
+      "params": [
+        {
+          "name": "text",
+          "default": {
+            "type": "Literal",
+            "value": "Hi"
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Filter",
+            "expr": {
+              "type": "Name",
+              "value": "text"
+            },
+            "name": "upper",
+            "args": [],
+            "kwargs": []
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Macro",
+      "name": "card",
+      "params": [
+        {
+          "name": "title",
+          "default": {
+            "type": "Literal",
+            "value": "Untitled"
+          }
+        },
+        {
+          "name": "subtitle",
+          "default": {
+            "type": "Literal",
+            "value": ""
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Call",
+            "callee": {
+              "type": "Name",
+              "value": "headline"
+            },
+            "args": [
+              {
+                "type": "Name",
+                "value": "title"
+              }
+            ],
+            "kwargs": []
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Call",
+            "callee": {
+              "type": "Name",
+              "value": "headline"
+            },
+            "args": [
+              {
+                "type": "Name",
+                "value": "subtitle"
+              }
+            ],
+            "kwargs": []
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "title"
+      },
+      "value": {
+        "type": "Literal",
+        "value": "Welcome"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "rendered"
+      },
+      "value": {
+        "type": "Call",
+        "callee": {
+          "type": "Name",
+          "value": "card"
+        },
+        "args": [
+          {
+            "type": "Name",
+            "value": "title"
+          },
+          {
+            "type": "Literal",
+            "value": "Secondary"
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

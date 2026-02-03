@@ -63,6 +63,7 @@ describe Crinkle::LSP do
       if h = hover
         h.contents.value.should contain "greeting"
         h.contents.value.should contain "assigned variable"
+        h.contents.value.should contain "Type: `String`"
       end
     end
 
@@ -167,7 +168,7 @@ describe Crinkle::LSP do
       hover.should be_nil
     end
 
-    it "returns nil for context variables (no useful definition info)" do
+    it "includes hover info for context variables" do
       config = Crinkle::LSP::Config.new
       schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
       inference = Crinkle::LSP::InferenceEngine.new(config)
@@ -180,8 +181,12 @@ describe Crinkle::LSP do
       # Position on "user" - a context variable
       hover = provider.hover("file:///test.j2", template, Crinkle::LSP::Position.new(0, 5))
 
-      # Context variables should not show hover since they have no useful info
-      hover.should be_nil
+      hover.should_not be_nil
+      hover.try do |result|
+        contents = result.contents.as(Crinkle::LSP::MarkupContent).value
+        contents.should contain("**user** - context variable")
+        contents.should contain("Type: `Any`")
+      end
     end
   end
 end

@@ -1,0 +1,42 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [],
+  "renderer": [
+    {
+      "id": "E_UNKNOWN_FUNCTION",
+      "severity": "error",
+      "message": "Unknown function 'formatter.format'.",
+      "span": {
+        "start": {
+          "offset": 51,
+          "line": 2,
+          "column": 20
+        },
+        "end": {
+          "offset": 67,
+          "line": 2,
+          "column": 36
+        }
+      }
+    },
+    {
+      "id": "E_UNKNOWN_FUNCTION",
+      "severity": "error",
+      "message": "Unknown function 'formatter.name'.",
+      "span": {
+        "start": {
+          "offset": 103,
+          "line": 3,
+          "column": 15
+        },
+        "end": {
+          "offset": 117,
+          "line": 3,
+          "column": 29
+        }
+      }
+    }
+  ],
+  "linter": []
+}

@@ -243,7 +243,7 @@ module Crinkle::LSP
             schema_provider = SchemaProvider.new(@config, root_path)
             @schema_provider = schema_provider
 
-            inference = InferenceEngine.new(@config, root_path)
+            inference = InferenceEngine.new(@config, root_path, schema_provider.custom_schema || Schema.registry)
             @inference = inference
 
             # Enable debug logging for cross-file resolution (can be removed once stable)
@@ -1023,7 +1023,9 @@ module Crinkle::LSP
       log(MessageType::Info, "Config reloaded")
 
       # Reinitialize inference engine with new config
-      inference = InferenceEngine.new(@config, root_path)
+      schema_provider = @schema_provider || SchemaProvider.new(@config, root_path)
+      @schema_provider = schema_provider
+      inference = InferenceEngine.new(@config, root_path, schema_provider.custom_schema || Schema.registry)
       @inference = inference
 
       # Update references provider with new inference engine

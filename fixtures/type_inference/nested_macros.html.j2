@@ -1,0 +1,11 @@
+{% macro headline(text="Hi") %}
+  {{ text | upper }}
+{% endmacro %}
+
+{% macro card(title="Untitled", subtitle="") %}
+  {{ headline(title) }}
+  {{ headline(subtitle) }}
+{% endmacro %}
+
+{% set title = "Welcome" %}
+{% set rendered = card(title, "Secondary") %}

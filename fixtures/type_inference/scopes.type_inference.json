@@ -1,0 +1,7 @@
+{
+  "base": "Int64",
+  "repeat.text": "String",
+  "repeat.times": "Int64",
+  "names": "Array",
+  "title": "Value"
+}

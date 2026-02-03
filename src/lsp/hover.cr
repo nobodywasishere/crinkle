@@ -24,8 +24,11 @@ module Crinkle::LSP
   class HoverProvider
     @schema_provider : SchemaProvider
     @inference : InferenceEngine
+    @type_inferer : TypeInference::Inferer
 
     def initialize(@schema_provider : SchemaProvider, @inference : InferenceEngine) : Nil
+      schema = @schema_provider.custom_schema || Schema.registry
+      @type_inferer = TypeInference::Inferer.new(schema)
     end
 
     # Get hover information for the given position
@@ -40,7 +43,7 @@ module Crinkle::LSP
       when .function?
         function_hover(context.name)
       when .variable?
-        variable_hover(uri, context.name)
+        variable_hover(uri, text, context.name)
       when .macro?
         macro_hover(uri, context.name)
       when .block?
@@ -137,13 +140,9 @@ module Crinkle::LSP
     end
 
     # Get hover info for a variable
-    private def variable_hover(uri : String, name : String) : Hover?
+    private def variable_hover(uri : String, text : String, name : String) : Hover?
       var_info = @inference.variable_info(uri, name)
       return unless var_info
-
-      # Don't show hover for context variables - they're just inferred from usage
-      # and don't have useful definition information
-      return if var_info.source.context?
 
       markdown = String.build do |str|
         str << "**#{name}**"
@@ -154,6 +153,7 @@ module Crinkle::LSP
                       when .set?         then "assigned variable"
                       when .set_block?   then "block assigned variable"
                       when .macro_param? then "macro parameter"
+                      when .context?     then "context variable"
                       else                    return # shouldn't happen, but be safe
                       end
         str << " - " << source_desc
@@ -162,6 +162,10 @@ module Crinkle::LSP
         if detail = var_info.detail
           str << "\n\n" << detail
         end
+
+        # Show inferred type if available
+        inferred_type = infer_variable_type(text, name, var_info) || "Any"
+        str << "\n\nType: `#{inferred_type}`"
 
         # Show definition location if available (lexer uses 1-based lines)
         if span = var_info.definition_span
@@ -172,6 +176,31 @@ module Crinkle::LSP
       Hover.new(
         contents: MarkupContent.new(kind: "markdown", value: markdown)
       )
+    end
+
+    private def infer_variable_type(text : String, name : String, var_info : VariableInfo) : String?
+      span = var_info.definition_span
+      return unless span
+
+      ast = parse(text)
+
+      case var_info.source
+      when .set?, .macro_param?
+        @type_inferer.infer_variable_type(ast, name, span).try(&.to_s)
+      when .set_block?
+        "String"
+      when .context?
+        "Any"
+      end
+    rescue
+      nil
+    end
+
+    private def parse(text : String) : AST::Template
+      lexer = Lexer.new(text)
+      tokens = lexer.lex_all
+      parser = Parser.new(tokens)
+      parser.parse
     end
 
     # Get hover info for a macro

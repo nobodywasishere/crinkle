@@ -1,0 +1,9 @@
+{
+  "title": "String",
+  "joined": "String",
+  "cropped": "String",
+  "decorated": "String",
+  "ok": "Bool",
+  "ok2": "Bool",
+  "total": "Number"
+}

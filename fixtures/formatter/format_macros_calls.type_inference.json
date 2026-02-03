@@ -1,0 +1,5 @@
+{
+  "input.value": "String",
+  "input.type": "String",
+  "form_field.required": "Bool"
+}

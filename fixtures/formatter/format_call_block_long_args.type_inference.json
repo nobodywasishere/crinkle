@@ -1,0 +1,9 @@
+{
+  "annual_locale": "String",
+  "monthly_locale": "String",
+  "show_standard": "Bool",
+  "choosing_new_plan": "Bool",
+  "confirm_change": "Bool",
+  "annual_billing": "Bool",
+  "per_period_text": "String"
+}

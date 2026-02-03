@@ -1,0 +1,186 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "base"
+      },
+      "value": {
+        "type": "Literal",
+        "value": 10
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "For",
+      "target": {
+        "type": "Name",
+        "value": "item"
+      },
+      "iter": {
+        "type": "ListLiteral",
+        "items": [
+          {
+            "type": "Literal",
+            "value": 1
+          },
+          {
+            "type": "Literal",
+            "value": 2
+          },
+          {
+            "type": "Literal",
+            "value": 3
+          }
+        ]
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Set",
+          "target": {
+            "type": "Name",
+            "value": "inner"
+          },
+          "value": {
+            "type": "Binary",
+            "op": "+",
+            "left": {
+              "type": "Name",
+              "value": "item"
+            },
+            "right": {
+              "type": "Name",
+              "value": "base"
+            }
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "inner"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Macro",
+      "name": "repeat",
+      "params": [
+        {
+          "name": "text",
+          "default": {
+            "type": "Literal",
+            "value": "x"
+          }
+        },
+        {
+          "name": "times",
+          "default": {
+            "type": "Literal",
+            "value": 2
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n  "
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "text"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "\n"
+        }
+      ]
+    },
+    {
+      "type": "Text",
+      "value": "\n\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "names"
+      },
+      "value": {
+        "type": "ListLiteral",
+        "items": [
+          {
+            "type": "Literal",
+            "value": "a"
+          },
+          {
+            "type": "Literal",
+            "value": "b"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Set",
+      "target": {
+        "type": "Name",
+        "value": "title"
+      },
+      "value": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "names"
+        },
+        "name": "first",
+        "args": [],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Name",
+        "value": "title"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

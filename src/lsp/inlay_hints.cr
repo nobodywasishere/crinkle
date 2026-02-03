@@ -4,8 +4,11 @@ module Crinkle::LSP
   class InlayHintProvider
     @inference : InferenceEngine
     @schema_provider : SchemaProvider
+    @type_inferer : TypeInference::Inferer
 
     def initialize(@inference : InferenceEngine, @schema_provider : SchemaProvider) : Nil
+      schema = @schema_provider.custom_schema || Schema.registry
+      @type_inferer = TypeInference::Inferer.new(schema)
     end
 
     # Get inlay hints for the given range
@@ -245,12 +248,12 @@ module Crinkle::LSP
       set_range = span_to_range(node.span)
       return unless ranges_overlap?(set_range, range)
 
-      inferred_type = infer_expr_type(node.value, uri)
+      inferred_type = @type_inferer.infer_expr_type(node.value)
       return unless inferred_type
 
       case target = node.target
       when AST::Name
-        add_type_hint(target, inferred_type, hints)
+        add_type_hint(target, inferred_type.to_s, hints)
       when AST::TupleLiteral
         if node.value.is_a?(AST::TupleLiteral)
           values = node.value.as(AST::TupleLiteral).items
@@ -258,16 +261,18 @@ module Crinkle::LSP
             next unless item.is_a?(AST::Name)
             next unless idx < values.size
 
-            item_type = infer_expr_type(values[idx], uri)
+            item_type = @type_inferer.infer_expr_type(values[idx])
             next unless item_type
 
-            add_type_hint(item, item_type, hints)
+            add_type_hint(item, item_type.to_s, hints)
           end
         end
       end
     end
 
     private def add_type_hint(target : AST::Name, inferred_type : String, hints : Array(InlayHint)) : Nil
+      return if inferred_type == "Any"
+
       pos = Position.new(
         line: target.span.end_pos.line - 1,
         character: target.span.end_pos.column - 1
@@ -280,83 +285,6 @@ module Crinkle::LSP
         padding_left: true,
         padding_right: true
       )
-    end
-
-    private def infer_expr_type(expr : AST::Expr, uri : String) : String?
-      case expr
-      when AST::Literal
-        value = expr.value
-        case value
-        when String
-          "String"
-        when Int64
-          "Int64"
-        when Float64
-          "Float64"
-        when Bool
-          "Bool"
-        when Nil
-          "Nil"
-        end
-      when AST::ListLiteral
-        "Array"
-      when AST::DictLiteral
-        "Hash"
-      when AST::TupleLiteral
-        "Tuple"
-      when AST::Group
-        infer_expr_type(expr.expr, uri)
-      when AST::Unary
-        infer_expr_type(expr.expr, uri)
-      when AST::Binary
-        left = infer_expr_type(expr.left, uri)
-        right = infer_expr_type(expr.right, uri)
-        infer_binary_type(expr.op, left, right)
-      when AST::Filter
-        schema = @schema_provider.custom_schema || Schema.registry
-        filter_schema = schema.filters[expr.name]?
-        filter_schema.try(&.returns)
-      when AST::Test
-        "Bool"
-      when AST::Call
-        if callee_name = extract_callee_name(expr.callee)
-          schema = @schema_provider.custom_schema || Schema.registry
-          if func = schema.functions[callee_name]?
-            return func.returns
-          end
-        end
-        nil
-      end
-    end
-
-    private def infer_binary_type(op : String, left : String?, right : String?) : String?
-      return unless left && right
-
-      case op
-      when "and", "or", "==", "!=", "<", ">", "<=", ">=", "in", "not in", "is", "is not"
-        "Bool"
-      when "+", "-", "*", "%", "/", "//", "**"
-        infer_numeric_type(op, left, right)
-      when "~"
-        if left == "String" || right == "String"
-          "String"
-        end
-      end
-    end
-
-    private def infer_numeric_type(op : String, left : String, right : String) : String?
-      numeric = ["Int64", "Float64", "Number"]
-      return unless numeric.includes?(left) && numeric.includes?(right)
-
-      if op == "/"
-        return "Float64" if left == "Float64" || right == "Float64"
-        return "Number" if left == "Number" || right == "Number"
-        return "Float64"
-      end
-
-      return "Float64" if left == "Float64" || right == "Float64"
-      return "Number" if left == "Number" || right == "Number"
-      "Int64"
     end
 
     # Extract callee name from expression
