@@ -250,6 +250,22 @@ crinkle lsp [options]
 - **Completions**: Filter, test, function, and property suggestions
 - **Hover**: Documentation for filters, tests, and functions
 - **Signature Help**: Parameter hints for function calls
+- **Typo Detection**: Warns when a property access like `user.emial` is similar to known property `user.email`
+- **Cross-Template Inference**: Properties from extended/included templates are available for completions
+
+#### LSP vs CLI Linting
+
+The LSP provides additional diagnostics beyond the CLI `lint` command:
+
+| Feature | CLI `lint` | LSP |
+|---------|-----------|-----|
+| Syntax errors | Yes | Yes |
+| Schema-aware linting (unknown filter/test/function) | Yes | Yes |
+| Style rules (whitespace, formatting) | Yes | Yes |
+| Typo detection (`user.emial` → `user.email`) | No | Yes |
+| Cross-template inference | No | Yes |
+
+The CLI linter processes files independently, while the LSP maintains state across open documents to enable inference-based features.
 
 ### Configuration
 

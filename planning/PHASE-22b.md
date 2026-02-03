@@ -243,57 +243,61 @@ end
 ## Acceptance Criteria
 
 ### Schema Integration
-- [ ] LSP loads schema from `.crinkle/schema.json`
-- [ ] Filter/test/function completions with signatures
-- [ ] Hover shows documentation and signature
-- [ ] Signature help on `(` and `,`
+- [x] LSP loads schema from `.crinkle/schema.json`
+- [x] Filter/test/function completions with signatures
+- [x] Hover shows documentation and signature
+- [x] Signature help on `(` and `,`
 
 ### Inference
-- [ ] Property tracking from template usage
-- [ ] Property completions after `.`
-- [ ] Cross-template inference via extends/include
-- [ ] Typo detection with suggestions
+- [x] Property tracking from template usage
+- [x] Property completions after `.`
+- [x] Cross-template inference via extends/include
+- [x] Typo detection with suggestions
 
 ### Configuration
-- [ ] `.crinkle/config.yaml` loader
-- [ ] File watcher for config/schema changes
-- [ ] Graceful defaults without config
+- [x] `.crinkle/config.yaml` loader
+- [ ] File watcher for config/schema changes → **Moved to Phase 22c**
+- [x] Graceful defaults without config
 
 ### Dev Server (Optional)
-- [ ] JSON-RPC protocol defined
-- [ ] Socket discovery mechanism
-- [ ] Connection with auto-reconnect
-- [ ] Graceful fallback
+- [ ] JSON-RPC protocol defined → **Deferred**
+- [ ] Socket discovery mechanism → **Deferred**
+- [ ] Connection with auto-reconnect → **Deferred**
+- [ ] Graceful fallback → **Deferred**
+
+## Status
+
+**COMPLETE** - Core functionality implemented. Remaining items moved to Phase 22c (LSP Enhancements).
 
 ## Checklist
 
 ### Configuration
-- [ ] Define `.crinkle/config.yaml` format
-- [ ] Implement config loader
-- [ ] File watcher for config changes
+- [x] Define `.crinkle/config.yaml` format
+- [x] Implement config loader
+- [ ] File watcher for config changes → **Phase 22c**
 
 ### Schema Integration
-- [ ] Load schema (reuse from Phase 22a)
-- [ ] Filter completions with signatures
-- [ ] Test completions
-- [ ] Function completions
-- [ ] Hover for filters/tests/functions
-- [ ] Signature help provider
+- [x] Load schema (reuse from Phase 22a)
+- [x] Filter completions with signatures
+- [x] Test completions
+- [x] Function completions
+- [x] Hover for filters/tests/functions
+- [x] Signature help provider
 
 ### Inference Engine
-- [ ] Template AST visitor for usage extraction
-- [ ] Property map per variable
-- [ ] Track variable origins (for loop, set, macro)
-- [ ] Cross-template analysis
-- [ ] Property completions provider
-- [ ] Typo detection (Levenshtein)
+- [x] Template AST visitor for usage extraction
+- [x] Property map per variable
+- [ ] Track variable origins (for loop, set, macro) → **Phase 22c**
+- [x] Cross-template analysis
+- [x] Property completions provider
+- [x] Typo detection (Levenshtein)
 
 ### Dev Server (Optional)
-- [ ] Define JSON-RPC protocol
-- [ ] Implement `Crinkle::DevServer` module
-- [ ] Socket discovery
-- [ ] LSP client connection
-- [ ] Rate limiting
+- [ ] Define JSON-RPC protocol → **Deferred**
+- [ ] Implement `Crinkle::DevServer` module → **Deferred**
+- [ ] Socket discovery → **Deferred**
+- [ ] LSP client connection → **Deferred**
+- [ ] Rate limiting → **Deferred**
 
 ## Dependencies
 

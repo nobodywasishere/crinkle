@@ -133,6 +133,11 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** LOW
 → [PHASE-22b.md](PHASE-22b.md)
 
+### Phase 22c — LSP Enhancements
+**Outcome:** Variable/block completions, go-to-definition, file watcher for hot reload.
+**Priority:** LOW
+→ [PHASE-22c.md](PHASE-22c.md)
+
 ### Phase 23 — LSP Hover & Navigation
 **Outcome:** Contextual information and code navigation.
 **Priority:** LOW

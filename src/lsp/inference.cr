@@ -7,10 +7,16 @@ module Crinkle::LSP
   class InferenceEngine
     # Maps URI -> variable name -> set of properties
     @usage : Hash(String, Hash(String, Set(String)))
+    # Maps URI -> template paths it extends/includes (for cross-template inference)
+    @relationships : Hash(String, Set(String))
+    # Maps template path -> URI (reverse lookup)
+    @path_to_uri : Hash(String, String)
     @config : Config
 
     def initialize(@config : Config) : Nil
       @usage = Hash(String, Hash(String, Set(String))).new
+      @relationships = Hash(String, Set(String)).new
+      @path_to_uri = Hash(String, String).new
     end
 
     # Analyze a template and extract property usage
@@ -25,10 +31,77 @@ module Crinkle::LSP
 
         properties = Hash(String, Set(String)).new
         extract_properties(ast.body, properties)
-
         @usage[uri] = properties
+
+        # Extract and track template relationships
+        if @config.inference.cross_template?
+          relationships = Set(String).new
+          extract_relationships(ast.body, relationships)
+          @relationships[uri] = relationships
+
+          # Register this URI by its template path for reverse lookup
+          register_uri_path(uri)
+        end
       rescue
         # Ignore parse errors - we're doing best-effort inference
+      end
+    end
+
+    # Register a URI by extracting its template path component
+    private def register_uri_path(uri : String) : Nil
+      # Extract filename from URI (e.g., "file:///path/to/templates/base.html.j2" -> "base.html.j2")
+      if path = uri_to_template_path(uri)
+        @path_to_uri[path] = uri
+      end
+    end
+
+    # Convert a URI to a relative template path
+    private def uri_to_template_path(uri : String) : String?
+      # Remove file:// prefix and get the path
+      path = uri.sub(/^file:\/\//, "")
+      # Return just the filename for simple matching
+      File.basename(path)
+    end
+
+    # Extract extends/include/import relationships from nodes
+    private def extract_relationships(nodes : Array(AST::Node), relationships : Set(String)) : Nil
+      nodes.each do |node|
+        case node
+        when AST::Extends
+          if path = extract_template_path(node.template)
+            relationships << path
+          end
+        when AST::Include
+          if path = extract_template_path(node.template)
+            relationships << path
+          end
+        when AST::Import
+          if path = extract_template_path(node.template)
+            relationships << path
+          end
+        when AST::FromImport
+          if path = extract_template_path(node.template)
+            relationships << path
+          end
+        when AST::If
+          extract_relationships(node.body, relationships)
+          extract_relationships(node.else_body, relationships)
+        when AST::For
+          extract_relationships(node.body, relationships)
+        when AST::Block
+          extract_relationships(node.body, relationships)
+        when AST::Macro
+          extract_relationships(node.body, relationships)
+        end
+      end
+    end
+
+    # Extract template path from an expression (usually a string literal)
+    private def extract_template_path(expr : AST::Expr) : String?
+      case expr
+      when AST::Literal
+        value = expr.value
+        value.is_a?(String) ? value : nil
       end
     end
 
@@ -117,9 +190,77 @@ module Crinkle::LSP
       end
     end
 
-    # Get properties for a variable in a specific template
+    # Get properties for a variable in a specific template (includes cross-template inference)
     def properties_for(uri : String, variable : String) : Array(String)
-      @usage[uri]?.try(&.[variable]?.try(&.to_a)) || Array(String).new
+      props = Set(String).new
+
+      # Add properties from this template
+      if local_props = @usage[uri]?.try(&.[variable]?)
+        props.concat(local_props)
+      end
+
+      # Add properties from related templates (extends/includes)
+      if @config.inference.cross_template?
+        collect_related_properties(uri, variable, props, visited: Set(String).new)
+      end
+
+      props.to_a
+    end
+
+    # Recursively collect properties from related templates
+    private def collect_related_properties(
+      uri : String,
+      variable : String,
+      props : Set(String),
+      visited : Set(String),
+    ) : Nil
+      return if visited.includes?(uri)
+      visited << uri
+
+      # Get relationships for this template
+      relationships = @relationships[uri]?
+      return unless relationships
+
+      relationships.each do |template_path|
+        # Find the URI for this template path
+        related_uri = resolve_template_uri(uri, template_path)
+        next unless related_uri
+
+        # Add properties from the related template
+        if related_props = @usage[related_uri]?.try(&.[variable]?)
+          props.concat(related_props)
+        end
+
+        # Recursively check relationships (one level deep by default)
+        # This handles extends chains like child -> parent -> grandparent
+        collect_related_properties(related_uri, variable, props, visited)
+      end
+    end
+
+    # Resolve a template path to a URI
+    private def resolve_template_uri(current_uri : String, template_path : String) : String?
+      # First try direct lookup by filename
+      if uri = @path_to_uri[template_path]?
+        return uri
+      end
+
+      # Try to resolve relative to current template's directory
+      if current_uri.starts_with?("file://")
+        current_path = current_uri.sub(/^file:\/\//, "")
+        current_dir = File.dirname(current_path)
+        resolved_path = File.join(current_dir, template_path)
+
+        # Check if we have this path registered
+        resolved_basename = File.basename(resolved_path)
+        if uri = @path_to_uri[resolved_basename]?
+          return uri
+        end
+
+        # Build a file:// URI for the resolved path
+        return "file://#{resolved_path}"
+      end
+
+      nil
     end
 
     # Get all variables tracked for a template
@@ -130,11 +271,15 @@ module Crinkle::LSP
     # Clear analysis for a template
     def clear(uri : String) : Nil
       @usage.delete(uri)
+      @relationships.delete(uri)
+      # Note: we don't clear @path_to_uri as other templates may still reference it
     end
 
     # Clear all analysis
     def clear_all : Nil
       @usage.clear
+      @relationships.clear
+      @path_to_uri.clear
     end
 
     # Find similar property names (for typo detection)
