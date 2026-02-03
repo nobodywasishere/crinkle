@@ -180,12 +180,12 @@ module Crinkle::LSP
         var.name.starts_with?(prefix)
       end.map do |var|
         source_desc = case var.source
-                 when .for_loop?    then "loop variable"
-                 when .set?         then "assigned variable"
-                 when .set_block?   then "block assigned"
-                 when .macro_param? then "macro parameter"
-                 else                    "context variable"
-                 end
+                      when .for_loop?    then "loop variable"
+                      when .set?         then "assigned variable"
+                      when .set_block?   then "block assigned"
+                      when .macro_param? then "macro parameter"
+                      else                    "context variable"
+                      end
         detail = if type = types[var.name]?
                    "#{var.name} : #{type} (#{source_desc})"
                  else
@@ -776,7 +776,10 @@ module Crinkle::LSP
       i = index - 1
       while i >= 0
         token = tokens[i]
-        next if token.type == TokenType::Whitespace
+        if token.type == TokenType::Whitespace
+          i -= 1
+          next
+        end
         if token.type == TokenType::Identifier
           return token.lexeme
         end

@@ -88,6 +88,26 @@ describe Crinkle::LSP do
       labels.should_not contain "product"
     end
 
+    it "provides filter completions after pipe with trailing whitespace" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::CompletionProvider.new(schema_provider, inference)
+
+      template = "{% set foo = 1 %}\n\n{{ foo | }}"
+      inference.analyze("file:///test.j2", template)
+
+      completions = provider.completions(
+        "file:///test.j2",
+        template,
+        Crinkle::LSP::Position.new(2, 8)
+      )
+
+      labels = completions.map(&.label)
+      labels.should contain "default"
+      labels.should contain "upper"
+    end
+
     it "adds auto-import edits for workspace macros" do
       tmp_root = ENV["TMPDIR"]? || "/tmp"
       dir = File.join(tmp_root, "crinkle-lsp-#{Time.utc.to_unix_ms}-#{Random.rand(1000)}")
