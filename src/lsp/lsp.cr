@@ -3,6 +3,12 @@ require "./logger"
 require "./transport"
 require "./document"
 require "./diagnostics"
+require "./config"
+require "./schema_provider"
+require "./inference"
+require "./completion"
+require "./hover"
+require "./signature_help"
 require "./server"
 
 module Crinkle::LSP

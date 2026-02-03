@@ -198,6 +198,7 @@ crinkle <command> [path ...] [options]
 | `render` | Render template, output HTML + diagnostics |
 | `format` | Format template source |
 | `lint` | Lint template, output diagnostics |
+| `lsp` | Start the Language Server Protocol server |
 
 ### Options
 
@@ -225,6 +226,63 @@ crinkle lint templates/*.j2 --strict
 
 # Render from stdin
 echo "Hello {{ name }}" | crinkle render --stdin
+```
+
+## Language Server (LSP)
+
+Crinkle includes a Language Server Protocol server for IDE integration.
+
+### Starting the LSP
+
+```bash
+crinkle lsp [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--log FILE` | Log to file (for debugging) |
+| `--log-level LEVEL` | Log level: debug, info, warning, error |
+
+### LSP Features
+
+- **Diagnostics**: Real-time syntax errors and lint warnings
+- **Formatting**: Format templates via editor commands
+- **Completions**: Filter, test, function, and property suggestions
+- **Hover**: Documentation for filters, tests, and functions
+- **Signature Help**: Parameter hints for function calls
+
+### Configuration
+
+The LSP works without any configuration, using the built-in standard library schema. To customize behavior, create `.crinkle/config.yaml`:
+
+```yaml
+version: 1
+
+# Inference settings for property completions
+inference:
+  enabled: true         # Track variable.property usage for suggestions
+  cross_template: true  # Share inferred properties across templates
+
+# Custom schema (only needed for custom extensions)
+schema:
+  path: .crinkle/schema.json
+```
+
+### Custom Schema Generation
+
+For projects with custom filters, tests, or functions, generate a schema file so the LSP can provide completions for them:
+
+```crystal
+require "crinkle"
+
+# Register your custom extensions first
+env = Crinkle::Environment.new
+MyApp::Filters.register(env)
+MyApp::Tests.register(env)
+
+# Export the schema
+Dir.mkdir_p(".crinkle")
+File.write(".crinkle/schema.json", Crinkle::Schema.to_pretty_json)
 ```
 
 ## Value Serialization

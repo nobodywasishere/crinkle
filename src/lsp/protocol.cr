@@ -250,11 +250,42 @@ module Crinkle::LSP
     property text_document_sync : TextDocumentSyncOptions?
     @[JSON::Field(key: "documentFormattingProvider")]
     property document_formatting_provider : Bool?
+    @[JSON::Field(key: "completionProvider")]
+    property completion_provider : CompletionOptions?
+    @[JSON::Field(key: "hoverProvider")]
+    property hover_provider : Bool?
+    @[JSON::Field(key: "signatureHelpProvider")]
+    property signature_help_provider : SignatureHelpOptions?
 
     def initialize(
       @text_document_sync : TextDocumentSyncOptions? = nil,
       @document_formatting_provider : Bool? = nil,
+      @completion_provider : CompletionOptions? = nil,
+      @hover_provider : Bool? = nil,
+      @signature_help_provider : SignatureHelpOptions? = nil,
     ) : Nil
+    end
+  end
+
+  # Completion options
+  struct CompletionOptions
+    include JSON::Serializable
+
+    @[JSON::Field(key: "triggerCharacters")]
+    property trigger_characters : Array(String)?
+
+    def initialize(@trigger_characters : Array(String)? = nil) : Nil
+    end
+  end
+
+  # Signature help options
+  struct SignatureHelpOptions
+    include JSON::Serializable
+
+    @[JSON::Field(key: "triggerCharacters")]
+    property trigger_characters : Array(String)?
+
+    def initialize(@trigger_characters : Array(String)? = nil) : Nil
     end
   end
 
@@ -441,6 +472,169 @@ module Crinkle::LSP
     def initialize(
       @text_document : TextDocumentIdentifier,
       @options : FormattingOptions,
+    ) : Nil
+    end
+  end
+
+  # Completion item kind
+  enum CompletionItemKind
+    Text          =  1
+    Method        =  2
+    Function      =  3
+    Constructor   =  4
+    Field         =  5
+    Variable      =  6
+    Class         =  7
+    Interface     =  8
+    Module        =  9
+    Property      = 10
+    Unit          = 11
+    Value         = 12
+    Enum          = 13
+    Keyword       = 14
+    Snippet       = 15
+    Color         = 16
+    File          = 17
+    Reference     = 18
+    Folder        = 19
+    EnumMember    = 20
+    Constant      = 21
+    Struct        = 22
+    Event         = 23
+    Operator      = 24
+    TypeParameter = 25
+
+    def to_json(json : JSON::Builder) : Nil
+      json.number(value)
+    end
+  end
+
+  # Completion item
+  struct CompletionItem
+    include JSON::Serializable
+
+    property label : String
+    property kind : CompletionItemKind?
+    property detail : String?
+    property documentation : String?
+    @[JSON::Field(key: "sortText")]
+    property sort_text : String?
+    @[JSON::Field(key: "filterText")]
+    property filter_text : String?
+    @[JSON::Field(key: "insertText")]
+    property insert_text : String?
+
+    def initialize(
+      @label : String,
+      @kind : CompletionItemKind? = nil,
+      @detail : String? = nil,
+      @documentation : String? = nil,
+      @sort_text : String? = nil,
+      @filter_text : String? = nil,
+      @insert_text : String? = nil,
+    ) : Nil
+    end
+  end
+
+  # Completion params
+  struct CompletionParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property position : Position
+
+    def initialize(@text_document : TextDocumentIdentifier, @position : Position) : Nil
+    end
+  end
+
+  # Hover params
+  struct HoverParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property position : Position
+
+    def initialize(@text_document : TextDocumentIdentifier, @position : Position) : Nil
+    end
+  end
+
+  # Markup content for hover/completion documentation
+  struct MarkupContent
+    include JSON::Serializable
+
+    property kind : String # "plaintext" | "markdown"
+    property value : String
+
+    def initialize(@kind : String, @value : String) : Nil
+    end
+  end
+
+  # Hover result
+  struct Hover
+    include JSON::Serializable
+
+    property contents : MarkupContent
+    property range : Range?
+
+    def initialize(@contents : MarkupContent, @range : Range? = nil) : Nil
+    end
+  end
+
+  # Signature help params
+  struct SignatureHelpParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property position : Position
+
+    def initialize(@text_document : TextDocumentIdentifier, @position : Position) : Nil
+    end
+  end
+
+  # Parameter information for signature help
+  struct ParameterInformation
+    include JSON::Serializable
+
+    property label : String
+    property documentation : String?
+
+    def initialize(@label : String, @documentation : String? = nil) : Nil
+    end
+  end
+
+  # Signature information
+  struct SignatureInformation
+    include JSON::Serializable
+
+    property label : String
+    property documentation : String?
+    property parameters : Array(ParameterInformation)?
+
+    def initialize(
+      @label : String,
+      @documentation : String? = nil,
+      @parameters : Array(ParameterInformation)? = nil,
+    ) : Nil
+    end
+  end
+
+  # Signature help result
+  struct SignatureHelp
+    include JSON::Serializable
+
+    property signatures : Array(SignatureInformation)
+    @[JSON::Field(key: "activeSignature")]
+    property active_signature : Int32?
+    @[JSON::Field(key: "activeParameter")]
+    property active_parameter : Int32?
+
+    def initialize(
+      @signatures : Array(SignatureInformation),
+      @active_signature : Int32? = nil,
+      @active_parameter : Int32? = nil,
     ) : Nil
     end
   end

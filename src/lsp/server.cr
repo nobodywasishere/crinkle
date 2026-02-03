@@ -1,9 +1,16 @@
 require "json"
+require "uri"
 require "../lexer/lexer"
 require "../parser/parser"
 require "../linter/linter"
 require "../linter/rules"
 require "../formatter/formatter"
+require "./config"
+require "./schema_provider"
+require "./inference"
+require "./completion"
+require "./hover"
+require "./signature_help"
 
 module Crinkle::LSP
   # LSP server for Jinja2/Crinkle templates.
@@ -20,8 +27,15 @@ module Crinkle::LSP
     @initialized : Bool
     @shutdown_requested : Bool
     @root_uri : String?
+    @root_path : String?
     @analyzer : Analyzer
     @pending_analysis : Hash(String, Time::Instant)
+    @config : Config
+    @schema_provider : SchemaProvider?
+    @inference : InferenceEngine?
+    @completion_provider : CompletionProvider?
+    @hover_provider : HoverProvider?
+    @signature_help_provider : SignatureHelpProvider?
 
     def initialize(
       @transport : Transport,
@@ -32,8 +46,15 @@ module Crinkle::LSP
       @initialized = false
       @shutdown_requested = false
       @root_uri = nil
+      @root_path = nil
       @analyzer = Analyzer.new
       @pending_analysis = Hash(String, Time::Instant).new
+      @config = Config.new
+      @schema_provider = nil
+      @inference = nil
+      @completion_provider = nil
+      @hover_provider = nil
+      @signature_help_provider = nil
     end
 
     # Main run loop - read and handle messages until exit.
@@ -94,6 +115,12 @@ module Crinkle::LSP
           handle_shutdown(id)
         when "textDocument/formatting"
           handle_formatting(id, params)
+        when "textDocument/completion"
+          handle_completion(id, params)
+        when "textDocument/hover"
+          handle_hover(id, params)
+        when "textDocument/signatureHelp"
+          handle_signature_help(id, params)
         else
           log(MessageType::Log, "<<< Error: Method not found: #{method}")
           send_error(id, ErrorCodes::MethodNotFound, "Method not found: #{method}")
@@ -144,6 +171,31 @@ module Crinkle::LSP
       if params
         @root_uri = params["rootUri"]?.try(&.as_s?)
         log(MessageType::Info, "Root URI: #{@root_uri}")
+
+        # Extract root path from URI
+        if root_uri = @root_uri
+          @root_path = uri_to_path(root_uri)
+          log(MessageType::Info, "Root path: #{@root_path}")
+
+          # Load configuration
+          if root_path = @root_path
+            @config = Config.load(root_path)
+            log(MessageType::Info, "Config loaded from #{root_path}")
+
+            # Initialize semantic providers
+            schema_provider = SchemaProvider.new(@config, root_path)
+            @schema_provider = schema_provider
+
+            inference = InferenceEngine.new(@config)
+            @inference = inference
+
+            @completion_provider = CompletionProvider.new(schema_provider, inference)
+            @hover_provider = HoverProvider.new(schema_provider)
+            @signature_help_provider = SignatureHelpProvider.new(schema_provider)
+
+            log(MessageType::Info, "Semantic providers initialized")
+          end
+        end
       end
 
       capabilities = ServerCapabilities.new(
@@ -152,7 +204,14 @@ module Crinkle::LSP
           change: 1, # Full sync
           save: SaveOptions.new(include_text: true)
         ),
-        document_formatting_provider: true
+        document_formatting_provider: true,
+        completion_provider: CompletionOptions.new(
+          trigger_characters: ["|", ".", " "]
+        ),
+        hover_provider: true,
+        signature_help_provider: SignatureHelpOptions.new(
+          trigger_characters: ["(", ","]
+        )
       )
 
       result = InitializeResult.new(
@@ -163,6 +222,12 @@ module Crinkle::LSP
       @initialized = true
       log(MessageType::Log, "<<< Response: initialize success")
       send_response(id, JSON.parse(result.to_json))
+    end
+
+    # Convert file:// URI to file path
+    private def uri_to_path(uri : String) : String
+      parsed = URI.parse(uri)
+      parsed.path || uri
     end
 
     # Initialized notification handler
@@ -226,6 +291,114 @@ module Crinkle::LSP
       end
     end
 
+    # textDocument/completion request handler
+    private def handle_completion(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        completion_params = CompletionParams.from_json(params.to_json)
+        uri = completion_params.text_document.uri
+        position = completion_params.position
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        # Get completions from provider
+        if provider = @completion_provider
+          completions = provider.completions(uri, doc.text, position)
+          log(MessageType::Log, "<<< Response: completion (#{completions.size} items)")
+          send_response(id, JSON.parse(completions.to_json))
+        else
+          # No provider, return empty list
+          log(MessageType::Log, "<<< Response: completion (no provider)")
+          send_response(id, JSON.parse("[]"))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide completions: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Completion error: #{ex.message}")
+      end
+    end
+
+    # textDocument/hover request handler
+    private def handle_hover(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        hover_params = HoverParams.from_json(params.to_json)
+        uri = hover_params.text_document.uri
+        position = hover_params.position
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        # Get hover from provider
+        if provider = @hover_provider
+          if hover = provider.hover(doc.text, position)
+            log(MessageType::Log, "<<< Response: hover (found)")
+            send_response(id, JSON.parse(hover.to_json))
+          else
+            log(MessageType::Log, "<<< Response: hover (null)")
+            send_response(id, JSON::Any.new(nil))
+          end
+        else
+          log(MessageType::Log, "<<< Response: hover (no provider)")
+          send_response(id, JSON::Any.new(nil))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide hover: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Hover error: #{ex.message}")
+      end
+    end
+
+    # textDocument/signatureHelp request handler
+    private def handle_signature_help(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        sig_params = SignatureHelpParams.from_json(params.to_json)
+        uri = sig_params.text_document.uri
+        position = sig_params.position
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        # Get signature help from provider
+        if provider = @signature_help_provider
+          if sig_help = provider.signature_help(doc.text, position)
+            log(MessageType::Log, "<<< Response: signatureHelp (found)")
+            send_response(id, JSON.parse(sig_help.to_json))
+          else
+            log(MessageType::Log, "<<< Response: signatureHelp (null)")
+            send_response(id, JSON::Any.new(nil))
+          end
+        else
+          log(MessageType::Log, "<<< Response: signatureHelp (no provider)")
+          send_response(id, JSON::Any.new(nil))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide signature help: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "Signature help error: #{ex.message}")
+      end
+    end
+
     # Exit notification handler
     private def handle_exit : Nil
       log(MessageType::Info, "Exit received")
@@ -240,6 +413,9 @@ module Crinkle::LSP
         doc = open_params.text_document
         @documents.open(doc.uri, doc.language_id, doc.text, doc.version)
         log(MessageType::Info, "Opened: #{doc.uri} (version #{doc.version})")
+
+        # Run inference analysis
+        @inference.try(&.analyze(doc.uri, doc.text))
 
         # Run diagnostics
         publish_diagnostics(doc.uri, doc.text, doc.version)
@@ -262,6 +438,9 @@ module Crinkle::LSP
           @documents.update(uri, change.text, version)
           log(MessageType::Info, "Updated: #{uri} (version #{version})")
 
+          # Run inference analysis
+          @inference.try(&.analyze(uri, change.text))
+
           # Run diagnostics with debouncing
           publish_diagnostics(uri, change.text, version, debounce: true)
         end
@@ -279,6 +458,10 @@ module Crinkle::LSP
         uri = close_params.text_document.uri
         @documents.close(uri)
         @pending_analysis.delete(uri)
+
+        # Clear inference data
+        @inference.try(&.clear(uri))
+
         log(MessageType::Info, "Closed: #{uri}")
 
         # Clear diagnostics for closed document

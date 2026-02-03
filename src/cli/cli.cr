@@ -136,10 +136,6 @@ module Crinkle
         exit exit_code_for_issues(all_issues, opts)
       when "lsp"
         exit LSP.run(args)
-      when "schema"
-        opts = parse_options(args, default_format: OutputFormat::Json)
-        emit_schema(opts)
-        exit 0
       when "-h", "--help", "help"
         print_usage
         exit 0
@@ -161,7 +157,6 @@ module Crinkle
           format   Format template and output formatted source
           lint     Lint template and output diagnostics
           lsp      Start the Language Server Protocol server
-          schema   Output schema of registered filters/tests/functions
 
         Options:
           --stdin                Read from stdin instead of file path
@@ -362,68 +357,6 @@ module Crinkle
       else
         results.each do |label, issues|
           print_issues(issues, opts, label)
-        end
-      end
-    end
-
-    private def self.emit_schema(opts : Options) : Nil
-      case opts.format
-      when OutputFormat::Json
-        if opts.pretty?
-          STDOUT.puts(Crinkle::Schema.to_pretty_json)
-        else
-          STDOUT.puts(Crinkle::Schema.to_json)
-        end
-      else
-        # Text format - human readable
-        registry = Crinkle::Schema.registry
-        STDOUT.puts("Crinkle Schema v#{Crinkle::Schema::VERSION}")
-        STDOUT.puts
-
-        unless registry.filters.empty?
-          STDOUT.puts("Filters (#{registry.filters.size}):")
-          registry.filters.each do |filter_name, schema|
-            params_str = schema.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
-            STDOUT.puts("  #{filter_name}(#{params_str}) -> #{schema.returns}")
-            STDOUT.puts("    #{schema.doc}") if schema.doc
-          end
-          STDOUT.puts
-        end
-
-        unless registry.tests.empty?
-          STDOUT.puts("Tests (#{registry.tests.size}):")
-          registry.tests.each do |test_name, schema|
-            params_str = schema.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
-            STDOUT.puts("  #{test_name}(#{params_str})")
-            STDOUT.puts("    #{schema.doc}") if schema.doc
-          end
-          STDOUT.puts
-        end
-
-        unless registry.functions.empty?
-          STDOUT.puts("Functions (#{registry.functions.size}):")
-          registry.functions.each do |func_name, schema|
-            params_str = schema.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
-            STDOUT.puts("  #{func_name}(#{params_str}) -> #{schema.returns}")
-            STDOUT.puts("    #{schema.doc}") if schema.doc
-          end
-          STDOUT.puts
-        end
-
-        unless registry.callables.empty?
-          STDOUT.puts("Callables (#{registry.callables.size}):")
-          registry.callables.each do |_name, schema|
-            STDOUT.puts("  #{schema.class_name}:")
-            if dc = schema.default_call
-              params_str = dc.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
-              STDOUT.puts("    __call__(#{params_str}) -> #{dc.returns}")
-            end
-            schema.methods.each do |method_name, method_schema|
-              params_str = method_schema.params.map { |param| "#{param.name}: #{param.type}#{param.required? ? "" : "?"}" }.join(", ")
-              STDOUT.puts("    #{method_name}(#{params_str}) -> #{method_schema.returns}")
-              STDOUT.puts("      #{method_schema.doc}") if method_schema.doc
-            end
-          end
         end
       end
     end
