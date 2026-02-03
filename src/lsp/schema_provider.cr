@@ -63,7 +63,7 @@ module Crinkle::LSP
 
     # Get template context schema
     def template_context(path : String) : Hash(String, String)?
-      schema.templates[path]?.try(&.context)
+      schema.template_context_for(path).try &.context
     end
 
     # Get a specific filter schema by name

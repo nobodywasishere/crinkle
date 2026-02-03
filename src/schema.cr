@@ -1,6 +1,6 @@
 module Crinkle
   module Schema
-    VERSION = 1
+    VERSION = 2
 
     # Represents a parameter in a filter, test, function, or callable method
     struct ParamSchema
@@ -174,6 +174,7 @@ module Crinkle
       getter callables : Hash(String, CallableSchema)
       getter templates : Hash(String, TemplateContextSchema)
       getter tags : Hash(String, TagSchema)
+      getter globals : Hash(String, String)
 
       def initialize : Nil
         @filters = Hash(String, FilterSchema).new
@@ -182,6 +183,7 @@ module Crinkle
         @callables = Hash(String, CallableSchema).new
         @templates = Hash(String, TemplateContextSchema).new
         @tags = Hash(String, TagSchema).new
+        @globals = Hash(String, String).new
       end
 
       def register_filter(schema : FilterSchema) : Nil
@@ -206,6 +208,24 @@ module Crinkle
 
       def register_tag(schema : TagSchema) : Nil
         @tags[schema.name] = schema
+      end
+
+      def register_global(name : String, type : String) : Nil
+        @globals[name] = type
+      end
+
+      def template_context_for(path : String?) : TemplateContextSchema?
+        return unless path
+        template = @templates[path]?
+        return unless template || @globals.present?
+
+        merged = @globals.dup
+        if template
+          template.context.each { |k, v| merged[k] = v }
+          TemplateContextSchema.new(template.path, merged)
+        else
+          TemplateContextSchema.new(path, merged)
+        end
       end
     end
 

@@ -1032,7 +1032,7 @@ module Crinkle
 
         private def find_template_context(path : String?) : Schema::TemplateContextSchema?
           return unless path
-          @schema.templates[path]?
+          @schema.template_context_for(path)
         end
 
         private def collect_not_callable_issues(
@@ -1101,7 +1101,7 @@ module Crinkle
 
         private def find_template_context(path : String?) : Schema::TemplateContextSchema?
           return unless path
-          @schema.templates[path]?
+          @schema.template_context_for(path)
         end
 
         private def collect_default_call_issues(
@@ -1205,7 +1205,7 @@ module Crinkle
 
         private def find_template_context(path : String?) : Schema::TemplateContextSchema?
           return unless path
-          @schema.templates[path]?
+          @schema.template_context_for(path)
         end
 
         private def collect_unknown_method_issues(
@@ -1368,7 +1368,7 @@ module Crinkle
 
         private def find_template_context(path : String?) : Schema::TemplateContextSchema?
           return unless path
-          @schema.templates[path]?
+          @schema.template_context_for(path)
         end
 
         private def collect_method_kwarg_issues(

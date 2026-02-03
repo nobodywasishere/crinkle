@@ -126,6 +126,11 @@ module Crinkle
       register_function(name, fn)
     end
 
+    def register_global(name : String, value : Value, type : String = "Any") : Nil
+      @globals[name] = value
+      Schema.registry.register_global(name, type)
+    end
+
     def set_loader(&loader : TemplateLoader) : Nil
       @template_loader = loader
     end

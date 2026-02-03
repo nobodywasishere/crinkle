@@ -396,7 +396,7 @@ module Crinkle::LSP
     private def template_context_for_uri(uri : String) : Schema::TemplateContextSchema?
       path = template_path_for_uri(uri)
       return unless path
-      @schema.templates[path]?
+      @schema.template_context_for(path)
     end
 
     private def template_path_for_uri(uri : String) : String?

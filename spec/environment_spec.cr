@@ -452,6 +452,16 @@ describe Crinkle::Environment do
     end
   end
 
+  describe "register_global" do
+    it "registers global value and schema type" do
+      env = Crinkle::Environment.new
+      env.register_global("ctx", Crinkle.value("context"), "Context")
+
+      env.globals["ctx"].to_s.should eq("context")
+      Crinkle::Schema.registry.globals["ctx"].should eq("Context")
+    end
+  end
+
   describe "RenderContext globals access" do
     it "filters can access globals via context" do
       env = Crinkle::Environment.new

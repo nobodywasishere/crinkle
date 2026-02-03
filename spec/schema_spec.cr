@@ -186,12 +186,47 @@ describe "Crinkle::Schema" do
       registry.functions["test_func"].should eq(schema)
     end
 
+    it "merges globals into template context" do
+      registry = Crinkle::Schema::Registry.new
+      registry.register_global("ctx", "Context")
+      registry.register_template(
+        Crinkle::Schema::TemplateContextSchema.new(
+          path: "templates/example.html.j2",
+          context: {"user" => "User"}
+        )
+      )
+
+      ctx = registry.template_context_for("templates/example.html.j2")
+      ctx.should be_a(Crinkle::Schema::TemplateContextSchema)
+      ctx = ctx.as(Crinkle::Schema::TemplateContextSchema)
+      ctx.context["ctx"].should eq("Context")
+      ctx.context["user"].should eq("User")
+    end
+
+    it "uses globals when template context is missing" do
+      registry = Crinkle::Schema::Registry.new
+      registry.register_global("ctx", "Context")
+
+      ctx = registry.template_context_for("templates/unknown.html.j2")
+      ctx.should be_a(Crinkle::Schema::TemplateContextSchema)
+      ctx = ctx.as(Crinkle::Schema::TemplateContextSchema)
+      ctx.context["ctx"].should eq("Context")
+    end
+
+    it "serializes globals to JSON" do
+      registry = Crinkle::Schema::Registry.new
+      registry.register_global("ctx", "Context")
+      json = String.build { |str| JSON.build(str) { |builder| registry.to_json(builder) } }
+      parsed = JSON.parse(json)
+      parsed["globals"]["ctx"].as_s.should eq("Context")
+    end
+
     it "serializes to JSON" do
       registry = Crinkle::Schema::Registry.new
       registry.register_filter(Crinkle::Schema::FilterSchema.new(name: "upper", returns: "String"))
       json = String.build { |str| JSON.build(str) { |builder| registry.to_json(builder) } }
       parsed = JSON.parse(json)
-      parsed["version"].as_i.should eq(1)
+      parsed["version"].as_i.should eq(2)
       parsed["filters"]["upper"]["name"].as_s.should eq("upper")
     end
   end
@@ -204,7 +239,7 @@ describe "Crinkle::Schema" do
     it "exports to JSON" do
       json = Crinkle::Schema.to_json
       parsed = JSON.parse(json)
-      parsed["version"].as_i.should eq(1)
+      parsed["version"].as_i.should eq(2)
     end
   end
 end
