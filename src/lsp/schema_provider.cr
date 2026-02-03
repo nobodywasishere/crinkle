@@ -6,7 +6,7 @@ module Crinkle::LSP
   # Uses the built-in standard library schema by default, with optional
   # override from a custom schema file for projects with custom extensions.
   class SchemaProvider
-    @custom_schema : Schema::Registry?
+    getter custom_schema : Schema::Registry?
     @config : Config
     @root_path : String
 

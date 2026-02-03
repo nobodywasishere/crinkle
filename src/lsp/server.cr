@@ -193,6 +193,10 @@ module Crinkle::LSP
             @hover_provider = HoverProvider.new(schema_provider)
             @signature_help_provider = SignatureHelpProvider.new(schema_provider)
 
+            # Recreate analyzer with schema for schema-aware linting and typo detection
+            custom_schema = schema_provider.custom_schema
+            @analyzer = Analyzer.new(custom_schema || Schema.registry, inference)
+
             log(MessageType::Info, "Semantic providers initialized")
           end
         end
@@ -491,8 +495,8 @@ module Crinkle::LSP
     # Run diagnostics immediately (bypasses debouncing).
     # Used for document open events where we want immediate feedback.
     private def run_diagnostics(uri : String, text : String, version : Int32) : Nil
-      # Use the analyzer to run full pipeline: lex → parse → lint
-      lsp_diagnostics = @analyzer.analyze_to_lsp(text)
+      # Use the analyzer to run full pipeline: lex → parse → lint → typo detection
+      lsp_diagnostics = @analyzer.analyze_to_lsp(text, uri)
 
       # Publish diagnostics
       params = PublishDiagnosticsParams.new(
