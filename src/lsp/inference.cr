@@ -91,16 +91,8 @@ module Crinkle::LSP
       @root_path = path
     end
 
-    # Enable debug logging
-    class_property? debug : Bool = false
-
-    private def debug(msg : String) : Nil
-      STDERR.puts "[InferenceEngine] #{msg}" if self.class.debug?
-    end
-
     # Analyze a template and extract property usage
     def analyze(uri : String, text : String) : Nil
-      debug "analyze(#{uri})"
       return unless @config.inference.enabled?
 
       begin
@@ -136,16 +128,10 @@ module Crinkle::LSP
           relationships = Set(String).new
           extract_relationships(ast.body, relationships)
           @relationships[uri] = relationships
-          debug "  relationships for #{uri}: #{relationships.to_a}"
-
           # Register this URI by its template path for reverse lookup
           register_uri_path(uri)
-          debug "  path_to_uri after registration: #{@path_to_uri}"
-
           # Automatically analyze imported templates
           analyze_related_templates(uri, relationships)
-        else
-          debug "  cross_template disabled"
         end
       rescue
         # Ignore parse errors - we're doing best-effort inference
@@ -154,30 +140,22 @@ module Crinkle::LSP
 
     # Automatically analyze templates that are imported/extended/included
     private def analyze_related_templates(current_uri : String, relationships : Set(String)) : Nil
-      debug "analyze_related_templates(#{current_uri})"
-      debug "  root_path: #{@root_path.inspect}"
       relationships.each do |template_path|
-        debug "  checking relationship: #{template_path}"
         # Skip if already analyzed
         if @path_to_uri[template_path]?
-          debug "    already analyzed (in path_to_uri)"
           next
         end
 
         # Try to resolve and analyze the template
         resolved_path = resolve_template_file(current_uri, template_path)
-        debug "    resolved_path: #{resolved_path.inspect}"
         if resolved_path
           exists = File.exists?(resolved_path)
-          debug "    file exists: #{exists}"
           if exists
             begin
               content = File.read(resolved_path)
               resolved_uri = "file://#{File.expand_path(resolved_path)}"
-              debug "    analyzing resolved_uri: #{resolved_uri}"
               analyze(resolved_uri, content)
             rescue ex
-              debug "    read error: #{ex.message}"
             end
           end
         end
@@ -186,14 +164,11 @@ module Crinkle::LSP
 
     # Resolve a template path to an actual file path
     private def resolve_template_file(current_uri : String, template_path : String) : String?
-      debug "resolve_template_file(#{current_uri}, #{template_path})"
-
       # First try relative to current template's directory
       if current_uri.starts_with?("file://")
         current_path = current_uri.sub(/^file:\/\//, "")
         current_dir = File.dirname(current_path)
         relative_path = File.join(current_dir, template_path)
-        debug "  trying relative: #{relative_path} (exists: #{File.exists?(relative_path)})"
         return relative_path if File.exists?(relative_path)
 
         # Walk up the directory tree to find a templates root
@@ -201,7 +176,6 @@ module Crinkle::LSP
         dir = current_dir
         while dir != "/" && dir != "."
           candidate = File.join(dir, template_path)
-          debug "  trying ancestor: #{candidate} (exists: #{File.exists?(candidate)})"
           return candidate if File.exists?(candidate)
           dir = File.dirname(dir)
         end
@@ -210,20 +184,14 @@ module Crinkle::LSP
       # Try relative to root path
       if root = @root_path
         root_relative = File.join(root, template_path)
-        debug "  trying root_relative: #{root_relative} (exists: #{File.exists?(root_relative)})"
         return root_relative if File.exists?(root_relative)
 
         # Try in common template directories (including src2/templates for kagi-style projects)
         ["templates", "views", "src/templates", "src2/templates", ""].each do |subdir|
           candidate = File.join(root, subdir, template_path)
-          debug "  trying candidate: #{candidate} (exists: #{File.exists?(candidate)})"
           return candidate if File.exists?(candidate)
         end
-      else
-        debug "  no root_path set"
       end
-
-      debug "  failed to resolve"
       nil
     end
 

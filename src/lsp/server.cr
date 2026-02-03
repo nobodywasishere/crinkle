@@ -246,9 +246,6 @@ module Crinkle::LSP
             inference = InferenceEngine.new(@config, root_path, schema_provider.custom_schema || Schema.registry)
             @inference = inference
 
-            # Enable debug logging for cross-file resolution (can be removed once stable)
-            InferenceEngine.debug = true
-            DefinitionProvider.debug = true
 
             @workspace_index = WorkspaceIndex.new(@config, root_path)
             @workspace_index.try(&.rebuild)

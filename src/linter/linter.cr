@@ -148,7 +148,6 @@ module Crinkle
         ruleset.add(Rules::UnknownKwarg.new(schema))
         ruleset.add(Rules::MissingRequiredArgument.new(schema))
         ruleset.add(Rules::DeprecatedUsage.new(schema))
-        ruleset.add(Rules::TypeMismatch.new(schema))
       end
 
       ruleset
