@@ -132,7 +132,8 @@ module Crinkle
         return handle_extension(tag, extension, start_span, start_trim_left)
       end
 
-      emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.")
+      # TODO(margret): Disabling to support custom tags without errors
+      # emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.")
       parse_unknown_tag(tag, start_span, start_trim_left)
     end
 

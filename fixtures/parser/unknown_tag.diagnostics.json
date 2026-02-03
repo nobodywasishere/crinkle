@@ -1,43 +1,7 @@
 {
   "lexer": [],
-  "parser": [
-    {
-      "id": "E_UNKNOWN_TAG",
-      "severity": "error",
-      "message": "Unknown tag 'frobnicate'.",
-      "span": {
-        "start": {
-          "offset": 13,
-          "line": 1,
-          "column": 14
-        },
-        "end": {
-          "offset": 14,
-          "line": 1,
-          "column": 15
-        }
-      }
-    }
-  ],
-  "formatter": [
-    {
-      "id": "E_UNKNOWN_TAG",
-      "severity": "error",
-      "message": "Unknown tag 'frobnicate'.",
-      "span": {
-        "start": {
-          "offset": 13,
-          "line": 1,
-          "column": 14
-        },
-        "end": {
-          "offset": 14,
-          "line": 1,
-          "column": 15
-        }
-      }
-    }
-  ],
+  "parser": [],
+  "formatter": [],
   "renderer": [
     {
       "id": "E_UNKNOWN_TAG_RENDERER",

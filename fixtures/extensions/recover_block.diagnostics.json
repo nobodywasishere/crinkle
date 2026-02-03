@@ -1,25 +1,7 @@
 {
   "lexer": [],
   "parser": [],
-  "formatter": [
-    {
-      "id": "E_UNKNOWN_TAG",
-      "severity": "error",
-      "message": "Unknown tag 'recover'.",
-      "span": {
-        "start": {
-          "offset": 10,
-          "line": 1,
-          "column": 11
-        },
-        "end": {
-          "offset": 11,
-          "line": 1,
-          "column": 12
-        }
-      }
-    }
-  ],
+  "formatter": [],
   "renderer": [
     {
       "id": "E_UNKNOWN_TAG_RENDERER",

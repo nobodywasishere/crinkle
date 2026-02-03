@@ -1,43 +1,7 @@
 {
   "lexer": [],
-  "parser": [
-    {
-      "id": "E_UNKNOWN_TAG",
-      "severity": "error",
-      "message": "Unknown tag 'mystery'.",
-      "span": {
-        "start": {
-          "offset": 22,
-          "line": 2,
-          "column": 13
-        },
-        "end": {
-          "offset": 23,
-          "line": 2,
-          "column": 14
-        }
-      }
-    }
-  ],
-  "formatter": [
-    {
-      "id": "E_UNKNOWN_TAG",
-      "severity": "error",
-      "message": "Unknown tag 'mystery'.",
-      "span": {
-        "start": {
-          "offset": 22,
-          "line": 2,
-          "column": 13
-        },
-        "end": {
-          "offset": 23,
-          "line": 2,
-          "column": 14
-        }
-      }
-    }
-  ],
+  "parser": [],
+  "formatter": [],
   "renderer": [
     {
       "id": "E_UNKNOWN_TAG_RENDERER",

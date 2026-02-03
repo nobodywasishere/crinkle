@@ -1,43 +1,7 @@
 {
   "lexer": [],
-  "parser": [
-    {
-      "id": "E_UNKNOWN_TAG",
-      "severity": "error",
-      "message": "Unknown tag 'autoescape'.",
-      "span": {
-        "start": {
-          "offset": 34,
-          "line": 2,
-          "column": 16
-        },
-        "end": {
-          "offset": 35,
-          "line": 2,
-          "column": 17
-        }
-      }
-    }
-  ],
-  "formatter": [
-    {
-      "id": "E_UNKNOWN_TAG",
-      "severity": "error",
-      "message": "Unknown tag 'autoescape'.",
-      "span": {
-        "start": {
-          "offset": 34,
-          "line": 2,
-          "column": 16
-        },
-        "end": {
-          "offset": 35,
-          "line": 2,
-          "column": 17
-        }
-      }
-    }
-  ],
+  "parser": [],
+  "formatter": [],
   "renderer": [
     {
       "id": "E_UNKNOWN_TAG_RENDERER",
