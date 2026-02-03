@@ -258,6 +258,8 @@ module Crinkle::LSP
     property signature_help_provider : SignatureHelpOptions?
     @[JSON::Field(key: "definitionProvider")]
     property definition_provider : Bool?
+    @[JSON::Field(key: "referencesProvider")]
+    property references_provider : Bool?
 
     def initialize(
       @text_document_sync : TextDocumentSyncOptions? = nil,
@@ -266,6 +268,7 @@ module Crinkle::LSP
       @hover_provider : Bool? = nil,
       @signature_help_provider : SignatureHelpOptions? = nil,
       @definition_provider : Bool? = nil,
+      @references_provider : Bool? = nil,
     ) : Nil
     end
   end
@@ -563,6 +566,34 @@ module Crinkle::LSP
     end
   end
 
+  # Reference context options (from LSP spec)
+  struct ReferenceContextOptions
+    include JSON::Serializable
+
+    @[JSON::Field(key: "includeDeclaration")]
+    getter? include_declaration : Bool
+
+    def initialize(@include_declaration : Bool = true) : Nil
+    end
+  end
+
+  # textDocument/references params
+  struct ReferenceParams
+    include JSON::Serializable
+
+    @[JSON::Field(key: "textDocument")]
+    property text_document : TextDocumentIdentifier
+    property position : Position
+    property context : ReferenceContextOptions?
+
+    def initialize(
+      @text_document : TextDocumentIdentifier,
+      @position : Position,
+      @context : ReferenceContextOptions? = nil,
+    ) : Nil
+    end
+  end
+
   # Markup content for hover/completion documentation
   struct MarkupContent
     include JSON::Serializable
@@ -658,6 +689,7 @@ module Crinkle::LSP
     include JSON::Serializable
 
     property uri : String
+    @[JSON::Field(converter: Enum::ValueConverter(FileChangeType))]
     property type : FileChangeType
 
     def initialize(@uri : String, @type : FileChangeType) : Nil

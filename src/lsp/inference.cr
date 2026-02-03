@@ -15,9 +15,10 @@ module Crinkle::LSP
   struct VariableInfo
     property name : String
     property source : VariableSource
-    property detail : String? # Extra info (e.g., "from for loop", iterator name)
+    property detail : String?        # Extra info (e.g., "from for loop", iterator name)
+    property definition_span : Span? # Where the variable is defined
 
-    def initialize(@name : String, @source : VariableSource, @detail : String? = nil) : Nil
+    def initialize(@name : String, @source : VariableSource, @detail : String? = nil, @definition_span : Span? = nil) : Nil
     end
   end
 
@@ -26,8 +27,9 @@ module Crinkle::LSP
     property name : String
     property params : Array(String)
     property defaults : Hash(String, String) # param name -> default value representation
+    property definition_span : Span?         # Where the macro is defined
 
-    def initialize(@name : String, @params : Array(String), @defaults : Hash(String, String) = Hash(String, String).new) : Nil
+    def initialize(@name : String, @params : Array(String), @defaults : Hash(String, String) = Hash(String, String).new, @definition_span : Span? = nil) : Nil
     end
 
     def signature : String
@@ -42,6 +44,16 @@ module Crinkle::LSP
     end
   end
 
+  # Information about a block definition
+  struct BlockInfo
+    property name : String
+    property definition_span : Span? # Where the block is defined
+    property source_uri : String?    # Which template the block is defined in
+
+    def initialize(@name : String, @definition_span : Span? = nil, @source_uri : String? = nil) : Nil
+    end
+  end
+
   # Inference engine for zero-config property completions
   # Tracks property usage across templates and provides suggestions
   class InferenceEngine
@@ -53,8 +65,8 @@ module Crinkle::LSP
     @path_to_uri : Hash(String, String)
     # Maps URI -> variable info (name -> info)
     @variables : Hash(String, Hash(String, VariableInfo))
-    # Maps URI -> block names defined in template
-    @blocks : Hash(String, Set(String))
+    # Maps URI -> block definitions (name -> info)
+    @blocks : Hash(String, Hash(String, BlockInfo))
     # Maps URI -> macro definitions
     @macros : Hash(String, Hash(String, MacroInfo))
     @config : Config
@@ -64,7 +76,7 @@ module Crinkle::LSP
       @relationships = Hash(String, Set(String)).new
       @path_to_uri = Hash(String, String).new
       @variables = Hash(String, Hash(String, VariableInfo)).new
-      @blocks = Hash(String, Set(String)).new
+      @blocks = Hash(String, Hash(String, BlockInfo)).new
       @macros = Hash(String, Hash(String, MacroInfo)).new
     end
 
@@ -87,9 +99,9 @@ module Crinkle::LSP
         extract_variables(ast.body, vars)
         @variables[uri] = vars
 
-        # Extract block names
-        blks = Set(String).new
-        extract_blocks(ast.body, blks)
+        # Extract block definitions with spans
+        blks = Hash(String, BlockInfo).new
+        extract_blocks(ast.body, blks, uri)
         @blocks[uri] = blks
 
         # Extract macro definitions
@@ -174,20 +186,20 @@ module Crinkle::LSP
       nodes.each do |node|
         case node
         when AST::For
-          # Extract for loop variable(s)
-          extract_target_variables(node.target, vars, VariableSource::ForLoop, "loop variable")
+          # Extract for loop variable(s) with the for statement span
+          extract_target_variables(node.target, vars, VariableSource::ForLoop, "loop variable", node.span)
           extract_variables(node.body, vars, scope_prefix)
         when AST::Set
-          # Extract set variable(s)
-          extract_target_variables(node.target, vars, VariableSource::Set, "assigned")
+          # Extract set variable(s) with the set statement span
+          extract_target_variables(node.target, vars, VariableSource::Set, "assigned", node.span)
         when AST::SetBlock
-          # Extract set block variable(s)
-          extract_target_variables(node.target, vars, VariableSource::SetBlock, "block assigned")
+          # Extract set block variable(s) with the setblock span
+          extract_target_variables(node.target, vars, VariableSource::SetBlock, "block assigned", node.span)
           extract_variables(node.body, vars, scope_prefix)
         when AST::Macro
           # Extract macro parameters as variables (scoped to macro body)
           node.params.each do |param|
-            vars[param.name] = VariableInfo.new(param.name, VariableSource::MacroParam, "macro #{node.name}")
+            vars[param.name] = VariableInfo.new(param.name, VariableSource::MacroParam, "macro #{node.name}", param.span)
           end
           extract_variables(node.body, vars, scope_prefix)
         when AST::If
@@ -205,14 +217,14 @@ module Crinkle::LSP
     end
 
     # Extract variable names from a target (handles tuples for unpacking)
-    private def extract_target_variables(target : AST::Target, vars : Hash(String, VariableInfo), source : VariableSource, detail : String) : Nil
+    private def extract_target_variables(target : AST::Target, vars : Hash(String, VariableInfo), source : VariableSource, detail : String, definition_span : Span? = nil) : Nil
       case target
       when AST::Name
-        vars[target.value] = VariableInfo.new(target.value, source, detail)
+        vars[target.value] = VariableInfo.new(target.value, source, detail, definition_span || target.span)
       when AST::TupleLiteral
         target.items.each do |item|
           if item.is_a?(AST::Name)
-            vars[item.value] = VariableInfo.new(item.value, source, detail)
+            vars[item.value] = VariableInfo.new(item.value, source, detail, definition_span || item.span)
           end
         end
       end
@@ -285,20 +297,20 @@ module Crinkle::LSP
       end
     end
 
-    # Extract block names from AST nodes
-    private def extract_blocks(nodes : Array(AST::Node), blks : Set(String)) : Nil
+    # Extract block definitions from AST nodes (with spans)
+    private def extract_blocks(nodes : Array(AST::Node), blks : Hash(String, BlockInfo), uri : String) : Nil
       nodes.each do |node|
         case node
         when AST::Block
-          blks << node.name
-          extract_blocks(node.body, blks)
+          blks[node.name] = BlockInfo.new(node.name, node.span, uri)
+          extract_blocks(node.body, blks, uri)
         when AST::If
-          extract_blocks(node.body, blks)
-          extract_blocks(node.else_body, blks)
+          extract_blocks(node.body, blks, uri)
+          extract_blocks(node.else_body, blks, uri)
         when AST::For
-          extract_blocks(node.body, blks)
+          extract_blocks(node.body, blks, uri)
         when AST::Macro
-          extract_blocks(node.body, blks)
+          extract_blocks(node.body, blks, uri)
         end
       end
     end
@@ -315,7 +327,7 @@ module Crinkle::LSP
               defaults[param.name] = expr_to_string(default)
             end
           end
-          macs[node.name] = MacroInfo.new(node.name, params, defaults)
+          macs[node.name] = MacroInfo.new(node.name, params, defaults, node.span)
           extract_macros(node.body, macs)
         when AST::If
           extract_macros(node.body, macs)
@@ -532,6 +544,49 @@ module Crinkle::LSP
       variables_for(uri).map(&.name)
     end
 
+    # Get variable info by name
+    def variable_info(uri : String, name : String) : VariableInfo?
+      # Check this template first
+      if local_vars = @variables[uri]?
+        if info = local_vars[name]?
+          return info
+        end
+      end
+
+      # Check extended templates
+      if @config.inference.cross_template?
+        return find_variable_in_related(uri, name, visited: Set(String).new)
+      end
+
+      nil
+    end
+
+    # Find a variable in related templates
+    private def find_variable_in_related(uri : String, name : String, visited : Set(String)) : VariableInfo?
+      return if visited.includes?(uri)
+      visited << uri
+
+      relationships = @relationships[uri]?
+      return unless relationships
+
+      relationships.each do |template_path|
+        related_uri = resolve_template_uri(uri, template_path)
+        next unless related_uri
+
+        if related_vars = @variables[related_uri]?
+          if info = related_vars[name]?
+            return info
+          end
+        end
+
+        if result = find_variable_in_related(related_uri, name, visited)
+          return result
+        end
+      end
+
+      nil
+    end
+
     # Recursively collect variables from related templates
     private def collect_related_variables(uri : String, vars : Hash(String, VariableInfo), visited : Set(String)) : Nil
       return if visited.includes?(uri)
@@ -553,12 +608,18 @@ module Crinkle::LSP
     end
 
     # Get block names for a template (includes blocks from extended templates)
+    # Returns just names for backward compatibility with completions
     def blocks_for(uri : String) : Array(String)
-      blks = Set(String).new
+      blocks_info_for(uri).map(&.name)
+    end
+
+    # Get block info for a template (includes blocks from extended templates)
+    def blocks_info_for(uri : String) : Array(BlockInfo)
+      blks = Hash(String, BlockInfo).new
 
       # Add blocks from this template
       if local_blks = @blocks[uri]?
-        blks.concat(local_blks)
+        local_blks.each { |name, info| blks[name] = info }
       end
 
       # Add blocks from extended templates (for block override suggestions)
@@ -566,11 +627,28 @@ module Crinkle::LSP
         collect_related_blocks(uri, blks, visited: Set(String).new)
       end
 
-      blks.to_a
+      blks.values.to_a
     end
 
-    # Recursively collect blocks from extended templates
-    private def collect_related_blocks(uri : String, blks : Set(String), visited : Set(String)) : Nil
+    # Get block info by name (searches this template and extended templates)
+    def block_info(uri : String, name : String) : BlockInfo?
+      # Check this template first
+      if local_blks = @blocks[uri]?
+        if info = local_blks[name]?
+          return info
+        end
+      end
+
+      # Check extended templates
+      if @config.inference.cross_template?
+        return find_block_in_related(uri, name, visited: Set(String).new)
+      end
+
+      nil
+    end
+
+    # Find a block in related templates
+    private def find_block_in_related(uri : String, name : String, visited : Set(String)) : BlockInfo?
       return if visited.includes?(uri)
       visited << uri
 
@@ -582,7 +660,33 @@ module Crinkle::LSP
         next unless related_uri
 
         if related_blks = @blocks[related_uri]?
-          blks.concat(related_blks)
+          if info = related_blks[name]?
+            return info
+          end
+        end
+
+        if result = find_block_in_related(related_uri, name, visited)
+          return result
+        end
+      end
+
+      nil
+    end
+
+    # Recursively collect blocks from extended templates
+    private def collect_related_blocks(uri : String, blks : Hash(String, BlockInfo), visited : Set(String)) : Nil
+      return if visited.includes?(uri)
+      visited << uri
+
+      relationships = @relationships[uri]?
+      return unless relationships
+
+      relationships.each do |template_path|
+        related_uri = resolve_template_uri(uri, template_path)
+        next unless related_uri
+
+        if related_blks = @blocks[related_uri]?
+          related_blks.each { |name, info| blks[name] ||= info }
         end
 
         collect_related_blocks(related_uri, blks, visited)
@@ -624,6 +728,49 @@ module Crinkle::LSP
 
         collect_related_macros(related_uri, macs, visited)
       end
+    end
+
+    # Get macro info by name
+    def macro_info(uri : String, name : String) : MacroInfo?
+      # Check this template first
+      if local_macs = @macros[uri]?
+        if info = local_macs[name]?
+          return info
+        end
+      end
+
+      # Check extended templates
+      if @config.inference.cross_template?
+        return find_macro_in_related(uri, name, visited: Set(String).new)
+      end
+
+      nil
+    end
+
+    # Find a macro in related templates
+    private def find_macro_in_related(uri : String, name : String, visited : Set(String)) : MacroInfo?
+      return if visited.includes?(uri)
+      visited << uri
+
+      relationships = @relationships[uri]?
+      return unless relationships
+
+      relationships.each do |template_path|
+        related_uri = resolve_template_uri(uri, template_path)
+        next unless related_uri
+
+        if related_macs = @macros[related_uri]?
+          if info = related_macs[name]?
+            return info
+          end
+        end
+
+        if result = find_macro_in_related(related_uri, name, visited)
+          return result
+        end
+      end
+
+      nil
     end
 
     # Get the template path that a URI extends (if any)

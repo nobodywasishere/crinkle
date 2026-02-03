@@ -12,6 +12,7 @@ require "./completion"
 require "./hover"
 require "./signature_help"
 require "./definition"
+require "./references"
 
 module Crinkle::LSP
   # LSP server for Jinja2/Crinkle templates.
@@ -38,6 +39,7 @@ module Crinkle::LSP
     @hover_provider : HoverProvider?
     @signature_help_provider : SignatureHelpProvider?
     @definition_provider : DefinitionProvider?
+    @references_provider : ReferencesProvider?
 
     def initialize(
       @transport : Transport,
@@ -58,6 +60,7 @@ module Crinkle::LSP
       @hover_provider = nil
       @signature_help_provider = nil
       @definition_provider = nil
+      @references_provider = nil
     end
 
     # Main run loop - read and handle messages until exit.
@@ -126,6 +129,8 @@ module Crinkle::LSP
           handle_signature_help(id, params)
         when "textDocument/definition"
           handle_definition(id, params)
+        when "textDocument/references"
+          handle_references(id, params)
         else
           log(MessageType::Log, "<<< Error: Method not found: #{method}")
           send_error(id, ErrorCodes::MethodNotFound, "Method not found: #{method}")
@@ -197,9 +202,10 @@ module Crinkle::LSP
             @inference = inference
 
             @completion_provider = CompletionProvider.new(schema_provider, inference)
-            @hover_provider = HoverProvider.new(schema_provider)
+            @hover_provider = HoverProvider.new(schema_provider, inference)
             @signature_help_provider = SignatureHelpProvider.new(schema_provider)
             @definition_provider = DefinitionProvider.new(inference, root_path)
+            @references_provider = ReferencesProvider.new(inference, @documents)
 
             # Recreate analyzer with schema for schema-aware linting and typo detection
             custom_schema = schema_provider.custom_schema
@@ -224,7 +230,8 @@ module Crinkle::LSP
         signature_help_provider: SignatureHelpOptions.new(
           trigger_characters: ["(", ","]
         ),
-        definition_provider: true
+        definition_provider: true,
+        references_provider: true
       )
 
       result = InitializeResult.new(
@@ -358,7 +365,7 @@ module Crinkle::LSP
 
         # Get hover from provider
         if provider = @hover_provider
-          if hover = provider.hover(doc.text, position)
+          if hover = provider.hover(uri, doc.text, position)
             log(MessageType::Log, "<<< Response: hover (found)")
             send_response(id, JSON.parse(hover.to_json))
           else
@@ -447,6 +454,45 @@ module Crinkle::LSP
       rescue ex
         log(MessageType::Error, "Failed to provide definition: #{ex.message}")
         send_error(id, ErrorCodes::InternalError, "Definition error: #{ex.message}")
+      end
+    end
+
+    # textDocument/references handler - find all references to a symbol
+    private def handle_references(id : Int64 | String, params : JSON::Any?) : Nil
+      unless params
+        send_error(id, ErrorCodes::InvalidParams, "Missing params")
+        return
+      end
+
+      begin
+        ref_params = ReferenceParams.from_json(params.to_json)
+        uri = ref_params.text_document.uri
+        position = ref_params.position
+        include_declaration = ref_params.context.try(&.include_declaration?) || true
+
+        doc = @documents.get(uri)
+        unless doc
+          send_error(id, ErrorCodes::InvalidParams, "Document not open: #{uri}")
+          return
+        end
+
+        # Get references from provider
+        if provider = @references_provider
+          locations = provider.references(uri, doc.text, position, include_declaration)
+          if locations.empty?
+            log(MessageType::Log, "<<< Response: references (empty)")
+            send_response(id, JSON.parse("[]"))
+          else
+            log(MessageType::Log, "<<< Response: references (#{locations.size} found)")
+            send_response(id, JSON.parse(locations.to_json))
+          end
+        else
+          log(MessageType::Log, "<<< Response: references (no provider)")
+          send_response(id, JSON.parse("[]"))
+        end
+      rescue ex
+        log(MessageType::Error, "Failed to provide references: #{ex.message}")
+        send_error(id, ErrorCodes::InternalError, "References error: #{ex.message}")
       end
     end
 
@@ -562,7 +608,11 @@ module Crinkle::LSP
       log(MessageType::Info, "Config reloaded")
 
       # Reinitialize inference engine with new config
-      @inference = InferenceEngine.new(@config)
+      inference = InferenceEngine.new(@config)
+      @inference = inference
+
+      # Update references provider with new inference engine
+      @references_provider = ReferencesProvider.new(inference, @documents)
 
       # Re-analyze all open documents
       reanalyze_open_documents
@@ -580,8 +630,9 @@ module Crinkle::LSP
       if inference = @inference
         @completion_provider = CompletionProvider.new(schema_provider, inference)
         @definition_provider = DefinitionProvider.new(inference, root_path)
+        @hover_provider = HoverProvider.new(schema_provider, inference)
+        @references_provider = ReferencesProvider.new(inference, @documents)
       end
-      @hover_provider = HoverProvider.new(schema_provider)
       @signature_help_provider = SignatureHelpProvider.new(schema_provider)
 
       # Update analyzer with new schema

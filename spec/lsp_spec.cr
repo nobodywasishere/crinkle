@@ -706,4 +706,562 @@ describe Crinkle::LSP do
       Crinkle::LSP::FileChangeType::Deleted.value.should eq 3
     end
   end
+
+  describe Crinkle::LSP::BlockInfo do
+    it "stores block information" do
+      info = Crinkle::LSP::BlockInfo.new("content")
+
+      info.name.should eq "content"
+      info.definition_span.should be_nil
+      info.source_uri.should be_nil
+    end
+
+    it "stores block information with span and source" do
+      span = Crinkle::Span.new(
+        Crinkle::Position.new(0, 0, 0),
+        Crinkle::Position.new(0, 20, 20)
+      )
+      info = Crinkle::LSP::BlockInfo.new("header", span, "file:///base.j2")
+
+      info.name.should eq "header"
+      info.definition_span.should eq span
+      info.source_uri.should eq "file:///base.j2"
+    end
+  end
+
+  describe Crinkle::LSP::HoverProvider do
+    it "provides hover for filters" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      # Position on "upper" filter
+      hover = provider.hover("file:///test.j2", "{{ name | upper }}", Crinkle::LSP::Position.new(0, 11))
+
+      hover.should_not be_nil
+      if h = hover
+        h.contents.value.should contain "upper"
+      end
+    end
+
+    it "provides hover for tests" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      # Position on "defined" test
+      hover = provider.hover("file:///test.j2", "{% if name is defined %}", Crinkle::LSP::Position.new(0, 17))
+
+      hover.should_not be_nil
+      if h = hover
+        h.contents.value.should contain "defined"
+      end
+    end
+
+    it "provides hover for functions" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      # Position on "range" function
+      hover = provider.hover("file:///test.j2", "{{ range(10) }}", Crinkle::LSP::Position.new(0, 5))
+
+      hover.should_not be_nil
+      if h = hover
+        h.contents.value.should contain "range"
+      end
+    end
+
+    it "provides hover for variables from set statements" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      template = "{% set greeting = 'Hello' %}{{ greeting }}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "greeting" in the output
+      hover = provider.hover("file:///test.j2", template, Crinkle::LSP::Position.new(0, 33))
+
+      hover.should_not be_nil
+      if h = hover
+        h.contents.value.should contain "greeting"
+        h.contents.value.should contain "assigned variable"
+      end
+    end
+
+    it "provides hover for variables from for loops" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      template = "{% for item in items %}{{ item }}{% endfor %}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "item" in the output
+      hover = provider.hover("file:///test.j2", template, Crinkle::LSP::Position.new(0, 27))
+
+      hover.should_not be_nil
+      if h = hover
+        h.contents.value.should contain "item"
+        h.contents.value.should contain "loop variable"
+      end
+    end
+
+    it "provides hover for macros" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      template = "{% macro button(text, style='primary') %}{% endmacro %}{{ button('Click') }}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "button" in the call
+      hover = provider.hover("file:///test.j2", template, Crinkle::LSP::Position.new(0, 59))
+
+      hover.should_not be_nil
+      if h = hover
+        h.contents.value.should contain "button"
+        h.contents.value.should contain "text"
+      end
+    end
+
+    it "provides hover for blocks" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      template = "{% block content %}Hello{% endblock %}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "content" block name
+      hover = provider.hover("file:///test.j2", template, Crinkle::LSP::Position.new(0, 12))
+
+      hover.should_not be_nil
+      if h = hover
+        h.contents.value.should contain "block"
+        h.contents.value.should contain "content"
+      end
+    end
+
+    it "provides hover for tags" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      # Position on "for" tag
+      hover = provider.hover("file:///test.j2", "{% for item in items %}{% endfor %}", Crinkle::LSP::Position.new(0, 4))
+
+      hover.should_not be_nil
+      if h = hover
+        h.contents.value.should contain "for"
+        h.contents.value.should contain "block tag"
+      end
+    end
+
+    it "provides hover for if tag" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      # Position on "if" tag
+      hover = provider.hover("file:///test.j2", "{% if true %}yes{% endif %}", Crinkle::LSP::Position.new(0, 4))
+
+      hover.should_not be_nil
+      if h = hover
+        h.contents.value.should contain "if"
+        h.contents.value.should contain "Conditional"
+      end
+    end
+
+    it "returns nil for text outside Jinja blocks" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      # Position on plain text
+      hover = provider.hover("file:///test.j2", "Hello {{ name }}", Crinkle::LSP::Position.new(0, 2))
+
+      hover.should be_nil
+    end
+
+    it "returns nil for context variables (no useful definition info)" do
+      config = Crinkle::LSP::Config.new
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::HoverProvider.new(schema_provider, inference)
+
+      # Template with only context variable (inferred from usage, not defined)
+      template = "{{ user.name }}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "user" - a context variable
+      hover = provider.hover("file:///test.j2", template, Crinkle::LSP::Position.new(0, 5))
+
+      # Context variables should not show hover since they have no useful info
+      hover.should be_nil
+    end
+  end
+
+  describe "InferenceEngine definition spans" do
+    it "tracks variable definition spans from set statements" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% set greeting = 'Hello' %}"
+      engine.analyze("file:///test.j2", template)
+
+      var_info = engine.variable_info("file:///test.j2", "greeting")
+      var_info.should_not be_nil
+      if info = var_info
+        info.definition_span.should_not be_nil
+        info.source.should eq Crinkle::LSP::VariableSource::Set
+      end
+    end
+
+    it "tracks variable definition spans from for loops" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% for item in items %}{{ item }}{% endfor %}"
+      engine.analyze("file:///test.j2", template)
+
+      var_info = engine.variable_info("file:///test.j2", "item")
+      var_info.should_not be_nil
+      if info = var_info
+        info.definition_span.should_not be_nil
+        info.source.should eq Crinkle::LSP::VariableSource::ForLoop
+      end
+    end
+
+    it "tracks macro definition spans" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% macro button(text) %}{{ text }}{% endmacro %}"
+      engine.analyze("file:///test.j2", template)
+
+      macro_info = engine.macro_info("file:///test.j2", "button")
+      macro_info.should_not be_nil
+      if info = macro_info
+        info.definition_span.should_not be_nil
+        info.name.should eq "button"
+      end
+    end
+
+    it "tracks block definition spans" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% block content %}Hello{% endblock %}"
+      engine.analyze("file:///test.j2", template)
+
+      block_info = engine.block_info("file:///test.j2", "content")
+      block_info.should_not be_nil
+      if info = block_info
+        info.definition_span.should_not be_nil
+        info.name.should eq "content"
+        info.source_uri.should eq "file:///test.j2"
+      end
+    end
+
+    it "returns nil for unknown variable" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% set greeting = 'Hello' %}"
+      engine.analyze("file:///test.j2", template)
+
+      var_info = engine.variable_info("file:///test.j2", "nonexistent")
+      var_info.should be_nil
+    end
+
+    it "returns nil for unknown macro" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% macro button(text) %}{% endmacro %}"
+      engine.analyze("file:///test.j2", template)
+
+      macro_info = engine.macro_info("file:///test.j2", "nonexistent")
+      macro_info.should be_nil
+    end
+
+    it "returns nil for unknown block" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% block content %}{% endblock %}"
+      engine.analyze("file:///test.j2", template)
+
+      block_info = engine.block_info("file:///test.j2", "nonexistent")
+      block_info.should be_nil
+    end
+
+    it "blocks_info_for returns BlockInfo array" do
+      config = Crinkle::LSP::Config.new
+      engine = Crinkle::LSP::InferenceEngine.new(config)
+
+      template = "{% block header %}{% endblock %}{% block content %}{% endblock %}"
+      engine.analyze("file:///test.j2", template)
+
+      blocks = engine.blocks_info_for("file:///test.j2")
+      blocks.size.should eq 2
+      block_names = blocks.map(&.name)
+      block_names.should contain "header"
+      block_names.should contain "content"
+    end
+  end
+
+  describe "DefinitionProvider for variables, macros, and blocks" do
+    it "provides definition for variables from set statements" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, ".")
+
+      template = "{% set greeting = 'Hello' %}{{ greeting }}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "greeting" in the output
+      location = provider.definition("file:///test.j2", template, Crinkle::LSP::Position.new(0, 33))
+
+      location.should_not be_nil
+      if loc = location
+        loc.uri.should eq "file:///test.j2"
+        # LSP uses 0-based lines, single-line template means line 0
+        loc.range.start.line.should eq 0
+      end
+    end
+
+    it "provides definition for variables from for loops" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, ".")
+
+      template = "{% for item in items %}{{ item }}{% endfor %}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "item" in the output
+      location = provider.definition("file:///test.j2", template, Crinkle::LSP::Position.new(0, 27))
+
+      location.should_not be_nil
+      if loc = location
+        loc.uri.should eq "file:///test.j2"
+        # LSP uses 0-based lines, single-line template means line 0
+        loc.range.start.line.should eq 0
+      end
+    end
+
+    it "provides definition for macros" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, ".")
+
+      template = "{% macro button(text) %}{{ text }}{% endmacro %}{{ button('Click') }}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "button" in the call
+      location = provider.definition("file:///test.j2", template, Crinkle::LSP::Position.new(0, 52))
+
+      location.should_not be_nil
+      if loc = location
+        loc.uri.should eq "file:///test.j2"
+        # LSP uses 0-based lines, single-line template means line 0
+        loc.range.start.line.should eq 0
+      end
+    end
+
+    it "provides definition for blocks" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, ".")
+
+      template = "{% block content %}Hello{% endblock %}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "content" block name
+      location = provider.definition("file:///test.j2", template, Crinkle::LSP::Position.new(0, 12))
+
+      location.should_not be_nil
+      if loc = location
+        loc.uri.should eq "file:///test.j2"
+        # LSP uses 0-based lines, single-line template means line 0
+        loc.range.start.line.should eq 0
+      end
+    end
+
+    it "returns nil for context variables without definition" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, ".")
+
+      template = "{{ user.name }}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on "user" - context variable has no definition span
+      location = provider.definition("file:///test.j2", template, Crinkle::LSP::Position.new(0, 5))
+
+      # Context variables don't have definition spans, so should be nil
+      location.should be_nil
+    end
+
+    it "returns nil for position on plain text" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DefinitionProvider.new(inference, ".")
+
+      template = "Hello {{ name }}"
+      inference.analyze("file:///test.j2", template)
+
+      # Position on plain text
+      location = provider.definition("file:///test.j2", template, Crinkle::LSP::Position.new(0, 2))
+
+      location.should be_nil
+    end
+  end
+
+  describe Crinkle::LSP::ReferencesProvider do
+    it "finds all references to a variable from set statement" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::ReferencesProvider.new(inference, documents)
+
+      template = "{% set greeting = 'Hello' %}{{ greeting }} {{ greeting }}"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+      inference.analyze(uri, template)
+
+      # Position on first "greeting" usage
+      locations = provider.references(uri, template, Crinkle::LSP::Position.new(0, 33))
+
+      # Should find: definition in set, and two usages in output
+      locations.size.should eq 3
+      locations.all? { |loc| loc.uri == uri }.should be_true
+    end
+
+    it "finds references to for loop variable" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::ReferencesProvider.new(inference, documents)
+
+      template = "{% for item in items %}{{ item.name }} - {{ item.id }}{% endfor %}"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+      inference.analyze(uri, template)
+
+      # Position on "item" in the for loop
+      locations = provider.references(uri, template, Crinkle::LSP::Position.new(0, 9))
+
+      # Should find: definition in for loop, and two usages
+      locations.size.should eq 3
+    end
+
+    it "can exclude declaration from results" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::ReferencesProvider.new(inference, documents)
+
+      template = "{% set x = 1 %}{{ x }}"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+      inference.analyze(uri, template)
+
+      # With declaration - position on the 'x' in output (char 18)
+      with_decl = provider.references(uri, template, Crinkle::LSP::Position.new(0, 18), include_declaration: true)
+      # Without declaration
+      without_decl = provider.references(uri, template, Crinkle::LSP::Position.new(0, 18), include_declaration: false)
+
+      with_decl.size.should eq 2    # set + usage
+      without_decl.size.should eq 1 # only usage
+    end
+
+    it "finds macro definition and call sites" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::ReferencesProvider.new(inference, documents)
+
+      template = "{% macro btn(t) %}{{ t }}{% endmacro %}{{ btn('A') }}{{ btn('B') }}"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+      inference.analyze(uri, template)
+
+      # Position on "btn" in first call
+      locations = provider.references(uri, template, Crinkle::LSP::Position.new(0, 42))
+
+      # Should find: macro definition, two call sites
+      locations.size.should eq 3
+    end
+
+    it "finds block references across templates" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::ReferencesProvider.new(inference, documents)
+
+      base_template = "{% block content %}Base content{% endblock %}"
+      child_template = "{% extends 'base.j2' %}{% block content %}Child content{% endblock %}"
+
+      base_uri = "file:///base.j2"
+      child_uri = "file:///child.j2"
+
+      documents.open(base_uri, "jinja2", base_template, 1)
+      documents.open(child_uri, "jinja2", child_template, 1)
+      inference.analyze(base_uri, base_template)
+      inference.analyze(child_uri, child_template)
+
+      # Position on "content" in child template
+      locations = provider.references(child_uri, child_template, Crinkle::LSP::Position.new(0, 33))
+
+      # Should find both block definitions
+      locations.size.should eq 2
+      locations.map(&.uri).should contain base_uri
+      locations.map(&.uri).should contain child_uri
+    end
+
+    it "returns empty array for position on plain text" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::ReferencesProvider.new(inference, documents)
+
+      template = "Hello World"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+
+      locations = provider.references(uri, template, Crinkle::LSP::Position.new(0, 3))
+
+      locations.should be_empty
+    end
+
+    it "returns empty array for filters (not referenceable)" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::ReferencesProvider.new(inference, documents)
+
+      template = "{{ name | upper }}"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+      inference.analyze(uri, template)
+
+      # Position on "upper" filter - filters are not referenceable
+      locations = provider.references(uri, template, Crinkle::LSP::Position.new(0, 12))
+
+      locations.should be_empty
+    end
+  end
 end
