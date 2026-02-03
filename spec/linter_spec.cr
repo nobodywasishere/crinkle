@@ -39,7 +39,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::UnknownFilter.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -61,7 +61,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::UnknownTest.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -83,7 +83,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::UnknownFunction.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -109,7 +109,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::UnknownFunction.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.should be_empty
     end
@@ -131,7 +131,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::UnknownFunction.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.should be_empty
     end
@@ -153,7 +153,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::UnknownFunction.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.should be_empty
     end
@@ -180,7 +180,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::WrongArgumentCount.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -211,7 +211,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::UnknownKwarg.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -242,7 +242,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::MissingRequiredArgument.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -269,7 +269,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::DeprecatedUsage.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -301,7 +301,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::TypeMismatch.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should be >= 1
       issue = issues.find(&.message.includes?("value"))
@@ -335,7 +335,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::TypeMismatch.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(2)
       issues.first.id.should eq("Lint/TypeMismatch")
@@ -354,7 +354,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::TypeMismatch.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -400,7 +400,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::CallableNotCallable.new(schema, "test.html"))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -441,7 +441,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::CallableDefaultCall.new(schema, "test.html"))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -481,7 +481,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::CallableDefaultCall.new(schema, "test.html"))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -516,7 +516,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::CallableUnknownMethod.new(schema, "test.html"))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -557,7 +557,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::CallableMethodKwarg.new(schema, "test.html"))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -598,7 +598,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::CallableMethodKwarg.new(schema, "test.html"))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       issues.size.should eq(1)
       issue = issues.first
@@ -627,7 +627,7 @@ describe Crinkle::Linter do
       ruleset.add(Crinkle::Linter::Rules::CallableNotCallable.new(schema))
 
       runner = Crinkle::Linter::Runner.new(ruleset, schema)
-      issues = runner.lint(template, source)
+      issues = runner.lint(template, source, "test.html.j2")
 
       # Should not report any issues when template context is not available
       issues.size.should eq(0)

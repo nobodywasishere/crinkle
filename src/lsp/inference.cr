@@ -155,7 +155,7 @@ module Crinkle::LSP
               content = File.read(resolved_path)
               resolved_uri = "file://#{File.expand_path(resolved_path)}"
               analyze(resolved_uri, content)
-            rescue ex
+            rescue
             end
           end
         end

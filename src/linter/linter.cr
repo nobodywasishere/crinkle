@@ -30,6 +30,7 @@ module Crinkle
 
     class Context
       getter source : String
+      getter uri : String?
       getter template : AST::Template
       getter diagnostics : Array(Diagnostic)
       # Additional known functions (e.g., from cross-template macro imports)
@@ -37,6 +38,7 @@ module Crinkle
 
       def initialize(
         @source : String,
+        @uri : String?,
         @template : AST::Template,
         @diagnostics : Array(Diagnostic),
         @extra_known_functions : Set(String) = Set(String).new,
@@ -91,10 +93,11 @@ module Crinkle
       def lint(
         template : AST::Template,
         source : String,
+        uri : String?,
         diagnostics : Array(Diagnostic) = Array(Diagnostic).new,
         extra_known_functions : Set(String) = Set(String).new,
       ) : Array(Issue)
-        context = Context.new(source, template, diagnostics, extra_known_functions)
+        context = Context.new(source, uri, template, diagnostics, extra_known_functions)
         issues = Linter.map_diagnostics(diagnostics)
         issues.concat(@ruleset.run(template, context))
         issues
@@ -130,7 +133,8 @@ module Crinkle
     def self.default_ruleset(schema : Schema::Registry? = nil) : RuleSet
       ruleset = RuleSet.new
       ruleset.add(Rules::MultipleExtends.new)
-      ruleset.add(Rules::ExtendsNotFirst.new)
+      # TODO(margret): apparently things defined in a child pass into a parent template - llm had this wrong
+      # ruleset.add(Rules::ExtendsNotFirst.new)
       ruleset.add(Rules::DuplicateBlock.new)
       ruleset.add(Rules::DuplicateMacro.new)
       # UnusedMacro not included - macros may be imported by other files

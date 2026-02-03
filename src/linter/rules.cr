@@ -330,7 +330,13 @@ module Crinkle
         end
 
         def check(_template : AST::Template, context : Context) : Array(Issue)
-          formatted = Formatter.new(context.source).format
+          html_aware = false
+          if uri = context.uri
+            html_aware = Formatter.html_aware?(uri)
+          end
+
+          options = Formatter::Options.new(html_aware: html_aware)
+          formatted = Formatter.new(context.source, options).format
           return Array(Issue).new if formatted == context.source
 
           # Only highlight the first character to avoid overwhelming the editor

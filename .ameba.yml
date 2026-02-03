@@ -1,3 +1,6 @@
+Excluded:
+  - tmp/**/*
+
 Metrics/CyclomaticComplexity:
   Enabled: false
 

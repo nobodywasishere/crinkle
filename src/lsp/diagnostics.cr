@@ -68,9 +68,10 @@ module Crinkle::LSP
 
       # For HTML files, run formatter which includes HTML validation diagnostics
       # (formatter.diagnostics is a superset of lexer + parser diagnostics)
-      all_diagnostics = if uri.nil? || Formatter.html_aware?(uri)
+      all_diagnostics = if uri
                           begin
-                            formatter = Formatter.new(text)
+                            options = Formatter::Options.new(html_aware: Formatter.html_aware?(uri))
+                            formatter = Formatter.new(text, options)
                             formatter.format
                             formatter.diagnostics
                           rescue
@@ -93,6 +94,7 @@ module Crinkle::LSP
                               end
 
       # Run linter with extra known functions from inference
+      issues = @linter.lint(ast, text, uri, all_diagnostics, extra_known_functions)
 
       # TODO(margret): disabling html validation rules as the html parser is jank
       issues.reject!(&.id.starts_with?("Formatter/Html"))

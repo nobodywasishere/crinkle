@@ -111,6 +111,13 @@ module Crinkle
         # Load schema
         schema = load_schema_for_lint(opts)
 
+        # NOTE(margret): give `crinkle lint` same semantic information as LSP
+        if schema
+          root_path = Dir.current
+          lsp_config = LSP::Config.load(root_path)
+          inference = LSP::InferenceEngine.new(lsp_config, root_path, schema)
+        end
+
         # Create linter with schema-aware ruleset
         ruleset = Linter.default_ruleset(schema)
         linter = Linter::Runner.new(ruleset, schema)
@@ -123,6 +130,18 @@ module Crinkle
           tokens, _diagnostics = lex_source(entry_source)
           template, _parser_diags = parse_tokens(tokens)
           all_diags = formatter.diagnostics
+
+          entry_uri = "file://#{File.expand_path(entry_label)}"
+
+          # Get known functions from inference engine (cross-template macro imports)
+          if inference
+            inference.analyze(entry_uri, entry_source)
+            extra_known_functions = inference.macros_for(entry_uri).map(&.name).to_set
+          else
+            extra_known_functions = Set(String).new
+          end
+
+          issues = linter.lint(template, entry_source, entry_uri, all_diags, extra_known_functions)
 
           # TODO(margret): disabling html validation rules as the html parser is jank
           issues.reject!(&.id.starts_with?("Formatter/Html"))

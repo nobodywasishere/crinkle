@@ -82,7 +82,7 @@ private def run_fixture(info : FixtureInfo, env : Crinkle::Environment, context 
   linter_issues = Array(Crinkle::Linter::Issue).new
   if info.base_dir.includes?("linter")
     # Use formatter.diagnostics which includes lexer + parser + HTML validation diagnostics
-    linter_issues = Crinkle::Linter::Runner.new.lint(template, source, formatter.diagnostics)
+    linter_issues = Crinkle::Linter::Runner.new.lint(template, source, info.path, formatter.diagnostics)
   end
 
   assert_json_fixture(info.name, "lexer", "tokens", tokens_to_json(tokens), info.base_dir)
