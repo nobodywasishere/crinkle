@@ -153,6 +153,11 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** LOW
 → [PHASE-25.md](PHASE-25.md)
 
+### Phase 25a — LSP Advanced Features
+**Outcome:** Code actions, rename symbol, workspace symbols, document highlights/links.
+**Priority:** LOW
+→ [PHASE-25a.md](PHASE-25a.md)
+
 ### Phase 26 — MCP Foundation
 **Outcome:** Basic MCP server with JSON-RPC and stdio transport.
 **Priority:** MEDIUM
