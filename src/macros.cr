@@ -10,12 +10,13 @@ module Crinkle
       name: {{ filter_name }},
       params: {% if params %}[
         {% for key, type in params %}
+          {% has_default = defaults && defaults.keys.includes?(key) %}
           {% dv = defaults && defaults[key] %}
           ::Crinkle::Schema::ParamSchema.new(
             name: {{ key.id.stringify }},
             type: {{ type.id.stringify }},
-            required: {{ !dv }},
-            default: {{ dv ? dv.stringify : nil }}
+            required: {{ !has_default }},
+            default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}
           ),
         {% end %}
       ]{% else %}[] of ::Crinkle::Schema::ParamSchema{% end %},
@@ -121,12 +122,13 @@ module Crinkle
       name: {{ test_name }},
       params: {% if params %}[
         {% for key, type in params %}
+          {% has_default = defaults && defaults.keys.includes?(key) %}
           {% dv = defaults && defaults[key] %}
           ::Crinkle::Schema::ParamSchema.new(
             name: {{ key.id.stringify }},
             type: {{ type.id.stringify }},
-            required: {{ !dv }},
-            default: {{ dv ? dv.stringify : nil }}
+            required: {{ !has_default }},
+            default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}
           ),
         {% end %}
       ]{% else %}[] of ::Crinkle::Schema::ParamSchema{% end %},
@@ -228,12 +230,13 @@ module Crinkle
       name: {{ func_name }},
       params: {% if params %}[
         {% for key, type in params %}
+          {% has_default = defaults && defaults.keys.includes?(key) %}
           {% dv = defaults && defaults[key] %}
           ::Crinkle::Schema::ParamSchema.new(
             name: {{ key.id.stringify }},
             type: {{ type.id.stringify }},
-            required: {{ !dv }},
-            default: {{ dv ? dv.stringify : nil }}
+            required: {{ !has_default }},
+            default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}
           ),
         {% end %}
       ]{% else %}[] of ::Crinkle::Schema::ParamSchema{% end %},
@@ -351,14 +354,14 @@ module Crinkle
               class_name: {{ @type.name.stringify }},
               default_call: {% if dc_ann %}::Crinkle::Schema::MethodSchema.new(
                 name: "__call__",
-                params: [{% for key, type in dc_ann[:params] || {} of Nil => Nil %}{% dv = dc_ann[:defaults] && dc_ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !dv }}, default: {{ dv ? dv.stringify : nil }}), {% end %}],
+                params: [{% for key, type in dc_ann[:params] || {} of Nil => Nil %}{% has_default = dc_ann[:defaults] && dc_ann[:defaults].keys.includes?(key) %}{% dv = dc_ann[:defaults] && dc_ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !has_default }}, default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}), {% end %}],
                 returns: {{ dc_ann[:returns] ? dc_ann[:returns].id.stringify : "Value" }},
                 doc: {{ dc_ann[:doc] }}
               ){% else %}nil{% end %},
               methods: {
                 {% for method in @type.methods %}{% ann = method.annotation(::Crinkle::Method) %}{% if ann %}{% method_name = (ann[:name] || method.name).id.stringify %}{{ method_name }} => ::Crinkle::Schema::MethodSchema.new(
                   name: {{ method_name }},
-                  params: [{% for key, type in ann[:params] || {} of Nil => Nil %}{% dv = ann[:defaults] && ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !dv }}, default: {{ dv ? dv.stringify : nil }}), {% end %}],
+                  params: [{% for key, type in ann[:params] || {} of Nil => Nil %}{% has_default = ann[:defaults] && ann[:defaults].keys.includes?(key) %}{% dv = ann[:defaults] && ann[:defaults][key] %}::Crinkle::Schema::ParamSchema.new(name: {{ key.id.stringify }}, type: {{ type.id.stringify }}, required: {{ !has_default }}, default: {{ has_default ? (dv == nil ? nil : dv.stringify) : nil }}), {% end %}],
                   returns: {{ ann[:returns] ? ann[:returns].id.stringify : "Value" }},
                   doc: {{ ann[:doc] }}
                 ), {% end %}{% end %}

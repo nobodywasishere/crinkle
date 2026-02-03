@@ -144,6 +144,40 @@ module Crinkle::Std::Filters
       indented.join('\n')
     end
 
+    Crinkle.define_filter :if,
+      params: {value: Value, condition: Value},
+      returns: Value,
+      doc: "Return value if condition is truthy, otherwise empty string" do |value, condition|
+      truthy = case condition
+               when Nil
+                 false
+               when Undefined, StrictUndefined
+                 false
+               when Bool
+                 condition
+               when Int64
+                 condition != 0
+               when Int32
+                 condition != 0
+               when Float64
+                 condition != 0.0
+               when String
+                 !condition.empty?
+               when SafeString
+                 !condition.to_s.empty?
+               when Array(Value)
+                 !condition.empty?
+               when Hash(String, Value)
+                 !condition.empty?
+               when Hash(Value, Value)
+                 !condition.empty?
+               else
+                 true
+               end
+
+      truthy ? value : Crinkle::Undefined.new
+    end
+
     Crinkle.define_filter :format,
       params: {value: String},
       returns: String,
@@ -196,6 +230,7 @@ module Crinkle::Std::Filters
       register_filter_reverse(env)
       register_filter_center(env)
       register_filter_indent(env)
+      register_filter_if(env)
       register_filter_format(env)
     end
   end
