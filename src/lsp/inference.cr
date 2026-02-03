@@ -303,11 +303,13 @@ module Crinkle::LSP
     private def extract_target_variables(target : AST::Target, vars : Hash(String, VariableInfo), source : VariableSource, detail : String, definition_span : Span? = nil) : Nil
       case target
       when AST::Name
-        vars[target.value] = VariableInfo.new(target.value, source, detail, definition_span || target.span)
+        name = pooled_name(target.value)
+        vars[name] = VariableInfo.new(name, source, detail, definition_span || target.span)
       when AST::TupleLiteral
         target.items.each do |item|
           if item.is_a?(AST::Name)
-            vars[item.value] = VariableInfo.new(item.value, source, detail, definition_span || item.span)
+            name = pooled_name(item.value)
+            vars[name] = VariableInfo.new(name, source, detail, definition_span || item.span)
           end
         end
       end
@@ -336,7 +338,8 @@ module Crinkle::LSP
       AST::Walker.walk_expr(expr) do |inner|
         next unless inner.is_a?(AST::Name)
         # Add as context variable if not already defined
-        vars[inner.value] ||= VariableInfo.new(inner.value, VariableSource::Context, "context")
+        name = pooled_name(inner.value)
+        vars[name] ||= VariableInfo.new(name, VariableSource::Context, "context")
       end
     end
 
@@ -344,7 +347,8 @@ module Crinkle::LSP
     private def extract_blocks(nodes : Array(AST::Node), blks : Hash(String, BlockInfo), uri : String) : Nil
       AST::Walker.walk_nodes(nodes) do |node|
         next unless node.is_a?(AST::Block)
-        blks[node.name] = BlockInfo.new(node.name, node.span, uri)
+        name = pooled_name(node.name)
+        blks[name] = BlockInfo.new(name, node.span, uri)
       end
     end
 
@@ -352,14 +356,16 @@ module Crinkle::LSP
     private def extract_macros(nodes : Array(AST::Node), macs : Hash(String, MacroInfo)) : Nil
       AST::Walker.walk_nodes(nodes) do |node|
         next unless node.is_a?(AST::Macro)
-        params = node.params.map(&.name)
+        params = node.params.map { |param| pooled_name(param.name) }
         defaults = Hash(String, String).new
         node.params.each do |param|
           if default = param.default_value
-            defaults[param.name] = expr_to_string(default)
+            name = pooled_name(param.name)
+            defaults[name] = expr_to_string(default)
           end
         end
-        macs[node.name] = MacroInfo.new(node.name, params, defaults, node.span)
+        name = pooled_name(node.name)
+        macs[name] = MacroInfo.new(name, params, defaults, node.span)
       end
     end
 
@@ -382,14 +388,14 @@ module Crinkle::LSP
             next unless default_value
             param_type = inferer.infer_expr_type(default_value, env)
             next unless param_type
-            types["#{node.name}.#{param.name}"] = param_type
+            types["#{pooled_name(node.name)}.#{pooled_name(param.name)}"] = param_type
           end
         end
       end
 
       if template_ctx = template_context_for_uri(uri)
         template_ctx.context.each do |name, type_str|
-          types[name] ||= inferer.parse_type(type_str)
+          types[pooled_name(name)] ||= inferer.parse_type(type_str)
         end
       end
 
@@ -406,13 +412,15 @@ module Crinkle::LSP
     ) : Nil
       case target
       when AST::Name
-        types[target.value] = type
-        env.set(target.value, type)
+        name = pooled_name(target.value)
+        types[name] = type
+        env.set(name, type)
       when AST::TupleLiteral
         target.items.each do |item|
           next unless item.is_a?(AST::Name)
-          types[item.value] = type
-          env.set(item.value, type)
+          name = pooled_name(item.value)
+          types[name] = type
+          env.set(name, type)
         end
       end
     end
@@ -436,6 +444,11 @@ module Crinkle::LSP
       end
 
       File.basename(full_path)
+    end
+
+    private def pooled_name(name : String) : String
+      return name if name.empty?
+      Crinkle.string_pool.get(name)
     end
 
     # Convert an expression to a string representation (for default values)
@@ -485,8 +498,10 @@ module Crinkle::LSP
       AST::Walker.walk_expr(expr) do |inner|
         next unless inner.is_a?(AST::GetAttr)
         if var_name = extract_variable_name(inner.target)
-          properties[var_name] ||= Set(String).new
-          properties[var_name] << inner.name
+          pooled_var = pooled_name(var_name)
+          pooled_prop = pooled_name(inner.name)
+          properties[pooled_var] ||= Set(String).new
+          properties[pooled_var] << pooled_prop
         end
       end
     end

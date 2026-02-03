@@ -6,9 +6,19 @@ module Crinkle
       Block
     end
 
+    POOL_TYPES = {
+      TokenType::Identifier,
+      TokenType::Operator,
+      TokenType::Punct,
+      TokenType::VarStart,
+      TokenType::VarEnd,
+      TokenType::BlockStart,
+      TokenType::BlockEnd,
+    }
+
     getter diagnostics : Array(Diagnostic)
 
-    def initialize(source : String) : Nil
+    def initialize(source : String, @string_pool : StringPool = Lexer.shared_pool) : Nil
       @source = source
       @reader = Char::Reader.new(source)
       @length = source.bytesize
@@ -19,6 +29,10 @@ module Crinkle
       @mode_start_line = 1
       @mode_start_col = 1
       @diagnostics = Array(Diagnostic).new
+    end
+
+    def self.shared_pool : StringPool
+      Crinkle.string_pool
     end
 
     def lex_all : Array(Token)
@@ -439,7 +453,12 @@ module Crinkle
     private def token_from(type : TokenType, start_offset : Int32, start_line : Int32, start_col : Int32) : Token
       span = make_span(start_offset, start_line, start_col)
       lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
-      Token.new(type, lexeme, span)
+      Token.new(type, pooled_lexeme(type, lexeme), span)
+    end
+
+    private def pooled_lexeme(type : TokenType, lexeme : String) : String
+      return lexeme unless POOL_TYPES.includes?(type)
+      @string_pool.get(lexeme)
     end
 
     private def mark_mode_start(start_offset : Int32, start_line : Int32, start_col : Int32) : Nil

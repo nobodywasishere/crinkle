@@ -21,6 +21,11 @@ module Crinkle
     end
 
     class Tokenizer
+      private def pooled_name(name : String) : String
+        return name if name.empty?
+        Crinkle.string_pool.get(name)
+      end
+
       def tokens(text : String) : Array(Token)
         tokens = Array(Token).new
         size = text.bytesize
@@ -212,7 +217,7 @@ module Crinkle
           i += 1
         end
         name = text.byte_slice(start, i - start).downcase
-        {name, i}
+        {pooled_name(name), i}
       end
 
       private def alpha?(ch : UInt8) : Bool

@@ -3,6 +3,7 @@ require "json"
 require "yaml"
 require "html"
 require "levenshtein"
+require "string_pool"
 
 require "./diagnostics/diagnostic"
 require "./runtime/undefined"
@@ -73,4 +74,9 @@ require "./lsp/server"
 require "./lsp/lsp"
 
 module Crinkle
+  @@string_pool : StringPool = StringPool.new
+
+  def self.string_pool : StringPool
+    @@string_pool
+  end
 end
