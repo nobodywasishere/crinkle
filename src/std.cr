@@ -17,5 +17,6 @@ module Crinkle::Std
     Functions::Range.register(env)
     Functions::Dict.register(env)
     Functions::Debug.register(env)
+    Functions::Macro.register(env)
   end
 end

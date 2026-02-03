@@ -420,19 +420,22 @@ module Crinkle
         def check(_template : AST::Template, context : Context) : Array(Issue)
           issues = Array(Issue).new
 
-          # First, collect all macro names defined in this template
+          # Collect all macro names defined in this template
           local_macros = collect_macro_names(context.template.body)
+
+          # Merge local macros with any extra known functions (e.g., from imports)
+          known_functions = local_macros | context.extra_known_functions
 
           ASTWalker.walk_nodes(context.template.body) do |node|
             case node
             when AST::Output
-              collect_function_issues(node.expr, issues, local_macros)
+              collect_function_issues(node.expr, issues, known_functions)
             when AST::If
-              collect_function_issues(node.test, issues, local_macros)
+              collect_function_issues(node.test, issues, known_functions)
             when AST::For
-              collect_function_issues(node.iter, issues, local_macros)
+              collect_function_issues(node.iter, issues, known_functions)
             when AST::Set
-              collect_function_issues(node.value, issues, local_macros)
+              collect_function_issues(node.value, issues, known_functions)
             end
           end
 
@@ -459,7 +462,7 @@ module Crinkle
           macros
         end
 
-        private def collect_function_issues(expr : AST::Expr, issues : Array(Issue), local_macros : Set(String)) : Nil
+        private def collect_function_issues(expr : AST::Expr, issues : Array(Issue), known_functions : Set(String)) : Nil
           ASTWalker.walk_expr(expr) do |inner|
             next unless inner.is_a?(AST::Call)
 
@@ -467,9 +470,9 @@ module Crinkle
             callee = inner.callee
             next unless callee.is_a?(AST::Name)
 
-            # Skip if it's a schema function or a locally-defined macro
+            # Skip if it's a schema function or a known macro (local or imported)
             next if @schema.functions.has_key?(callee.value)
-            next if local_macros.includes?(callee.value)
+            next if known_functions.includes?(callee.value)
 
             issues << issue(inner.span, "Unknown function '#{callee.value}'.")
           end

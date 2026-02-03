@@ -26,6 +26,13 @@ module Crinkle::LSP
     @inference : InferenceEngine
     @root_path : String?
 
+    # Enable debug logging
+    class_property? debug : Bool = false
+
+    private def debug(msg : String) : Nil
+      STDERR.puts "[DefinitionProvider] #{msg}" if self.class.debug?
+    end
+
     def initialize(@inference : InferenceEngine, @root_path : String?) : Nil
     end
 
@@ -67,18 +74,16 @@ module Crinkle::LSP
 
     # Find definition for a macro
     private def macro_definition(uri : String, name : String) : Location?
+      debug "macro_definition(#{uri}, #{name})"
       macro_info = @inference.macro_info(uri, name)
+      debug "  macro_info: #{macro_info.inspect}"
       return unless macro_info
 
       if span = macro_info.definition_span
-        # Need to find the URI where this macro is defined
-        # First check current file
-        if @inference.macros_for(uri).any? { |mac| mac.name == name && mac.definition_span == span }
-          return Location.new(uri: uri, range: span_to_range(span))
-        end
-
-        # Check imported templates
+        debug "  has definition_span"
+        # Find the URI where this macro is actually defined
         macro_uri = find_macro_uri(uri, name)
+        debug "  macro_uri: #{macro_uri.inspect}"
         if macro_uri
           Location.new(uri: macro_uri, range: span_to_range(span))
         end
@@ -86,17 +91,39 @@ module Crinkle::LSP
     end
 
     # Find the URI where a macro is defined
-    private def find_macro_uri(uri : String, name : String) : String?
-      # First check if it's in the current file
-      local_macros = @inference.macros_for(uri).select { |mac| mac.name == name }
+    private def find_macro_uri(uri : String, name : String, visited : Set(String) = Set(String).new) : String?
+      debug "find_macro_uri(#{uri}, #{name})"
+      return if visited.includes?(uri)
+      visited << uri
+
+      # First check if it's in the current file (only local macros, not imports)
+      local_macros = @inference.local_macros_for(uri).select { |mac| mac.name == name }
+      debug "  local_macros: #{local_macros.map(&.name)}"
       return uri unless local_macros.empty?
 
-      # Check related templates via extends_path
-      if extends = @inference.extends_path(uri)
-        related_uri = resolve_template_uri_from_path(uri, extends)
-        return find_macro_uri(related_uri, name) if related_uri
+      # Check ALL related templates (not just extends_path which only returns the first)
+      relationships = @inference.relationships_for(uri)
+      debug "  relationships: #{relationships.inspect}"
+
+      relationships.each do |template_path|
+        debug "  checking relationship: #{template_path}"
+        # Try inference engine's URI resolution first (works with virtual URIs)
+        related_uri = @inference.resolve_uri(uri, template_path)
+        debug "    resolve_uri result: #{related_uri.inspect}"
+        if related_uri
+          result = find_macro_uri(related_uri, name, visited)
+          return result if result
+        end
+        # Fall back to file-based resolution
+        related_uri = resolve_template_uri_from_path(uri, template_path)
+        debug "    resolve_template_uri_from_path result: #{related_uri.inspect}"
+        if related_uri
+          result = find_macro_uri(related_uri, name, visited)
+          return result if result
+        end
       end
 
+      debug "  returning nil"
       nil
     end
 

@@ -32,11 +32,14 @@ module Crinkle
       getter source : String
       getter template : AST::Template
       getter diagnostics : Array(Diagnostic)
+      # Additional known functions (e.g., from cross-template macro imports)
+      getter extra_known_functions : Set(String)
 
       def initialize(
         @source : String,
         @template : AST::Template,
         @diagnostics : Array(Diagnostic),
+        @extra_known_functions : Set(String) = Set(String).new,
       ) : Nil
       end
     end
@@ -89,8 +92,9 @@ module Crinkle
         template : AST::Template,
         source : String,
         diagnostics : Array(Diagnostic) = Array(Diagnostic).new,
+        extra_known_functions : Set(String) = Set(String).new,
       ) : Array(Issue)
-        context = Context.new(source, template, diagnostics)
+        context = Context.new(source, template, diagnostics, extra_known_functions)
         issues = Linter.map_diagnostics(diagnostics)
         issues.concat(@ruleset.run(template, context))
         issues

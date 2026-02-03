@@ -81,10 +81,21 @@ module Crinkle::LSP
                           lex_diagnostics + parse_diagnostics
                         end
 
-      # Run linter (includes mapped diagnostics + lint rules)
-      issues = @linter.lint(ast, text, all_diagnostics)
+      # Get known functions from inference engine (cross-template macro imports)
+      extra_known_functions = if inference = @inference
+                                if uri
+                                  inference.macros_for(uri).map(&.name).to_set
+                                else
+                                  Set(String).new
+                                end
+                              else
+                                Set(String).new
+                              end
 
-      # Run typo detection if inference engine is available
+      # Run linter with extra known functions from inference
+      issues = @linter.lint(ast, text, all_diagnostics, extra_known_functions)
+
+      # Run typo detection if inference engine available
       if inference = @inference
         if uri
           typo_issues = detect_typos(ast, uri, inference)

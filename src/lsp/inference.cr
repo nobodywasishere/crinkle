@@ -70,8 +70,9 @@ module Crinkle::LSP
     # Maps URI -> macro definitions
     @macros : Hash(String, Hash(String, MacroInfo))
     @config : Config
+    @root_path : String?
 
-    def initialize(@config : Config) : Nil
+    def initialize(@config : Config, @root_path : String? = nil) : Nil
       @usage = Hash(String, Hash(String, Set(String))).new
       @relationships = Hash(String, Set(String)).new
       @path_to_uri = Hash(String, String).new
@@ -80,8 +81,21 @@ module Crinkle::LSP
       @macros = Hash(String, Hash(String, MacroInfo)).new
     end
 
+    # Set the root path for resolving template imports
+    def root_path=(path : String?) : Nil
+      @root_path = path
+    end
+
+    # Enable debug logging
+    class_property? debug : Bool = false
+
+    private def debug(msg : String) : Nil
+      STDERR.puts "[InferenceEngine] #{msg}" if self.class.debug?
+    end
+
     # Analyze a template and extract property usage
     def analyze(uri : String, text : String) : Nil
+      debug "analyze(#{uri})"
       return unless @config.inference.enabled?
 
       begin
@@ -114,29 +128,121 @@ module Crinkle::LSP
           relationships = Set(String).new
           extract_relationships(ast.body, relationships)
           @relationships[uri] = relationships
+          debug "  relationships for #{uri}: #{relationships.to_a}"
 
           # Register this URI by its template path for reverse lookup
           register_uri_path(uri)
+          debug "  path_to_uri after registration: #{@path_to_uri}"
+
+          # Automatically analyze imported templates
+          analyze_related_templates(uri, relationships)
+        else
+          debug "  cross_template disabled"
         end
       rescue
         # Ignore parse errors - we're doing best-effort inference
       end
     end
 
+    # Automatically analyze templates that are imported/extended/included
+    private def analyze_related_templates(current_uri : String, relationships : Set(String)) : Nil
+      debug "analyze_related_templates(#{current_uri})"
+      debug "  root_path: #{@root_path.inspect}"
+      relationships.each do |template_path|
+        debug "  checking relationship: #{template_path}"
+        # Skip if already analyzed
+        if @path_to_uri[template_path]?
+          debug "    already analyzed (in path_to_uri)"
+          next
+        end
+
+        # Try to resolve and analyze the template
+        resolved_path = resolve_template_file(current_uri, template_path)
+        debug "    resolved_path: #{resolved_path.inspect}"
+        if resolved_path
+          exists = File.exists?(resolved_path)
+          debug "    file exists: #{exists}"
+          if exists
+            begin
+              content = File.read(resolved_path)
+              resolved_uri = "file://#{File.expand_path(resolved_path)}"
+              debug "    analyzing resolved_uri: #{resolved_uri}"
+              analyze(resolved_uri, content)
+            rescue ex
+              debug "    read error: #{ex.message}"
+            end
+          end
+        end
+      end
+    end
+
+    # Resolve a template path to an actual file path
+    private def resolve_template_file(current_uri : String, template_path : String) : String?
+      debug "resolve_template_file(#{current_uri}, #{template_path})"
+
+      # First try relative to current template's directory
+      if current_uri.starts_with?("file://")
+        current_path = current_uri.sub(/^file:\/\//, "")
+        current_dir = File.dirname(current_path)
+        relative_path = File.join(current_dir, template_path)
+        debug "  trying relative: #{relative_path} (exists: #{File.exists?(relative_path)})"
+        return relative_path if File.exists?(relative_path)
+
+        # Walk up the directory tree to find a templates root
+        # This handles cases like src2/templates/settings/ai.html.j2 looking for layouts/foo.html.j2
+        dir = current_dir
+        while dir != "/" && dir != "."
+          candidate = File.join(dir, template_path)
+          debug "  trying ancestor: #{candidate} (exists: #{File.exists?(candidate)})"
+          return candidate if File.exists?(candidate)
+          dir = File.dirname(dir)
+        end
+      end
+
+      # Try relative to root path
+      if root = @root_path
+        root_relative = File.join(root, template_path)
+        debug "  trying root_relative: #{root_relative} (exists: #{File.exists?(root_relative)})"
+        return root_relative if File.exists?(root_relative)
+
+        # Try in common template directories (including src2/templates for kagi-style projects)
+        ["templates", "views", "src/templates", "src2/templates", ""].each do |subdir|
+          candidate = File.join(root, subdir, template_path)
+          debug "  trying candidate: #{candidate} (exists: #{File.exists?(candidate)})"
+          return candidate if File.exists?(candidate)
+        end
+      else
+        debug "  no root_path set"
+      end
+
+      debug "  failed to resolve"
+      nil
+    end
+
     # Register a URI by extracting its template path component
+    # Registers multiple path variants for flexible matching
     private def register_uri_path(uri : String) : Nil
-      # Extract filename from URI (e.g., "file:///path/to/templates/base.html.j2" -> "base.html.j2")
-      if path = uri_to_template_path(uri)
+      paths = uri_to_template_paths(uri)
+      paths.each do |path|
         @path_to_uri[path] = uri
       end
     end
 
-    # Convert a URI to a relative template path
-    private def uri_to_template_path(uri : String) : String?
+    # Convert a URI to multiple relative template path variants
+    # Returns paths from most specific to least (e.g., "a/b/c.j2", "b/c.j2", "c.j2")
+    private def uri_to_template_paths(uri : String) : Array(String)
+      paths = Array(String).new
       # Remove file:// prefix and get the path
-      path = uri.sub(/^file:\/\//, "")
-      # Return just the filename for simple matching
-      File.basename(path)
+      full_path = uri.sub(/^file:\/\//, "")
+      parts = full_path.split("/").reject(&.empty?)
+
+      # Generate progressively shorter paths (last N components)
+      # e.g., for /a/b/c/d.j2: ["d.j2", "c/d.j2", "b/c/d.j2", "a/b/c/d.j2"]
+      (1..Math.min(parts.size, 5)).each do |depth|
+        paths << parts.last(depth).join("/")
+      end
+
+      paths
     end
 
     # Extract extends/include/import relationships from nodes
@@ -710,6 +816,15 @@ module Crinkle::LSP
       macs.values.to_a
     end
 
+    # Get only local macro definitions for a template (excludes imported macros)
+    def local_macros_for(uri : String) : Array(MacroInfo)
+      if local_macs = @macros[uri]?
+        local_macs.values.to_a
+      else
+        Array(MacroInfo).new
+      end
+    end
+
     # Recursively collect macros from related templates
     private def collect_related_macros(uri : String, macs : Hash(String, MacroInfo), visited : Set(String)) : Nil
       return if visited.includes?(uri)
@@ -779,6 +894,17 @@ module Crinkle::LSP
         # Return the first relationship (extends is typically first)
         rels.first?
       end
+    end
+
+    # Get all template relationships for a URI (imports, extends, includes)
+    def relationships_for(uri : String) : Array(String)
+      @relationships[uri]?.try(&.to_a) || Array(String).new
+    end
+
+    # Resolve a template path to a URI (public interface for cross-template lookups)
+    # This uses the internal @path_to_uri mapping populated during analysis
+    def resolve_uri(current_uri : String, template_path : String) : String?
+      resolve_template_uri(current_uri, template_path)
     end
 
     # Clear analysis for a template

@@ -233,8 +233,12 @@ module Crinkle::LSP
             schema_provider = SchemaProvider.new(@config, root_path)
             @schema_provider = schema_provider
 
-            inference = InferenceEngine.new(@config)
+            inference = InferenceEngine.new(@config, root_path)
             @inference = inference
+
+            # Enable debug logging for cross-file resolution (can be removed once stable)
+            InferenceEngine.debug = true
+            DefinitionProvider.debug = true
 
             @completion_provider = CompletionProvider.new(schema_provider, inference)
             @hover_provider = HoverProvider.new(schema_provider, inference)
@@ -667,8 +671,9 @@ module Crinkle::LSP
         @documents.close(uri)
         @pending_analysis.delete(uri)
 
-        # Clear inference data
-        @inference.try(&.clear(uri))
+        # Note: We intentionally do NOT clear inference data on close.
+        # Other open files may depend on macros/blocks from this file.
+        # The data will be refreshed on the next didOpen if needed.
 
         log(MessageType::Info, "Closed: #{uri}")
 
@@ -742,7 +747,7 @@ module Crinkle::LSP
       log(MessageType::Info, "Config reloaded")
 
       # Reinitialize inference engine with new config
-      inference = InferenceEngine.new(@config)
+      inference = InferenceEngine.new(@config, root_path)
       @inference = inference
 
       # Update references provider with new inference engine
