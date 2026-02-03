@@ -1037,6 +1037,101 @@ module Crinkle
         end
       end
 
+      # HTML validation rule - runs HTML parsing on text content
+      class HtmlValidation < Rule
+        # Configuration for HTML parsing
+        HTML_INDENT_TAGS       = Formatter::Options::HTML_INDENT_TAGS
+        HTML_VOID_TAGS         = Formatter::Options::HTML_VOID_TAGS
+        HTML_PREFORMATTED_TAGS = Formatter::Options::HTML_PREFORMATTED_TAGS
+
+        def initialize : Nil
+          super("Formatter/HtmlValidation", Severity::Warning)
+        end
+
+        def check(_template : AST::Template, context : Context) : Array(Issue)
+          issues = Array(Issue).new
+
+          # Create HTML parser
+          parser = HTML::Parser.new(HTML_INDENT_TAGS, HTML_VOID_TAGS, HTML_PREFORMATTED_TAGS)
+          tokenizer = HTML::Tokenizer.new
+
+          # Walk through AST and extract text nodes for HTML parsing
+          ASTWalker.walk_nodes(context.template.body) do |node|
+            next unless node.is_a?(AST::Text)
+
+            text = node.value
+            tokens = tokenizer.tokens(text)
+
+            # Offset token spans by text node's starting position
+            base_pos = node.span.start_pos
+            adjusted_tokens = tokens.map do |token|
+              HTML::Token.new(
+                token.kind,
+                token.name,
+                token.lexeme,
+                offset_span(token.span, base_pos)
+              )
+            end
+
+            # Process opening tags first, then closing (order matters for validation)
+            parser.apply_opening(adjusted_tokens)
+            parser.apply_closing(adjusted_tokens)
+          end
+
+          # Finalize to get unclosed tag diagnostics
+          parser.finalize
+
+          # Convert HTML diagnostics to linter issues
+          parser.diagnostics.each do |diag|
+            rule_id = DIAGNOSTIC_MAP[diag.type]? || "Formatter/HtmlValidation"
+            issues << Issue.new(rule_id, diag.severity, diag.message, diag.span, diag.type)
+          end
+
+          issues
+        end
+
+        # Offset a span by a base position
+        private def offset_span(span : Span, base : Position) : Span
+          # For positions on line 1, add base offset and column
+          # For positions on later lines, add base offset but column stays relative
+          start_pos = span.start_pos
+          end_pos = span.end_pos
+
+          new_start = if start_pos.line == 1
+                        Position.new(
+                          base.offset + start_pos.offset,
+                          base.line + start_pos.line - 1,
+                          base.column + start_pos.column - 1
+                        )
+                      else
+                        Position.new(
+                          base.offset + start_pos.offset,
+                          base.line + start_pos.line - 1,
+                          start_pos.column
+                        )
+                      end
+
+          new_end = if end_pos.line == 1
+                      Position.new(
+                        base.offset + end_pos.offset,
+                        base.line + end_pos.line - 1,
+                        base.column + end_pos.column - 1
+                      )
+                    else
+                      Position.new(
+                        base.offset + end_pos.offset,
+                        base.line + end_pos.line - 1,
+                        end_pos.column
+                      )
+                    end
+
+          Span.new(new_start, new_end)
+        end
+
+        # Reference the diagnostic map from parent module
+        DIAGNOSTIC_MAP = Linter::DIAGNOSTIC_MAP
+      end
+
       class CallableMethodKwarg < Rule
         def initialize(@schema : Schema::Registry, @template_path : String? = nil) : Nil
           super("Lint/CallableMethodKwarg", Severity::Error)
@@ -1182,7 +1277,8 @@ module Crinkle
         until stack.empty?
           node = stack.pop
           yield node
-          children_for(node).each { |child| stack << child }
+          # Push children in reverse order so they're popped in document order
+          children_for(node).reverse_each { |child| stack << child }
         end
       end
 

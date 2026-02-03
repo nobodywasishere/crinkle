@@ -1,0 +1,94 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [
+    {
+      "id": "E_HTML_UNEXPECTED_END_TAG",
+      "severity": "warning",
+      "message": "Unexpected HTML end tag 'span'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 7,
+          "line": 1,
+          "column": 8
+        }
+      }
+    },
+    {
+      "id": "E_HTML_UNCLOSED_TAG",
+      "severity": "warning",
+      "message": "Unclosed HTML tag 'div'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 5,
+          "line": 1,
+          "column": 6
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": [
+    {
+      "id": "Formatter/HtmlUnexpectedEndTag",
+      "severity": "warning",
+      "message": "Unexpected HTML end tag 'span'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 7,
+          "line": 1,
+          "column": 8
+        }
+      }
+    },
+    {
+      "id": "Formatter/HtmlUnclosedTag",
+      "severity": "warning",
+      "message": "Unclosed HTML tag 'div'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 5,
+          "line": 1,
+          "column": 6
+        }
+      }
+    },
+    {
+      "id": "Style/Formatting",
+      "severity": "warning",
+      "message": "File is not formatted.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 1,
+          "line": 1,
+          "column": 2
+        }
+      }
+    }
+  ]
+}

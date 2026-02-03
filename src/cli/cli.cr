@@ -88,25 +88,23 @@ module Crinkle
           formatter_options = Formatter::Options.new(html_aware: html_aware, normalize_text_indent: html_aware)
           formatter = Formatter.new(source, formatter_options)
           output = formatter.format
-          all_diags = formatter.diagnostics
-          write_snapshots(opts.snapshots_dir, label, output: output, diagnostics: all_diags, output_ext: "j2")
-          exit_with = emit_output_and_diagnostics(output, all_diags, opts, label)
-          exit exit_with
+          write_snapshots(opts.snapshots_dir, label, output: output, output_ext: "j2")
+          # Format command only outputs formatted code, no diagnostics
+          # Use `crinkle lint` for diagnostics including HTML validation
+          STDOUT.print(output)
+          exit 0
         else
-          results = Array(Tuple(String, Array(Diagnostic))).new
-          all_diags = Array(Diagnostic).new
           sources.each do |entry_source, entry_label|
             html_aware = Formatter.html_aware?(entry_label)
             formatter_options = Formatter::Options.new(html_aware: html_aware, normalize_text_indent: html_aware)
             formatter = Formatter.new(entry_source, formatter_options)
             output = formatter.format
             File.write(entry_label, output) unless entry_label == "stdin"
-            results << {entry_label, formatter.diagnostics}
-            all_diags.concat(formatter.diagnostics)
-            write_snapshots(opts.snapshots_dir, entry_label, output: output, diagnostics: formatter.diagnostics, output_ext: "j2")
+            write_snapshots(opts.snapshots_dir, entry_label, output: output, output_ext: "j2")
           end
-          emit_format_diagnostics_results(results, opts)
-          exit exit_code(all_diags, opts)
+          # Format command doesn't output diagnostics for multiple files
+          # Use `crinkle lint` for diagnostics
+          exit 0
         end
       when "lint"
         opts = parse_options(args, default_format: OutputFormat::Json)

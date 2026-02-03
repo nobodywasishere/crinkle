@@ -26,6 +26,7 @@ private def run_fixture(info : FixtureInfo, env : Crinkle::Environment, context 
 
   html_aware = Crinkle::Formatter.html_aware?(info.template_ext)
   formatter = Crinkle::Formatter.new(source, Crinkle::Formatter::Options.new(html_aware: html_aware, normalize_text_indent: html_aware))
+  formatter_output = formatter.format # Run formatter to generate HTML diagnostics
 
   renderer = Crinkle::Renderer.new(env)
   register_renderers.call(renderer)
@@ -33,12 +34,13 @@ private def run_fixture(info : FixtureInfo, env : Crinkle::Environment, context 
 
   linter_issues = Array(Crinkle::Linter::Issue).new
   if info.base_dir.includes?("linter")
-    linter_issues = Crinkle::Linter::Runner.new.lint(template, source, lexer.diagnostics + parser.diagnostics)
+    # Use formatter.diagnostics which includes lexer + parser + HTML validation diagnostics
+    linter_issues = Crinkle::Linter::Runner.new.lint(template, source, formatter.diagnostics)
   end
 
   assert_json_fixture(info.name, "lexer", "tokens", tokens_to_json(tokens), info.base_dir)
   assert_json_fixture(info.name, "parser", "ast", JSON.parse(Crinkle::AST::Serializer.to_pretty_json(template)), info.base_dir)
-  assert_text_fixture(info.name, "formatter", "output", formatter.format, info.template_ext, info.base_dir)
+  assert_text_fixture(info.name, "formatter", "output", formatter_output, info.template_ext, info.base_dir)
   assert_text_fixture(info.name, "renderer", "output", renderer_output, "txt", info.base_dir)
 
   diags = diagnostics_payload(lexer.diagnostics, parser.diagnostics, formatter.diagnostics, renderer.diagnostics, linter_issues)

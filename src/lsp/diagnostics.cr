@@ -66,8 +66,20 @@ module Crinkle::LSP
       ast = parser.parse
       parse_diagnostics = parser.diagnostics
 
-      # Combine lexer and parser diagnostics
-      all_diagnostics = lex_diagnostics + parse_diagnostics
+      # For HTML files, run formatter which includes HTML validation diagnostics
+      # (formatter.diagnostics is a superset of lexer + parser diagnostics)
+      all_diagnostics = if uri.nil? || Formatter.html_aware?(uri)
+                          begin
+                            formatter = Formatter.new(text)
+                            formatter.format
+                            formatter.diagnostics
+                          rescue
+                            # If formatter fails, fall back to lexer + parser diagnostics
+                            lex_diagnostics + parse_diagnostics
+                          end
+                        else
+                          lex_diagnostics + parse_diagnostics
+                        end
 
       # Run linter (includes mapped diagnostics + lint rules)
       issues = @linter.lint(ast, text, all_diagnostics)

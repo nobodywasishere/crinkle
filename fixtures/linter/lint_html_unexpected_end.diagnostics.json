@@ -1,0 +1,43 @@
+{
+  "lexer": [],
+  "parser": [],
+  "formatter": [
+    {
+      "id": "E_HTML_UNEXPECTED_END_TAG",
+      "severity": "warning",
+      "message": "Unexpected HTML end tag 'div'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 6,
+          "line": 1,
+          "column": 7
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": [
+    {
+      "id": "Formatter/HtmlUnexpectedEndTag",
+      "severity": "warning",
+      "message": "Unexpected HTML end tag 'div'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 6,
+          "line": 1,
+          "column": 7
+        }
+      }
+    }
+  ]
+}
