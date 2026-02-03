@@ -1954,4 +1954,368 @@ describe Crinkle::LSP do
       ranges.should be_empty
     end
   end
+
+  describe Crinkle::LSP::DocumentHighlightProvider do
+    it "highlights variable occurrences" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DocumentHighlightProvider.new(inference)
+
+      template = "{% set name = 'Alice' %}{{ name }} Hello {{ name }}"
+      uri = "file:///test.j2"
+      inference.analyze(uri, template)
+
+      # Position on first "name" usage in output
+      highlights = provider.highlights(uri, template, Crinkle::LSP::Position.new(0, 28))
+
+      # Should find: definition + 2 usages
+      highlights.size.should be >= 2
+    end
+
+    it "highlights macro definition and calls" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DocumentHighlightProvider.new(inference)
+
+      template = "{% macro btn(t) %}{{ t }}{% endmacro %}{{ btn('A') }}"
+      uri = "file:///test.j2"
+      inference.analyze(uri, template)
+
+      # Position on "btn" in call
+      highlights = provider.highlights(uri, template, Crinkle::LSP::Position.new(0, 42))
+
+      # Should find definition and call
+      highlights.size.should be >= 1
+    end
+
+    it "returns empty for plain text" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::DocumentHighlightProvider.new(inference)
+
+      template = "Hello World"
+      uri = "file:///test.j2"
+
+      highlights = provider.highlights(uri, template, Crinkle::LSP::Position.new(0, 3))
+
+      highlights.should be_empty
+    end
+  end
+
+  describe Crinkle::LSP::DocumentLinkProvider do
+    it "creates links for extends statements" do
+      provider = Crinkle::LSP::DocumentLinkProvider.new("spec")
+
+      # Use spec_helper.cr which exists
+      template = %({% extends "spec_helper.cr" %})
+
+      links = provider.links("file:///spec/test.j2", template)
+
+      links.size.should eq 1
+      links[0].tooltip.try(&.includes?("spec_helper.cr")).should be_true
+    end
+
+    it "returns empty for non-existent templates" do
+      provider = Crinkle::LSP::DocumentLinkProvider.new(".")
+
+      template = %({% extends "nonexistent.j2" %})
+
+      links = provider.links("file:///test.j2", template)
+
+      links.should be_empty
+    end
+
+    it "creates links for include statements" do
+      provider = Crinkle::LSP::DocumentLinkProvider.new("spec")
+
+      template = %({% include "spec_helper.cr" %})
+
+      links = provider.links("file:///spec/test.j2", template)
+
+      links.size.should eq 1
+    end
+  end
+
+  describe Crinkle::LSP::WorkspaceSymbolProvider do
+    it "finds macros across analyzed templates" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::WorkspaceSymbolProvider.new(inference)
+
+      # Analyze templates with macros
+      inference.analyze("file:///a.j2", "{% macro button(text) %}{% endmacro %}")
+      inference.analyze("file:///b.j2", "{% macro icon(name) %}{% endmacro %}")
+
+      symbols = provider.symbols("button")
+
+      symbols.size.should eq 1
+      symbols[0].name.should eq "button"
+      symbols[0].kind.should eq Crinkle::LSP::SymbolKind::Method
+    end
+
+    it "uses fuzzy matching" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::WorkspaceSymbolProvider.new(inference)
+
+      inference.analyze("file:///a.j2", "{% macro render_button(text) %}{% endmacro %}")
+
+      # Fuzzy search "btn" should match "render_button"
+      symbols = provider.symbols("btn")
+
+      symbols.size.should eq 1
+      symbols[0].name.should eq "render_button"
+    end
+
+    it "returns empty for no matches" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::WorkspaceSymbolProvider.new(inference)
+
+      inference.analyze("file:///a.j2", "{% macro button() %}{% endmacro %}")
+
+      symbols = provider.symbols("xyz123nonexistent")
+
+      symbols.should be_empty
+    end
+  end
+
+  describe Crinkle::LSP::RenameProvider do
+    it "prepares rename for variables" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::RenameProvider.new(inference, documents)
+
+      template = "{% set name = 'Alice' %}{{ name }}"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+      inference.analyze(uri, template)
+
+      # Position on "name" in output
+      result = provider.prepare_rename(uri, template, Crinkle::LSP::Position.new(0, 28))
+
+      result.should_not be_nil
+      if res = result
+        res.placeholder.should eq "name"
+      end
+    end
+
+    it "rejects reserved names" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::RenameProvider.new(inference, documents)
+
+      template = "{% set x = 1 %}{{ x }}"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+      inference.analyze(uri, template)
+
+      # Try to rename to reserved word "for"
+      edit = provider.rename(uri, template, Crinkle::LSP::Position.new(0, 18), "for")
+
+      edit.should be_nil
+    end
+
+    it "renames variables across file" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      documents = Crinkle::LSP::DocumentStore.new
+      provider = Crinkle::LSP::RenameProvider.new(inference, documents)
+
+      template = "{% set x = 1 %}{{ x }} {{ x }}"
+      uri = "file:///test.j2"
+      documents.open(uri, "jinja2", template, 1)
+      inference.analyze(uri, template)
+
+      # Rename x to y
+      edit = provider.rename(uri, template, Crinkle::LSP::Position.new(0, 18), "y")
+
+      edit.should_not be_nil
+      if e = edit
+        changes = e.changes
+        changes.should_not be_nil
+        if c = changes
+          c[uri]?.should_not be_nil
+          c[uri].size.should eq 3 # definition + 2 usages
+        end
+      end
+    end
+  end
+
+  describe Crinkle::LSP::CodeActionProvider do
+    it "extracts suggestion from 'Did you mean' message" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::CodeActionProvider.new(inference)
+
+      diagnostic = Crinkle::LSP::Diagnostic.new(
+        range: Crinkle::LSP::Range.new(
+          Crinkle::LSP::Position.new(0, 5),
+          Crinkle::LSP::Position.new(0, 10)
+        ),
+        message: "Unknown property 'emial'. Did you mean 'email'?",
+        code: "Inference/PossibleTypo"
+      )
+
+      context = Crinkle::LSP::CodeActionContext.new(diagnostics: [diagnostic])
+      actions = provider.code_actions("file:///test.j2", diagnostic.range, context)
+
+      actions.size.should eq 1
+      actions[0].title.should eq "Change to 'email'"
+    end
+
+    it "returns empty for diagnostics without fixes" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      provider = Crinkle::LSP::CodeActionProvider.new(inference)
+
+      diagnostic = Crinkle::LSP::Diagnostic.new(
+        range: Crinkle::LSP::Range.new(
+          Crinkle::LSP::Position.new(0, 0),
+          Crinkle::LSP::Position.new(0, 10)
+        ),
+        message: "Some random error"
+      )
+
+      context = Crinkle::LSP::CodeActionContext.new(diagnostics: [diagnostic])
+      actions = provider.code_actions("file:///test.j2", diagnostic.range, context)
+
+      actions.should be_empty
+    end
+  end
+
+  describe Crinkle::LSP::InlayHintProvider do
+    it "provides parameter hints for macro calls" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      provider = Crinkle::LSP::InlayHintProvider.new(inference, schema_provider)
+
+      template = %({% macro button(text, style) %}{{ text }}{% endmacro %}{{ button("Click", "primary") }})
+      uri = "file:///test.j2"
+      inference.analyze(uri, template)
+
+      range = Crinkle::LSP::Range.new(
+        Crinkle::LSP::Position.new(0, 0),
+        Crinkle::LSP::Position.new(0, 100)
+      )
+      hints = provider.inlay_hints(uri, template, range)
+
+      # Should have hints for "text:" and "style:"
+      hints.size.should eq 2
+      labels = hints.map(&.label)
+      labels.should contain "text:"
+      labels.should contain "style:"
+    end
+
+    it "returns empty for templates without macro calls" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      provider = Crinkle::LSP::InlayHintProvider.new(inference, schema_provider)
+
+      template = "{{ name }}"
+      uri = "file:///test.j2"
+      inference.analyze(uri, template)
+
+      range = Crinkle::LSP::Range.new(
+        Crinkle::LSP::Position.new(0, 0),
+        Crinkle::LSP::Position.new(0, 20)
+      )
+      hints = provider.inlay_hints(uri, template, range)
+
+      hints.should be_empty
+    end
+
+    it "skips hint when argument name matches parameter" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      provider = Crinkle::LSP::InlayHintProvider.new(inference, schema_provider)
+
+      # When passing `text` to param named `text`, no hint needed
+      template = %({% macro greet(text) %}{{ text }}{% endmacro %}{% set text = "hi" %}{{ greet(text) }})
+      uri = "file:///test.j2"
+      inference.analyze(uri, template)
+
+      range = Crinkle::LSP::Range.new(
+        Crinkle::LSP::Position.new(0, 0),
+        Crinkle::LSP::Position.new(0, 100)
+      )
+      hints = provider.inlay_hints(uri, template, range)
+
+      # Should have no parameter hints since arg matches param
+      hints.select { |hint| hint.kind == Crinkle::LSP::InlayHintKind::Parameter }.should be_empty
+    end
+
+    it "provides parameter hints for filter calls" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      provider = Crinkle::LSP::InlayHintProvider.new(inference, schema_provider)
+
+      # The 'default' filter takes a 'fallback' parameter
+      template = %({{ value|default(42) }})
+      uri = "file:///test.j2"
+      inference.analyze(uri, template)
+
+      range = Crinkle::LSP::Range.new(
+        Crinkle::LSP::Position.new(0, 0),
+        Crinkle::LSP::Position.new(0, 50)
+      )
+      hints = provider.inlay_hints(uri, template, range)
+
+      # Should have hint for the default_value parameter
+      hints.size.should eq 1
+      hints[0].label.should eq "default_value:"
+    end
+
+    it "provides parameter hints for test calls" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      provider = Crinkle::LSP::InlayHintProvider.new(inference, schema_provider)
+
+      # The 'divisibleby' test takes a 'num' parameter
+      template = %({% if num is divisibleby(3) %}yes{% endif %})
+      uri = "file:///test.j2"
+      inference.analyze(uri, template)
+
+      range = Crinkle::LSP::Range.new(
+        Crinkle::LSP::Position.new(0, 0),
+        Crinkle::LSP::Position.new(0, 50)
+      )
+      hints = provider.inlay_hints(uri, template, range)
+
+      # Should have hint for the num parameter
+      hints.size.should eq 1
+      hints[0].label.should eq "num:"
+    end
+
+    it "provides inferred type hints for set variables" do
+      config = Crinkle::LSP::Config.new
+      inference = Crinkle::LSP::InferenceEngine.new(config)
+      schema_provider = Crinkle::LSP::SchemaProvider.new(config, ".")
+      provider = Crinkle::LSP::InlayHintProvider.new(inference, schema_provider)
+
+      template = %({% set foo = 1 %}{% set bar = "hi" %})
+      uri = "file:///test.j2"
+      inference.analyze(uri, template)
+
+      range = Crinkle::LSP::Range.new(
+        Crinkle::LSP::Position.new(0, 0),
+        Crinkle::LSP::Position.new(0, 100)
+      )
+      hints = provider.inlay_hints(uri, template, range)
+
+      labels = hints.map(&.label)
+      labels.should contain ": Int64"
+      labels.should contain ": String"
+
+      kinds = hints.map(&.kind)
+      kinds.all? { |kind| kind == Crinkle::LSP::InlayHintKind::Type }.should be_true
+    end
+  end
 end
