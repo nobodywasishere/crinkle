@@ -429,8 +429,10 @@ module Crinkle
       getter args : Array(Expr)
       getter kwargs : Array(KeywordArg)
       getter span : Span
+      getter name_span : Span # Span of just the filter name (for precise error reporting)
 
-      def initialize(@expr : Expr, @name : String, @args : Array(Expr), @kwargs : Array(KeywordArg), @span : Span) : Nil
+      def initialize(@expr : Expr, @name : String, @args : Array(Expr), @kwargs : Array(KeywordArg), @span : Span, @name_span : Span? = nil) : Nil
+        @name_span = @name_span || @span
       end
     end
 
@@ -441,8 +443,10 @@ module Crinkle
       getter kwargs : Array(KeywordArg)
       getter? negated : Bool
       getter span : Span
+      getter name_span : Span # Span of just the test name (for precise error reporting)
 
-      def initialize(@expr : Expr, @name : String, @args : Array(Expr), @kwargs : Array(KeywordArg), @negated : Bool, @span : Span) : Nil
+      def initialize(@expr : Expr, @name : String, @args : Array(Expr), @kwargs : Array(KeywordArg), @negated : Bool, @span : Span, @name_span : Span? = nil) : Nil
+        @name_span = @name_span || @span
       end
     end
 

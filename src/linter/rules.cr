@@ -371,7 +371,8 @@ module Crinkle
             next unless inner.is_a?(AST::Filter)
 
             unless @schema.filters.has_key?(inner.name)
-              issues << issue(inner.span, "Unknown filter '#{inner.name}'.")
+              # Use name_span for precise error location (just filter name and args)
+              issues << issue(inner.name_span, "Unknown filter '#{inner.name}'.")
             end
           end
         end
@@ -404,7 +405,8 @@ module Crinkle
             next unless inner.is_a?(AST::Test)
 
             unless @schema.tests.has_key?(inner.name)
-              issues << issue(inner.span, "Unknown test '#{inner.name}'.")
+              # Use name_span for precise error location (just test name and args)
+              issues << issue(inner.name_span, "Unknown test '#{inner.name}'.")
             end
           end
         end

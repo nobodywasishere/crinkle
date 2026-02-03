@@ -1242,7 +1242,9 @@ module Crinkle
         args, kwargs, end_span = parse_call_args(stop_types, stop_lexemes)
       end
 
-      AST::Test.new(left, name, args, kwargs, negated, span_between(start_span, end_span))
+      # test_name_span covers just the test name and args (for precise error reporting)
+      test_name_span = span_between(name_span, end_span)
+      AST::Test.new(left, name, args, kwargs, negated, span_between(start_span, end_span), test_name_span)
     end
 
     private def parse_add(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
@@ -1373,7 +1375,9 @@ module Crinkle
             end_span = arg.span
           end
 
-          left = AST::Filter.new(left, name, args, kwargs, span_between(start_span, end_span))
+          # name_span covers just the filter name and args (for precise error reporting)
+          filter_name_span = span_between(name_span, end_span)
+          left = AST::Filter.new(left, name, args, kwargs, span_between(start_span, end_span), filter_name_span)
           next
         end
 
