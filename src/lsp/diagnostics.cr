@@ -93,7 +93,9 @@ module Crinkle::LSP
                               end
 
       # Run linter with extra known functions from inference
-      issues = @linter.lint(ast, text, all_diagnostics, extra_known_functions)
+
+      # TODO(margret): disabling html validation rules as the html parser is jank
+      issues.reject!(&.id.starts_with?("Formatter/Html"))
 
       # Run typo detection if inference engine available
       if inference = @inference

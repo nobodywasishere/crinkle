@@ -123,7 +123,10 @@ module Crinkle
           tokens, _diagnostics = lex_source(entry_source)
           template, _parser_diags = parse_tokens(tokens)
           all_diags = formatter.diagnostics
-          issues = linter.lint(template, entry_source, all_diags)
+
+          # TODO(margret): disabling html validation rules as the html parser is jank
+          issues.reject!(&.id.starts_with?("Formatter/Html"))
+
           results << {entry_label, issues}
           all_issues.concat(issues)
           write_snapshots(opts.snapshots_dir, entry_label, issues: issues)
