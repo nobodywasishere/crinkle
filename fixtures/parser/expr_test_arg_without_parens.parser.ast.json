@@ -1,0 +1,28 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Test",
+        "expr": {
+          "type": "Literal",
+          "value": 3
+        },
+        "name": "equalto",
+        "negated": false,
+        "args": [
+          {
+            "type": "Literal",
+            "value": 3
+          }
+        ],
+        "kwargs": []
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

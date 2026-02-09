@@ -32,8 +32,8 @@
     }
   },
   {
-    "type": "Punct",
-    "lexeme": "(",
+    "type": "Number",
+    "lexeme": "3",
     "span": {
       "start": {
         "offset": 3,
@@ -48,8 +48,8 @@
     }
   },
   {
-    "type": "Identifier",
-    "lexeme": "foo",
+    "type": "Whitespace",
+    "lexeme": " ",
     "span": {
       "start": {
         "offset": 4,
@@ -57,6 +57,22 @@
         "column": 5
       },
       "end": {
+        "offset": 5,
+        "line": 1,
+        "column": 6
+      }
+    }
+  },
+  {
+    "type": "Identifier",
+    "lexeme": "is",
+    "span": {
+      "start": {
+        "offset": 5,
+        "line": 1,
+        "column": 6
+      },
+      "end": {
         "offset": 7,
         "line": 1,
         "column": 8
@@ -80,8 +96,8 @@
     }
   },
   {
-    "type": "Operator",
-    "lexeme": "+",
+    "type": "Identifier",
+    "lexeme": "equalto",
     "span": {
       "start": {
         "offset": 8,
@@ -89,9 +105,9 @@
         "column": 9
       },
       "end": {
-        "offset": 9,
+        "offset": 15,
         "line": 1,
-        "column": 10
+        "column": 16
       }
     }
   },
@@ -100,30 +116,30 @@
     "lexeme": " ",
     "span": {
       "start": {
-        "offset": 9,
+        "offset": 15,
         "line": 1,
-        "column": 10
+        "column": 16
       },
       "end": {
-        "offset": 10,
+        "offset": 16,
         "line": 1,
-        "column": 11
+        "column": 17
       }
     }
   },
   {
     "type": "Number",
-    "lexeme": "1",
+    "lexeme": "3",
     "span": {
       "start": {
-        "offset": 10,
+        "offset": 16,
         "line": 1,
-        "column": 11
+        "column": 17
       },
       "end": {
-        "offset": 11,
+        "offset": 17,
         "line": 1,
-        "column": 12
+        "column": 18
       }
     }
   },
@@ -132,60 +148,44 @@
     "lexeme": " ",
     "span": {
       "start": {
-        "offset": 11,
+        "offset": 17,
         "line": 1,
-        "column": 12
+        "column": 18
       },
       "end": {
-        "offset": 12,
+        "offset": 18,
         "line": 1,
-        "column": 13
+        "column": 19
       }
     }
   },
   {
-    "type": "Punct",
-    "lexeme": "}",
+    "type": "VarEnd",
+    "lexeme": "}}",
     "span": {
       "start": {
-        "offset": 12,
+        "offset": 18,
         "line": 1,
-        "column": 13
+        "column": 19
       },
       "end": {
-        "offset": 13,
+        "offset": 20,
         "line": 1,
-        "column": 14
+        "column": 21
       }
     }
   },
   {
-    "type": "Punct",
-    "lexeme": "}",
-    "span": {
-      "start": {
-        "offset": 13,
-        "line": 1,
-        "column": 14
-      },
-      "end": {
-        "offset": 14,
-        "line": 1,
-        "column": 15
-      }
-    }
-  },
-  {
-    "type": "Whitespace",
+    "type": "Text",
     "lexeme": "\n",
     "span": {
       "start": {
-        "offset": 14,
+        "offset": 20,
         "line": 1,
-        "column": 15
+        "column": 21
       },
       "end": {
-        "offset": 15,
+        "offset": 21,
         "line": 2,
         "column": 1
       }
@@ -196,12 +196,12 @@
     "lexeme": "",
     "span": {
       "start": {
-        "offset": 15,
+        "offset": 21,
         "line": 2,
         "column": 1
       },
       "end": {
-        "offset": 15,
+        "offset": 21,
         "line": 2,
         "column": 1
       }

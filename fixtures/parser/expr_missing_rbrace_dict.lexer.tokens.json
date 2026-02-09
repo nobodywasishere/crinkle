@@ -224,13 +224,29 @@
     }
   },
   {
-    "type": "VarEnd",
-    "lexeme": "}}",
+    "type": "Punct",
+    "lexeme": "}",
     "span": {
       "start": {
         "offset": 19,
         "line": 1,
         "column": 20
+      },
+      "end": {
+        "offset": 20,
+        "line": 1,
+        "column": 21
+      }
+    }
+  },
+  {
+    "type": "Punct",
+    "lexeme": "}",
+    "span": {
+      "start": {
+        "offset": 20,
+        "line": 1,
+        "column": 21
       },
       "end": {
         "offset": 21,
@@ -240,7 +256,7 @@
     }
   },
   {
-    "type": "Text",
+    "type": "Whitespace",
     "lexeme": "\n",
     "span": {
       "start": {

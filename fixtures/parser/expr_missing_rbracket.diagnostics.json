@@ -1,5 +1,23 @@
 {
-  "lexer": [],
+  "lexer": [
+    {
+      "id": "E_UNTERMINATED_EXPRESSION",
+      "severity": "error",
+      "message": "Unterminated expression; expected '}}'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 15,
+          "line": 2,
+          "column": 1
+        }
+      }
+    }
+  ],
   "parser": [
     {
       "id": "E_EXPECTED_TOKEN",
@@ -12,14 +30,48 @@
           "column": 13
         },
         "end": {
-          "offset": 14,
+          "offset": 13,
           "line": 1,
-          "column": 15
+          "column": 14
+        }
+      }
+    },
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected '}}' to close expression.",
+      "span": {
+        "start": {
+          "offset": 12,
+          "line": 1,
+          "column": 13
+        },
+        "end": {
+          "offset": 13,
+          "line": 1,
+          "column": 14
         }
       }
     }
   ],
   "formatter": [
+    {
+      "id": "E_UNTERMINATED_EXPRESSION",
+      "severity": "error",
+      "message": "Unterminated expression; expected '}}'.",
+      "span": {
+        "start": {
+          "offset": 0,
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "offset": 15,
+          "line": 2,
+          "column": 1
+        }
+      }
+    },
     {
       "id": "E_EXPECTED_TOKEN",
       "severity": "error",
@@ -31,9 +83,26 @@
           "column": 13
         },
         "end": {
-          "offset": 14,
+          "offset": 13,
           "line": 1,
-          "column": 15
+          "column": 14
+        }
+      }
+    },
+    {
+      "id": "E_EXPECTED_TOKEN",
+      "severity": "error",
+      "message": "Expected '}}' to close expression.",
+      "span": {
+        "start": {
+          "offset": 12,
+          "line": 1,
+          "column": 13
+        },
+        "end": {
+          "offset": 13,
+          "line": 1,
+          "column": 14
         }
       }
     }

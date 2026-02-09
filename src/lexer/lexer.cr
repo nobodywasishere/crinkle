@@ -29,6 +29,7 @@ module Crinkle
       @mode_start_line = 1
       @mode_start_col = 1
       @diagnostics = Array(Diagnostic).new
+      @delimiter_stack = Array(Char).new
     end
 
     def self.shared_pool : StringPool
@@ -110,9 +111,9 @@ module Crinkle
       loop do
         return unterminated(end_type) if at_eof?
 
-        if end_type == TokenType::VarEnd && starts_var_end?
+        if end_type == TokenType::VarEnd && starts_var_end? && delimiter_stack_closed?
           return lex_var_end(next_mode)
-        elsif end_type == TokenType::BlockEnd && starts_block_end?
+        elsif end_type == TokenType::BlockEnd && starts_block_end? && delimiter_stack_closed?
           return lex_block_end(next_mode)
         end
 
@@ -212,6 +213,7 @@ module Crinkle
 
       @mode = Mode::Expr
       mark_mode_start(start_offset, start_line, start_col)
+      @delimiter_stack.clear
       token_from(TokenType::VarStart, start_offset, start_line, start_col)
     end
 
@@ -229,6 +231,7 @@ module Crinkle
 
       @mode = Mode::Block
       mark_mode_start(start_offset, start_line, start_col)
+      @delimiter_stack.clear
       token_from(TokenType::BlockStart, start_offset, start_line, start_col)
     end
 
@@ -244,6 +247,7 @@ module Crinkle
       advance_char
 
       @mode = next_mode
+      @delimiter_stack.clear
       token_from(TokenType::VarEnd, start_offset, start_line, start_col)
     end
 
@@ -259,6 +263,7 @@ module Crinkle
       advance_char
 
       @mode = next_mode
+      @delimiter_stack.clear
       token_from(TokenType::BlockEnd, start_offset, start_line, start_col)
     end
 
@@ -297,9 +302,14 @@ module Crinkle
       end
 
       if current_char == '.'
-        advance_char
-        while !at_eof? && digit?(current_char)
+        # Keep '.' in the number only if followed by a digit. Otherwise '.' is
+        # lexed separately as punctuation (member access), matching Crinja.
+        next_byte = byte_at(current_offset + 1)
+        if next_byte && digit_byte?(next_byte)
           advance_char
+          while !at_eof? && digit?(current_char)
+            advance_char
+          end
         end
       end
 
@@ -359,6 +369,7 @@ module Crinkle
       lexeme = @source.byte_slice(start_offset, span.end_pos.offset - start_offset)
 
       if punct?(lexeme)
+        track_delimiter(lexeme)
         Token.new(TokenType::Punct, lexeme, span)
       else
         Token.new(TokenType::Operator, lexeme, span)
@@ -396,6 +407,7 @@ module Crinkle
       else
         emit_diagnostic(DiagnosticType::UnterminatedBlock, "Unterminated block; expected '%}'.", @mode_start_offset, @mode_start_line, @mode_start_col)
       end
+      @delimiter_stack.clear
       eof_token
     end
 
@@ -407,6 +419,7 @@ module Crinkle
       end
 
       @mode = Mode::Text
+      @delimiter_stack.clear
       span = Span.new(
         Position.new(current_offset, @line, @column),
         Position.new(current_offset, @line, @column)
@@ -467,6 +480,23 @@ module Crinkle
       @mode_start_col = start_col
     end
 
+    private def delimiter_stack_closed? : Bool
+      @delimiter_stack.empty?
+    end
+
+    private def track_delimiter(lexeme : String) : Nil
+      case lexeme
+      when "("
+        @delimiter_stack << ')'
+      when "["
+        @delimiter_stack << ']'
+      when "{"
+        @delimiter_stack << '}'
+      when ")", "]", "}"
+        @delimiter_stack.pop if @delimiter_stack.last? == lexeme[0]
+      end
+    end
+
     private def starts_end_for_mode? : Bool
       case @mode
       when Mode::Expr
@@ -520,6 +550,10 @@ module Crinkle
 
     private def digit?(ch : Char) : Bool
       ch >= '0' && ch <= '9'
+    end
+
+    private def digit_byte?(byte : UInt8) : Bool
+      byte >= '0'.ord.to_u8 && byte <= '9'.ord.to_u8
     end
 
     private def quote?(ch : Char) : Bool

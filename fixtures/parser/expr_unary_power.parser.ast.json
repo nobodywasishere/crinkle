@@ -4,20 +4,25 @@
     {
       "type": "Output",
       "expr": {
-        "type": "Group",
+        "type": "Unary",
+        "op": "-",
         "expr": {
           "type": "Binary",
-          "op": "+",
+          "op": "**",
           "left": {
-            "type": "Name",
-            "value": "foo"
+            "type": "Literal",
+            "value": 2
           },
           "right": {
             "type": "Literal",
-            "value": 1
+            "value": 2
           }
         }
       }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
     }
   ]
 }

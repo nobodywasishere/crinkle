@@ -15,19 +15,13 @@
               "type": "Literal",
               "value": 1
             }
-          },
-          {
-            "key": {
-              "type": "Literal",
-              "value": "b"
-            },
-            "value": {
-              "type": "Literal",
-              "value": 2
-            }
           }
         ]
       }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
     }
   ]
 }

@@ -1241,6 +1241,10 @@ module Crinkle
       skip_whitespace
       if punct?("(")
         args, kwargs, end_span = parse_call_args(stop_types, stop_lexemes)
+      elsif starts_simple_expression?(stop_types, stop_lexemes)
+        arg = parse_simple_expression(stop_types, stop_lexemes)
+        args << arg
+        end_span = arg.span
       end
 
       # test_name_span covers just the test name and args (for precise error reporting)
@@ -1265,7 +1269,7 @@ module Crinkle
     end
 
     private def parse_mul(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
-      left = parse_power(stop_types, stop_lexemes)
+      left = parse_unary(stop_types, stop_lexemes)
 
       loop do
         skip_whitespace
@@ -1273,7 +1277,7 @@ module Crinkle
         break unless operator?("*", "/", "//", "%")
         op = current.lexeme
         advance
-        right = parse_power(stop_types, stop_lexemes)
+        right = parse_unary(stop_types, stop_lexemes)
         left = AST::Binary.new(op, left, right, span_between(left.span, right.span))
       end
 
@@ -1281,13 +1285,15 @@ module Crinkle
     end
 
     private def parse_power(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
-      left = parse_unary(stop_types, stop_lexemes)
-      skip_whitespace
+      left = parse_postfix(stop_types, stop_lexemes)
 
-      if operator?("**")
+      loop do
+        skip_whitespace
+        break if stop_at?(stop_types, stop_lexemes)
+        break unless operator?("**")
         op = current.lexeme
         advance
-        right = parse_power(stop_types, stop_lexemes)
+        right = parse_unary(stop_types, stop_lexemes)
         left = AST::Binary.new(op, left, right, span_between(left.span, right.span))
       end
 
@@ -1304,7 +1310,7 @@ module Crinkle
         return AST::Unary.new(op, expr, span_between(start_span, expr.span))
       end
 
-      parse_postfix(stop_types, stop_lexemes)
+      parse_power(stop_types, stop_lexemes)
     end
 
     private def parse_postfix(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
@@ -1317,13 +1323,13 @@ module Crinkle
         if punct?(".")
           start_span = left.span
           advance
-          if current.type == TokenType::Identifier
+          if current.type == TokenType::Identifier || current.type == TokenType::Number
             name = current.lexeme
             end_span = current.span
             advance
             left = AST::GetAttr.new(left, name, span_between(start_span, end_span))
           else
-            emit_expected_token("Expected attribute name after '.'.")
+            emit_expected_token("Expected attribute name or integer index after '.'.")
           end
           next
         end
@@ -1411,13 +1417,13 @@ module Crinkle
         if punct?(".")
           start_span = expr.span
           advance
-          if current.type == TokenType::Identifier
+          if current.type == TokenType::Identifier || current.type == TokenType::Number
             name = current.lexeme
             end_span = current.span
             advance
             expr = AST::GetAttr.new(expr, name, span_between(start_span, end_span))
           else
-            emit_expected_token("Expected attribute name after '.'.")
+            emit_expected_token("Expected attribute name or integer index after '.'.")
           end
           next
         end
