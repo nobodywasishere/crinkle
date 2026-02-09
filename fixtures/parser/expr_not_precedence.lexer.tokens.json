@@ -33,7 +33,7 @@
   },
   {
     "type": "Identifier",
-    "lexeme": "item",
+    "lexeme": "not",
     "span": {
       "start": {
         "offset": 3,
@@ -41,6 +41,22 @@
         "column": 4
       },
       "end": {
+        "offset": 6,
+        "line": 1,
+        "column": 7
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 6,
+        "line": 1,
+        "column": 7
+      },
+      "end": {
         "offset": 7,
         "line": 1,
         "column": 8
@@ -48,8 +64,8 @@
     }
   },
   {
-    "type": "Whitespace",
-    "lexeme": " ",
+    "type": "Number",
+    "lexeme": "1",
     "span": {
       "start": {
         "offset": 7,
@@ -64,8 +80,8 @@
     }
   },
   {
-    "type": "Identifier",
-    "lexeme": "is",
+    "type": "Whitespace",
+    "lexeme": " ",
     "span": {
       "start": {
         "offset": 8,
@@ -73,20 +89,20 @@
         "column": 9
       },
       "end": {
-        "offset": 10,
+        "offset": 9,
         "line": 1,
-        "column": 11
+        "column": 10
       }
     }
   },
   {
-    "type": "Whitespace",
-    "lexeme": " ",
+    "type": "Operator",
+    "lexeme": "==",
     "span": {
       "start": {
-        "offset": 10,
+        "offset": 9,
         "line": 1,
-        "column": 11
+        "column": 10
       },
       "end": {
         "offset": 11,
@@ -96,8 +112,8 @@
     }
   },
   {
-    "type": "Identifier",
-    "lexeme": "not",
+    "type": "Whitespace",
+    "lexeme": " ",
     "span": {
       "start": {
         "offset": 11,
@@ -105,89 +121,41 @@
         "column": 12
       },
       "end": {
+        "offset": 12,
+        "line": 1,
+        "column": 13
+      }
+    }
+  },
+  {
+    "type": "Number",
+    "lexeme": "2",
+    "span": {
+      "start": {
+        "offset": 12,
+        "line": 1,
+        "column": 13
+      },
+      "end": {
+        "offset": 13,
+        "line": 1,
+        "column": 14
+      }
+    }
+  },
+  {
+    "type": "Whitespace",
+    "lexeme": " ",
+    "span": {
+      "start": {
+        "offset": 13,
+        "line": 1,
+        "column": 14
+      },
+      "end": {
         "offset": 14,
         "line": 1,
         "column": 15
-      }
-    }
-  },
-  {
-    "type": "Whitespace",
-    "lexeme": " ",
-    "span": {
-      "start": {
-        "offset": 14,
-        "line": 1,
-        "column": 15
-      },
-      "end": {
-        "offset": 15,
-        "line": 1,
-        "column": 16
-      }
-    }
-  },
-  {
-    "type": "Identifier",
-    "lexeme": "in",
-    "span": {
-      "start": {
-        "offset": 15,
-        "line": 1,
-        "column": 16
-      },
-      "end": {
-        "offset": 17,
-        "line": 1,
-        "column": 18
-      }
-    }
-  },
-  {
-    "type": "Whitespace",
-    "lexeme": " ",
-    "span": {
-      "start": {
-        "offset": 17,
-        "line": 1,
-        "column": 18
-      },
-      "end": {
-        "offset": 18,
-        "line": 1,
-        "column": 19
-      }
-    }
-  },
-  {
-    "type": "Identifier",
-    "lexeme": "items",
-    "span": {
-      "start": {
-        "offset": 18,
-        "line": 1,
-        "column": 19
-      },
-      "end": {
-        "offset": 23,
-        "line": 1,
-        "column": 24
-      }
-    }
-  },
-  {
-    "type": "Whitespace",
-    "lexeme": " ",
-    "span": {
-      "start": {
-        "offset": 23,
-        "line": 1,
-        "column": 24
-      },
-      "end": {
-        "offset": 24,
-        "line": 1,
-        "column": 25
       }
     }
   },
@@ -196,14 +164,14 @@
     "lexeme": "}}",
     "span": {
       "start": {
-        "offset": 24,
+        "offset": 14,
         "line": 1,
-        "column": 25
+        "column": 15
       },
       "end": {
-        "offset": 26,
+        "offset": 16,
         "line": 1,
-        "column": 27
+        "column": 17
       }
     }
   },
@@ -212,12 +180,12 @@
     "lexeme": "\n",
     "span": {
       "start": {
-        "offset": 26,
+        "offset": 16,
         "line": 1,
-        "column": 27
+        "column": 17
       },
       "end": {
-        "offset": 27,
+        "offset": 17,
         "line": 2,
         "column": 1
       }
@@ -228,12 +196,12 @@
     "lexeme": "",
     "span": {
       "start": {
-        "offset": 27,
+        "offset": 17,
         "line": 2,
         "column": 1
       },
       "end": {
-        "offset": 27,
+        "offset": 17,
         "line": 2,
         "column": 1
       }

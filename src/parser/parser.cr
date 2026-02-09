@@ -1144,69 +1144,70 @@ module Crinkle
     end
 
     private def parse_and(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
-      left = parse_not(stop_types, stop_lexemes)
+      left = parse_compare(stop_types, stop_lexemes)
 
       loop do
         skip_whitespace
         break if stop_at?(stop_types, stop_lexemes)
         break unless keyword?("and")
         advance
-        right = parse_not(stop_types, stop_lexemes)
+        right = parse_compare(stop_types, stop_lexemes)
         left = AST::Binary.new("and", left, right, span_between(left.span, right.span))
       end
 
       left
     end
 
-    private def parse_not(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
-      skip_whitespace
-      if keyword?("not")
-        start_span = current.span
-        advance
-        expr = parse_not(stop_types, stop_lexemes)
-        return AST::Unary.new("not", expr, span_between(start_span, expr.span))
-      end
-
-      parse_compare(stop_types, stop_lexemes)
-    end
-
     private def parse_compare(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
-      left = parse_add(stop_types, stop_lexemes)
+      left = parse_less_greater(stop_types, stop_lexemes)
 
       loop do
         skip_whitespace
         break if stop_at?(stop_types, stop_lexemes)
 
-        if comparison_operator?
-          op = current.lexeme
+        if operator?("==", "!=") || keyword?("not")
+          op = keyword?("not") ? "not" : current.lexeme
           advance
-          right = parse_add(stop_types, stop_lexemes)
+          right = parse_less_greater(stop_types, stop_lexemes)
           left = AST::Binary.new(op, left, right, span_between(left.span, right.span))
           next
         end
 
-        if keyword?("not") && peek_keyword?("in")
-          advance
-          skip_whitespace
-          advance if keyword?("in")
-          right = parse_add(stop_types, stop_lexemes)
-          left = AST::Binary.new("not in", left, right, span_between(left.span, right.span))
-          next
-        end
-
-        if keyword?("in")
-          advance
-          right = parse_add(stop_types, stop_lexemes)
-          left = AST::Binary.new("in", left, right, span_between(left.span, right.span))
-          next
-        end
-
-        if keyword?("is")
-          left = parse_test(left, stop_types, stop_lexemes)
-          next
-        end
-
         break
+      end
+
+      left
+    end
+
+    private def parse_less_greater(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
+      left = parse_concat(stop_types, stop_lexemes)
+
+      loop do
+        skip_whitespace
+        break if stop_at?(stop_types, stop_lexemes)
+        break unless operator?("<", "<=", ">", ">=")
+
+        op = current.lexeme
+        advance
+        right = parse_concat(stop_types, stop_lexemes)
+        left = AST::Binary.new(op, left, right, span_between(left.span, right.span))
+      end
+
+      left
+    end
+
+    private def parse_concat(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
+      left = parse_add(stop_types, stop_lexemes)
+
+      loop do
+        skip_whitespace
+        break if stop_at?(stop_types, stop_lexemes)
+        break unless operator?("~")
+
+        op = current.lexeme
+        advance
+        right = parse_add(stop_types, stop_lexemes)
+        left = AST::Binary.new(op, left, right, span_between(left.span, right.span))
       end
 
       left
@@ -1256,7 +1257,7 @@ module Crinkle
       loop do
         skip_whitespace
         break if stop_at?(stop_types, stop_lexemes)
-        break unless operator?("+", "-", "~")
+        break unless operator?("+", "-")
         op = current.lexeme
         advance
         right = parse_mul(stop_types, stop_lexemes)
@@ -1267,12 +1268,29 @@ module Crinkle
     end
 
     private def parse_mul(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
+      left = parse_mod(stop_types, stop_lexemes)
+
+      loop do
+        skip_whitespace
+        break if stop_at?(stop_types, stop_lexemes)
+        break unless operator?("*", "/", "//")
+        op = current.lexeme
+        advance
+        right = parse_mod(stop_types, stop_lexemes)
+        left = AST::Binary.new(op, left, right, span_between(left.span, right.span))
+      end
+
+      left
+    end
+
+    private def parse_mod(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
       left = parse_unary(stop_types, stop_lexemes)
 
       loop do
         skip_whitespace
         break if stop_at?(stop_types, stop_lexemes)
-        break unless operator?("*", "/", "//", "%")
+        break unless operator?("%")
+
         op = current.lexeme
         advance
         right = parse_unary(stop_types, stop_lexemes)
@@ -1300,6 +1318,13 @@ module Crinkle
 
     private def parse_unary(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr
       skip_whitespace
+      if keyword?("not")
+        start_span = current.span
+        advance
+        expr = parse_unary(stop_types, stop_lexemes)
+        return AST::Unary.new("not", expr, span_between(start_span, expr.span))
+      end
+
       if operator?("+", "-")
         op = current.lexeme
         start_span = current.span
@@ -1381,6 +1406,11 @@ module Crinkle
           # name_span covers just the filter name and args (for precise error reporting)
           filter_name_span = span_between(name_span, end_span)
           left = AST::Filter.new(left, name, args, kwargs, span_between(start_span, end_span), filter_name_span)
+          next
+        end
+
+        if keyword?("is")
+          left = parse_test(left, stop_types, stop_lexemes)
           next
         end
 
@@ -1469,7 +1499,7 @@ module Crinkle
           AST::Literal.new(true, span)
         when "false", "False"
           AST::Literal.new(false, span)
-        when "none", "None", "null"
+        when "none", "None"
           AST::Literal.new(nil, span)
         else
           AST::Name.new(lexeme, span)
@@ -1773,12 +1803,6 @@ module Crinkle
       current.type == TokenType::Identifier && current.lexeme == value
     end
 
-    private def peek_keyword?(value : String) : Bool
-      token = peek_non_whitespace
-      return false unless token
-      token.type == TokenType::Identifier && token.lexeme == value
-    end
-
     private def operator?(*ops : String) : Bool
       return false unless current.type == TokenType::Operator
       ops.any? { |op| op == current.lexeme }
@@ -1786,16 +1810,6 @@ module Crinkle
 
     private def punct?(value : String) : Bool
       current.type == TokenType::Punct && current.lexeme == value
-    end
-
-    private def comparison_operator? : Bool
-      return false unless current.type == TokenType::Operator
-      case current.lexeme
-      when "==", "!=", "<", "<=", ">", ">="
-        true
-      else
-        false
-      end
     end
 
     private def keyword_arg_start? : Bool

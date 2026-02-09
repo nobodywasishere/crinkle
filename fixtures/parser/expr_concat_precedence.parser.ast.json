@@ -1,0 +1,32 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Binary",
+        "op": "~",
+        "left": {
+          "type": "Literal",
+          "value": 1
+        },
+        "right": {
+          "type": "Binary",
+          "op": "-",
+          "left": {
+            "type": "Literal",
+            "value": 2
+          },
+          "right": {
+            "type": "Literal",
+            "value": 3
+          }
+        }
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

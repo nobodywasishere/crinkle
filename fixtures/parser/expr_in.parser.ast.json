@@ -4,16 +4,20 @@
     {
       "type": "Output",
       "expr": {
-        "type": "Binary",
-        "op": "in",
-        "left": {
+        "type": "Test",
+        "expr": {
           "type": "Name",
           "value": "item"
         },
-        "right": {
-          "type": "Name",
-          "value": "items"
-        }
+        "name": "in",
+        "negated": false,
+        "args": [
+          {
+            "type": "Name",
+            "value": "items"
+          }
+        ],
+        "kwargs": []
       }
     },
     {

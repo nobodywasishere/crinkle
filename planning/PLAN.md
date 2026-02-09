@@ -183,9 +183,10 @@ Build a cohesive developer experience for Jinja2 templates in Crystal:
 **Priority:** LOW
 → [PHASE-29.md](PHASE-29.md)
 
-### Phase 30 — Crinja Lexer/Parser Parity
+### Phase 30 — Crinja Lexer/Parser Parity (In Progress)
 **Outcome:** Match Crinja lexer/parser behavior exactly for tokenization, expression grammar, and template parsing edge cases.
 **Priority:** CRITICAL - Blocks Drop-in Compatibility
+**Status:** Expression parser parity slice landed; lexer/template parser strictness work remains.
 → [PHASE-30.md](PHASE-30.md)
 
 ## Production Readiness Summary
@@ -198,7 +199,7 @@ Critical path for drop-in Crinja replacement:
 | 13 | Std Library & Fixture Reorg | HIGH |
 | 14 | Callable Objects | CRITICAL |
 | 15 | 18 Builtin Filters | HIGH |
-| 16 | 4 Builtin Tests | HIGH |
+| 16 | 29 Builtin Tests | HIGH |
 | 17 | Environment Access | HIGH |
 | 18 | Template Loading API | HIGH |
 | 19 | Context Inheritance | MEDIUM |
