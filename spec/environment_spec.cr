@@ -127,11 +127,16 @@ describe Crinkle::Environment do
     end
 
     it "inherits strict settings from parent" do
-      parent = Crinkle::Environment.new(strict_undefined: false, strict_filters: false)
+      parent = Crinkle::Environment.new(
+        strict_undefined: false,
+        strict_filters: false,
+        strict_unknown_tags: true
+      )
       child = parent.new_child
 
       child.strict_undefined?.should be_false
       child.strict_filters?.should be_false
+      child.strict_unknown_tags?.should be_true
     end
 
     it "allows child to override filters" do

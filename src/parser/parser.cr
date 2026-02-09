@@ -132,8 +132,13 @@ module Crinkle
         return handle_extension(tag, extension, start_span, start_trim_left)
       end
 
-      # TODO(margret): Disabling to support custom tags without errors
-      # emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.")
+      if @environment.strict_unknown_tags?
+        emit_diagnostic(DiagnosticType::UnknownTag, "Unknown tag '#{tag}'.", start_span)
+        recover_to([TokenType::BlockEnd])
+        advance if current.type == TokenType::BlockEnd
+        return
+      end
+
       parse_unknown_tag(tag, start_span, start_trim_left)
     end
 
@@ -675,20 +680,24 @@ module Crinkle
         "macro"    => ->(span : Span, trim_left : Bool) : AST::Node? { parse_macro(span, trim_left) },
         "call"     => ->(span : Span, trim_left : Bool) : AST::Node? { parse_call_block(span, trim_left) },
         "raw"      => ->(span : Span, trim_left : Bool) : AST::Node? { parse_raw_block(span, trim_left) },
-        "endif"    => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endif") },
-        "endfor"   => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endfor") },
-        "endset"   => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endset") },
-        "endblock" => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endblock") },
-        "endmacro" => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endmacro") },
-        "endcall"  => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endcall") },
-        "endraw"   => ->(_span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endraw") },
+        "endif"    => ->(span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endif", span) },
+        "endfor"   => ->(span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endfor", span) },
+        "endset"   => ->(span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endset", span) },
+        "endblock" => ->(span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endblock", span) },
+        "endmacro" => ->(span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endmacro", span) },
+        "endcall"  => ->(span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endcall", span) },
+        "endraw"   => ->(span : Span, _trim_left : Bool) : AST::Node? { parse_unexpected_end_tag("endraw", span) },
       } of String => BuiltInTagHandler
     end
 
-    private def parse_unexpected_end_tag(tag : String) : Nil
-      emit_diagnostic(DiagnosticType::UnexpectedEndTag, "Unexpected '#{tag}'.")
+    private def parse_unexpected_end_tag(tag : String, start_span : Span) : Nil
       recover_to([TokenType::BlockEnd])
-      advance if current.type == TokenType::BlockEnd
+      end_span = if current.type == TokenType::BlockEnd
+                   advance.span
+                 else
+                   previous.span
+                 end
+      emit_diagnostic(DiagnosticType::UnexpectedEndTag, "Unexpected '#{tag}'.", span_between(start_span, end_span))
     end
 
     def parse_until_end_tag(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), EndTagInfo?}
@@ -1924,6 +1933,10 @@ module Crinkle
 
     private def emit_diagnostic(type : DiagnosticType, message : String) : Nil
       @diagnostics << Diagnostic.new(type, Severity::Error, message, current.span)
+    end
+
+    private def emit_diagnostic(type : DiagnosticType, message : String, span : Span) : Nil
+      @diagnostics << Diagnostic.new(type, Severity::Error, message, span)
     end
 
     def current : Token

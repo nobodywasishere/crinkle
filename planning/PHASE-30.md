@@ -100,7 +100,7 @@ fixtures/
 | Binary `in`/`not in` expression handling | done (now rejected/recovery, matching Crinja) | `fixtures/parser/expr_in.*`, `fixtures/parser/expr_not_in.*` |
 | `null` literal handling | done (`null` treated as identifier) | `fixtures/parser/expr_null_identifier.*` |
 | Lexer operator strictness for bare `!` | done (invalid bare `!` emits lexer error and recovers) | `fixtures/lexer/invalid_bang_operator.*` |
-| Template parser strictness (unknown tags, mismatched end-tags) | pending | fixture updates needed |
+| Template parser strictness (unknown tags, mismatched end-tags) | in progress (strict mode + better unexpected end-tag spans) | `spec/parser_spec.cr` strict-mode coverage, `fixtures/parser/unexpected_end_tag.*` |
 | Parity-specific fast spec target | pending | spec target needed |
 
 ## Acceptance Criteria
@@ -117,7 +117,7 @@ fixtures/
 - [ ] Add template parser parity fixtures (end tags, unknown tags, trimming).
 - [ ] Implement remaining lexer updates in `src/lexer/lexer.cr`.
 - [x] Implement expression parser updates in `src/parser/parser.cr`.
-- [ ] Implement template parser parity updates in `src/parser/parser.cr`.
+- [ ] Implement template parser parity updates in `src/parser/parser.cr` (strict unknown-tag mode landed; remaining mismatch/unknown-tag parity pending).
 - [x] Ensure diagnostics snapshots are stable and useful.
 - [x] Run `crystal spec`.
 - [x] Run `/Users/margret/.local/bin/ameba`.
