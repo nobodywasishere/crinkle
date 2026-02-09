@@ -1,6 +1,6 @@
 {% set title = "Hello" %}
 {% set joined = ["a", "b", "c"] | join(", ", attribute="name") %}
-{% set cropped = "Hello world" | truncate(5, True, end="..") %}
+{% set cropped = "Hello world" | truncate(5, true, end="..") %}
 {% set decorated = title | replace("H", "Y", count=1) %}
 {% set ok = title is equalto("Hello") %}
 {% set ok2 = title is string %}

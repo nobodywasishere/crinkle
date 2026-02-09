@@ -82,8 +82,8 @@
             "value": 5
           },
           {
-            "type": "Name",
-            "value": "True"
+            "type": "Literal",
+            "value": true
           }
         ],
         "kwargs": [

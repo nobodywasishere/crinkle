@@ -1,0 +1,38 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Literal",
+        "value": true
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Literal",
+        "value": false
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Literal",
+        "value": null
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

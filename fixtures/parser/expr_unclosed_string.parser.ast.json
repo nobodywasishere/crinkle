@@ -5,7 +5,7 @@
       "type": "Output",
       "expr": {
         "type": "Literal",
-        "value": "foo }}"
+        "value": "foo }}\n"
       }
     }
   ]

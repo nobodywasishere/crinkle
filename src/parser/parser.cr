@@ -1241,10 +1241,8 @@ module Crinkle
       skip_whitespace
       if punct?("(")
         args, kwargs, end_span = parse_call_args(stop_types, stop_lexemes)
-      elsif starts_simple_expression?(stop_types, stop_lexemes)
-        arg = parse_simple_expression(stop_types, stop_lexemes)
-        args << arg
-        end_span = arg.span
+      elsif starts_simple_expression?(stop_types, stop_lexemes) || keyword_arg_start?
+        args, kwargs, end_span = parse_bare_call_args(stop_types, stop_lexemes)
       end
 
       # test_name_span covers just the test name and args (for precise error reporting)
@@ -1376,10 +1374,8 @@ module Crinkle
           skip_whitespace
           if punct?("(")
             args, kwargs, end_span = parse_call_args(stop_types, stop_lexemes)
-          elsif starts_simple_expression?(stop_types, stop_lexemes)
-            arg = parse_simple_expression(stop_types, stop_lexemes)
-            args << arg
-            end_span = arg.span
+          elsif starts_simple_expression?(stop_types, stop_lexemes) || keyword_arg_start?
+            args, kwargs, end_span = parse_bare_call_args(stop_types, stop_lexemes)
           end
 
           # name_span covers just the filter name and args (for precise error reporting)
@@ -1469,11 +1465,11 @@ module Crinkle
         span = current.span
         advance
         case lexeme
-        when "true"
+        when "true", "True"
           AST::Literal.new(true, span)
-        when "false"
+        when "false", "False"
           AST::Literal.new(false, span)
-        when "none", "null"
+        when "none", "None", "null"
           AST::Literal.new(nil, span)
         else
           AST::Name.new(lexeme, span)
@@ -1683,6 +1679,43 @@ module Crinkle
       {args, kwargs, span_between(start_span, end_span)}
     end
 
+    private def parse_bare_call_args(stop_types : Array(TokenType), stop_lexemes : Array(String)) : {Array(AST::Expr), Array(AST::KeywordArg), Span}
+      args = Array(AST::Expr).new
+      kwargs = Array(AST::KeywordArg).new
+      end_span = current.span
+
+      loop do
+        skip_whitespace
+        break unless keyword_arg_start? || starts_simple_expression?(stop_types, stop_lexemes)
+
+        if keyword_arg_start?
+          name = current.lexeme
+          name_span = current.span
+          advance
+          skip_whitespace
+          if operator?("=")
+            advance
+          else
+            emit_expected_token("Expected '=' for keyword argument.")
+          end
+          skip_whitespace
+          value = parse_simple_expression(stop_types, stop_lexemes)
+          kwargs << AST::KeywordArg.new(name, value, span_between(name_span, value.span))
+          end_span = value.span
+        else
+          arg = parse_simple_expression(stop_types, stop_lexemes)
+          args << arg
+          end_span = arg.span
+        end
+
+        skip_whitespace
+        break unless punct?(",")
+        advance
+      end
+
+      {args, kwargs, end_span}
+    end
+
     private def number_value(lexeme : String) : (Int64 | Float64)
       if lexeme.includes?(".")
         lexeme.to_f64
@@ -1692,8 +1725,42 @@ module Crinkle
     end
 
     private def unquote(lexeme : String) : String
-      return "" if lexeme.size < 2
-      lexeme[1, lexeme.size - 2]
+      return "" if lexeme.empty?
+
+      quote = lexeme[0]
+      has_closing_quote = lexeme.size >= 2 && lexeme[-1] == quote
+      raw = if has_closing_quote
+              lexeme[1, lexeme.size - 2]
+            elsif lexeme.size > 1
+              lexeme[1, lexeme.size - 1]
+            else
+              ""
+            end
+
+      decode_string_escapes(raw)
+    end
+
+    private def decode_string_escapes(raw : String) : String
+      escaped = false
+      String.build do |io|
+        raw.each_char do |char|
+          if escaped
+            escaped = false
+            case char
+            when 'n'
+              io << '\n'
+            when '"', '\'', '\\'
+              io << char
+            else
+              # Crinja ignores unknown escapes.
+            end
+          elsif char == '\\'
+            escaped = true
+          else
+            io << char
+          end
+        end
+      end
     end
 
     private def stop_at?(stop_types : Array(TokenType), stop_lexemes : Array(String)) : Bool

@@ -1,0 +1,39 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Filter",
+        "expr": {
+          "type": "Name",
+          "value": "value"
+        },
+        "name": "replace",
+        "args": [
+          {
+            "type": "Literal",
+            "value": " "
+          },
+          {
+            "type": "Literal",
+            "value": "-"
+          }
+        ],
+        "kwargs": [
+          {
+            "name": "count",
+            "value": {
+              "type": "Literal",
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

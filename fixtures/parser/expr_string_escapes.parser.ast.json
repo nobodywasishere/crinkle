@@ -1,0 +1,27 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Literal",
+        "value": "line\nbreak"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Output",
+      "expr": {
+        "type": "Literal",
+        "value": "ab"
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    }
+  ]
+}

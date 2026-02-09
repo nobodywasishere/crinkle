@@ -478,6 +478,12 @@ module Crinkle
     end
 
     private def format_output(node : AST::Output) : Nil
+      original = original_text(node.span)
+      unless output_has_closing_delimiter?(original)
+        @printer.write_raw(original)
+        return
+      end
+
       sync_indent
       brace_space = @options.space_inside_braces? ? " " : ""
       start_delim = node.trim_left? ? "{{-" : "{{"
@@ -489,6 +495,10 @@ module Crinkle
         format_expr(node.expr)
       end
       @printer.write("#{brace_space}#{end_delim}")
+    end
+
+    private def output_has_closing_delimiter?(text : String) : Bool
+      text.ends_with?("}}") || text.ends_with?("-}}")
     end
 
     private def format_if(node : AST::If) : Nil
@@ -803,6 +813,10 @@ module Crinkle
       case value = expr.value
       when String
         original = original_text(expr.span)
+        if unterminated_quoted_literal?(original)
+          @printer.write(original)
+          return
+        end
         if quoted_literal?(original)
           @printer.write(original)
           return
@@ -844,6 +858,13 @@ module Crinkle
       first = value[0]
       return false unless first == '"' || first == '\''
       value.ends_with?(first)
+    end
+
+    private def unterminated_quoted_literal?(value : String) : Bool
+      return false if value.empty?
+      first = value[0]
+      return false unless first == '"' || first == '\''
+      !value.ends_with?(first)
     end
 
     private def format_binary(expr : AST::Binary) : Nil
