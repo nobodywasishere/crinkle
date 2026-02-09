@@ -139,6 +139,12 @@ module Crinkle
           return lex_string
         end
 
+        if ch == '!' && !not_equal_operator?
+          emit_unexpected_char
+          advance_char
+          next
+        end
+
         if operator_or_punct?(ch)
           return lex_operator_or_punct
         end
@@ -390,6 +396,14 @@ module Crinkle
       return true if a == '|'.ord.to_u8 && b == '|'.ord.to_u8
       return true if a == '&'.ord.to_u8 && b == '&'.ord.to_u8
       false
+    end
+
+    private def not_equal_operator? : Bool
+      pos = current_offset
+      a = byte_at(pos)
+      b = byte_at(pos + 1)
+      return false unless a && b
+      a == '!'.ord.to_u8 && b == '='.ord.to_u8
     end
 
     private def punct?(lexeme : String) : Bool

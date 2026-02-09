@@ -1,0 +1,43 @@
+{
+  "lexer": [
+    {
+      "id": "E_UNEXPECTED_CHAR",
+      "severity": "error",
+      "message": "Unexpected character '!' in expression.",
+      "span": {
+        "start": {
+          "offset": 3,
+          "line": 1,
+          "column": 4
+        },
+        "end": {
+          "offset": 4,
+          "line": 1,
+          "column": 5
+        }
+      }
+    }
+  ],
+  "parser": [],
+  "formatter": [
+    {
+      "id": "E_UNEXPECTED_CHAR",
+      "severity": "error",
+      "message": "Unexpected character '!' in expression.",
+      "span": {
+        "start": {
+          "offset": 3,
+          "line": 1,
+          "column": 4
+        },
+        "end": {
+          "offset": 4,
+          "line": 1,
+          "column": 5
+        }
+      }
+    }
+  ],
+  "renderer": [],
+  "linter": []
+}

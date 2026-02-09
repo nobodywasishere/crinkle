@@ -99,7 +99,7 @@ fixtures/
 | Expression precedence (`not`, `~`, `%`, compare layers) | done | `fixtures/parser/expr_not_precedence.*`, `fixtures/parser/expr_mod_precedence.*`, `fixtures/parser/expr_concat_precedence.*` |
 | Binary `in`/`not in` expression handling | done (now rejected/recovery, matching Crinja) | `fixtures/parser/expr_in.*`, `fixtures/parser/expr_not_in.*` |
 | `null` literal handling | done (`null` treated as identifier) | `fixtures/parser/expr_null_identifier.*` |
-| Lexer operator strictness for bare `!` | pending | fixture needed |
+| Lexer operator strictness for bare `!` | done (invalid bare `!` emits lexer error and recovers) | `fixtures/lexer/invalid_bang_operator.*` |
 | Template parser strictness (unknown tags, mismatched end-tags) | pending | fixture updates needed |
 | Parity-specific fast spec target | pending | spec target needed |
 
@@ -112,7 +112,7 @@ fixtures/
 ## Checklist
 - [x] Add parity matrix with concrete mismatch cases and expected behavior.
 - [x] Add lexer parity fixtures for delimiter/numeric/string edge cases.
-- [ ] Add lexer parity fixtures for remaining operator edge cases (`!`).
+- [x] Add lexer parity fixtures for remaining operator edge cases (`!`).
 - [x] Add expression parser parity fixtures (precedence, filters/tests, calls/members).
 - [ ] Add template parser parity fixtures (end tags, unknown tags, trimming).
 - [ ] Implement remaining lexer updates in `src/lexer/lexer.cr`.
