@@ -697,7 +697,12 @@ module Crinkle
                  else
                    previous.span
                  end
-      emit_diagnostic(DiagnosticType::UnexpectedEndTag, "Unexpected '#{tag}'.", span_between(start_span, end_span))
+      message = if @environment.strict_tag_structure?
+                  "End tag without start: #{tag}"
+                else
+                  "Unexpected '#{tag}'."
+                end
+      emit_diagnostic(DiagnosticType::UnexpectedEndTag, message, span_between(start_span, end_span))
     end
 
     def parse_until_end_tag(end_tag : String, allow_end_name : Bool = false) : {Array(AST::Node), EndTagInfo?}
@@ -732,7 +737,12 @@ module Crinkle
         end
       end
 
-      emit_diagnostic(DiagnosticType::MissingEndTag, "Missing end tag '#{end_tag}'.")
+      message = if @environment.strict_tag_structure?
+                  "Unclosed tag, missing: #{end_tag}"
+                else
+                  "Missing end tag '#{end_tag}'."
+                end
+      emit_diagnostic(DiagnosticType::MissingEndTag, message)
       {nodes, nil}
     end
 
@@ -772,11 +782,7 @@ module Crinkle
       end
 
       unless end_tags.empty?
-        message = if end_tags.size == 1
-                    "Missing end tag '#{end_tags.first}'."
-                  else
-                    "Missing end tag (one of: #{end_tags.join(", ")})."
-                  end
+        message = missing_end_tag_message(end_tags)
         emit_diagnostic(DiagnosticType::MissingEndTag, message)
       end
 
@@ -813,11 +819,7 @@ module Crinkle
       end
 
       unless end_tags.empty?
-        message = if end_tags.size == 1
-                    "Missing end tag '#{end_tags.first}'."
-                  else
-                    "Missing end tag (one of: #{end_tags.join(", ")})."
-                  end
+        message = missing_end_tag_message(end_tags)
         emit_diagnostic(DiagnosticType::MissingEndTag, message)
       end
 
@@ -1937,6 +1939,23 @@ module Crinkle
 
     private def emit_diagnostic(type : DiagnosticType, message : String, span : Span) : Nil
       @diagnostics << Diagnostic.new(type, Severity::Error, message, span)
+    end
+
+    private def missing_end_tag_message(end_tags : Array(String)) : String
+      if @environment.strict_tag_structure?
+        primary_end_tag = end_tags.find(&.starts_with?("end")) || end_tags.first?
+        if primary_end_tag
+          "Unclosed tag, missing: #{primary_end_tag}"
+        else
+          "Unclosed tag, missing: end tag"
+        end
+      else
+        if end_tags.size == 1
+          "Missing end tag '#{end_tags.first}'."
+        else
+          "Missing end tag (one of: #{end_tags.join(", ")})."
+        end
+      end
     end
 
     def current : Token

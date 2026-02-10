@@ -130,13 +130,15 @@ describe Crinkle::Environment do
       parent = Crinkle::Environment.new(
         strict_undefined: false,
         strict_filters: false,
-        strict_unknown_tags: true
+        strict_unknown_tags: true,
+        strict_tag_structure: true
       )
       child = parent.new_child
 
       child.strict_undefined?.should be_false
       child.strict_filters?.should be_false
       child.strict_unknown_tags?.should be_true
+      child.strict_tag_structure?.should be_true
     end
 
     it "allows child to override filters" do

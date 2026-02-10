@@ -33,6 +33,7 @@ module Crinkle
     getter? strict_tests : Bool
     getter? strict_functions : Bool
     getter? strict_unknown_tags : Bool
+    getter? strict_tag_structure : Bool
     getter parent : Environment?
     getter globals : Hash(String, Value)
 
@@ -43,6 +44,7 @@ module Crinkle
       @strict_tests : Bool = true,
       @strict_functions : Bool = true,
       @strict_unknown_tags : Bool = false,
+      @strict_tag_structure : Bool = false,
       load_std : Bool = true,
       @parent : Environment? = nil,
     ) : Nil
@@ -67,6 +69,7 @@ module Crinkle
         strict_tests: @strict_tests,
         strict_functions: @strict_functions,
         strict_unknown_tags: @strict_unknown_tags,
+        strict_tag_structure: @strict_tag_structure,
         load_std: false,
       )
       child.filters.merge!(@filters)
