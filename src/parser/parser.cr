@@ -1435,12 +1435,17 @@ module Crinkle
       return false if stop_at?(stop_types, stop_lexemes)
       case current.type
       when TokenType::Identifier, TokenType::Number, TokenType::String
+        return false if current.type == TokenType::Identifier && bare_arg_break_keyword?(current.lexeme)
         true
       when TokenType::Punct
         punct?("(") || punct?("[") || punct?("{")
       else
         false
       end
+    end
+
+    private def bare_arg_break_keyword?(value : String) : Bool
+      value == "and" || value == "or"
     end
 
     private def parse_simple_expression(stop_types : Array(TokenType), stop_lexemes : Array(String)) : AST::Expr

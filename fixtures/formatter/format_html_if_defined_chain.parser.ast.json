@@ -1,0 +1,74 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<section>\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Binary",
+        "op": "and",
+        "left": {
+          "type": "Binary",
+          "op": "and",
+          "left": {
+            "type": "Test",
+            "expr": {
+              "type": "GetAttr",
+              "target": {
+                "type": "GetAttr",
+                "target": {
+                  "type": "Name",
+                  "value": "user"
+                },
+                "name": "profile"
+              },
+              "name": "avatar"
+            },
+            "name": "defined",
+            "negated": false,
+            "args": [],
+            "kwargs": []
+          },
+          "right": {
+            "type": "Binary",
+            "op": "!=",
+            "left": {
+              "type": "Name",
+              "value": "name"
+            },
+            "right": {
+              "type": "Literal",
+              "value": "november"
+            }
+          }
+        },
+        "right": {
+          "type": "Binary",
+          "op": "!=",
+          "left": {
+            "type": "Name",
+            "value": "name"
+          },
+          "right": {
+            "type": "Literal",
+            "value": "september"
+          }
+        }
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<div>Feature tiles</div>\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n</section>\n"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "type": "Template",
+  "body": [
+    {
+      "type": "Text",
+      "value": "<section>\n"
+    },
+    {
+      "type": "If",
+      "test": {
+        "type": "Binary",
+        "op": "and",
+        "left": {
+          "type": "Test",
+          "expr": {
+            "type": "Name",
+            "value": "description"
+          },
+          "name": "none",
+          "negated": true,
+          "args": [],
+          "kwargs": []
+        },
+        "right": {
+          "type": "Binary",
+          "op": ">",
+          "left": {
+            "type": "Filter",
+            "expr": {
+              "type": "Name",
+              "value": "description"
+            },
+            "name": "length",
+            "args": [],
+            "kwargs": []
+          },
+          "right": {
+            "type": "Literal",
+            "value": 0
+          }
+        }
+      },
+      "body": [
+        {
+          "type": "Text",
+          "value": "\n<div>"
+        },
+        {
+          "type": "Output",
+          "expr": {
+            "type": "Name",
+            "value": "description"
+          }
+        },
+        {
+          "type": "Text",
+          "value": "</div>\n"
+        }
+      ],
+      "else": []
+    },
+    {
+      "type": "Text",
+      "value": "\n</section>\n"
+    }
+  ]
+}
